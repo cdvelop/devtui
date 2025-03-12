@@ -34,7 +34,7 @@ func (t *DevTUI) ReturnFocus() error {
 		return cmd.Run()
 
 	default:
-		return errors.New("Focus Unsupported platform")
+		return errors.New("focus unsupported platform")
 	}
 
 }

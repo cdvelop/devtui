@@ -16,9 +16,10 @@ type tickMsg time.Time
 
 // tabContent imprime un mensaje en la tui
 type tabContent struct {
-	Content string
-	Type    MessageType
-	Time    time.Time
+	Content    string
+	Type       messageType
+	Time       time.Time
+	tabSection *TabSection
 }
 
 // DevTUI mantiene el estado de la aplicación
@@ -40,6 +41,7 @@ type DevTUI struct {
 
 // represent the tab section in the tui
 type TabSection struct {
+	index         int            // index of the tab
 	Title         string         // eg: "BUILD", "TEST"
 	SectionFields []SectionField // Field actions configured for the section
 	SectionFooter string         // eg: "Press 't' to compile", "Press 'r' to run tests"
@@ -116,6 +118,7 @@ func NewTUI(c *TuiConfig) *DevTUI {
 	// Recorremos c.TabSections y actualizamos el índice de cada campo.
 	for i := range c.TabSections {
 		section := &c.TabSections[i]
+		section.index = i
 		for j := range section.SectionFields {
 			section.SectionFields[j].index = j
 			section.SectionFields[j].cursor = 0

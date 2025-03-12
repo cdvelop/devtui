@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	. "github.com/cdvelop/messagetype"
 )
 
 // Print sends a normal Label or error to the tui
 func (h *DevTUI) Print(messages ...any) {
-	msgType := NormMsg
+	msgType := Normal
 	newMessages := make([]any, 0, len(messages))
 
 	for _, msg := range messages {
@@ -16,47 +18,27 @@ func (h *DevTUI) Print(messages ...any) {
 
 			switch strings.ToLower(str) {
 			case "error":
-				msgType = ErrorMsg
+				msgType = Error
 				continue
 			case "warning", "debug":
-				msgType = WarnMsg
+				msgType = Warning
 				continue
 			case "info":
-				msgType = InfoMsg
+				msgType = Info
 				continue
 			case "ok":
-				msgType = OkMsg
+				msgType = OK
 				continue
 			}
 		}
 		if _, isError := msg.(error); isError {
-			msgType = ErrorMsg
+			msgType = Error
 		}
 
 		newMessages = append(newMessages, msg)
 	}
 
-	h.SendMessage(joinMessages(newMessages...), msgType)
-}
-
-// PrintError sends an error Label to the tui
-func (h *DevTUI) PrintError(messages ...any) {
-	h.SendMessage(joinMessages(messages...), ErrorMsg)
-}
-
-// PrintWarning sends a warning Label to the tui
-func (h *DevTUI) PrintWarning(messages ...any) {
-	h.SendMessage(joinMessages(messages...), WarnMsg)
-}
-
-// PrintInfo sends an informational Label to the tui
-func (h *DevTUI) PrintInfo(messages ...any) {
-	h.SendMessage(joinMessages(messages...), InfoMsg)
-}
-
-// PrintOK sends a success Label to the tui
-func (h *DevTUI) PrintOK(messages ...any) {
-	h.SendMessage(joinMessages(messages...), OkMsg)
+	h.sendMessage(joinMessages(newMessages...), msgType)
 }
 
 func joinMessages(messages ...any) (Label string) {
@@ -68,93 +50,34 @@ func joinMessages(messages ...any) (Label string) {
 	return
 }
 
-// SendMessage envía un mensaje al tui
-func (t *DevTUI) SendMessage(content string, msgType MessageType) {
+// sendMessage envía un mensaje al tui
+func (t *DevTUI) sendMessage(content string, msgType messageType, tabSection *TabSection) {
 
 	t.tabContentsChan <- tabContent{
-		Content: content,
-		Type:    msgType,
-		Time:    time.Now(),
+		Content:    content,
+		Type:       msgType,
+		Time:       time.Now(),
+		tabSection: tabSection,
 	}
 }
 
-// MessageType define el tipo de mensaje
-type MessageType string
-
-const (
-	NormMsg  MessageType = "normal"
-	InfoMsg  MessageType = "info"
-	ErrorMsg MessageType = "error"
-	WarnMsg  MessageType = "warn"
-	OkMsg    MessageType = "ok"
-)
-
 // formatMessage formatea un mensaje según su tipo
 func (t *DevTUI) formatMessage(msg tabContent) string {
-	timeStr := t.timeStyle.Render(fmt.Sprintf("%s", msg.Time.Format("15:04:05")))
+	timeStr := t.timeStyle.Render(msg.Time.Format("15:04:05"))
 	// content := fmt.Sprintf("[%s] %s", timeStr, msg.Content)
 
 	switch msg.Type {
-	case ErrorMsg:
+	case Error:
 		msg.Content = t.errStyle.Render(msg.Content)
-	case WarnMsg:
+	case Warning:
 		msg.Content = t.warnStyle.Render(msg.Content)
-	case InfoMsg:
+	case Info:
 		msg.Content = t.infoStyle.Render(msg.Content)
-	case OkMsg:
+	case OK:
 		msg.Content = t.okStyle.Render(msg.Content)
 		// default:
 		// 	msg.Content= msg.Content
 	}
 
 	return fmt.Sprintf("%s %s", timeStr, msg.Content)
-}
-
-// Función para detectar el tipo de mensaje basado en su contenido
-func detectMessageType(content string) MessageType {
-	lowerContent := strings.ToLower(content)
-
-	// Detectar errores
-	if strings.Contains(lowerContent, "error") ||
-		strings.Contains(lowerContent, "failed") ||
-		strings.Contains(lowerContent, "exit status 1") ||
-		strings.Contains(lowerContent, "undeclared") ||
-		strings.Contains(lowerContent, "undefined") ||
-		strings.Contains(lowerContent, "fatal") {
-		return ErrorMsg
-	}
-
-	// Detectar advertencias
-	if strings.Contains(lowerContent, "warning") ||
-		strings.Contains(lowerContent, "warn") {
-		return WarnMsg
-	}
-
-	// Detectar mensajes informativos
-	if strings.Contains(lowerContent, "info") ||
-		strings.Contains(lowerContent, " ...") ||
-		strings.Contains(lowerContent, "starting") ||
-		strings.Contains(lowerContent, "initializing") ||
-		strings.Contains(lowerContent, "success") {
-		return InfoMsg
-	}
-
-	return NormMsg
-}
-
-// Write implementa io.Writer para capturar la salida de otros procesos
-func (h *DevTUI) Write(p []byte) (n int, err error) {
-	msg := strings.TrimSpace(string(p))
-	if msg != "" {
-		// Detectar automáticamente el tipo de mensaje
-		msgType := detectMessageType(msg)
-
-		h.SendMessage(msg, msgType)
-		// Si es un error, escribirlo en el archivo de log
-		if msgType == ErrorMsg {
-			h.LogToFile(msg)
-		}
-
-	}
-	return len(p), nil
 }

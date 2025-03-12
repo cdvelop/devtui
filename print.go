@@ -2,43 +2,15 @@ package devtui
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	. "github.com/cdvelop/messagetype"
 )
 
-// Print sends a normal Label or error to the tui
+// Print sends a normal Label or error to the tui in current tab
 func (h *DevTUI) Print(messages ...any) {
-	msgType := Normal
-	newMessages := make([]any, 0, len(messages))
-
-	for _, msg := range messages {
-		if str, isString := msg.(string); isString {
-
-			switch strings.ToLower(str) {
-			case "error":
-				msgType = Error
-				continue
-			case "warning", "debug":
-				msgType = Warning
-				continue
-			case "info":
-				msgType = Info
-				continue
-			case "ok":
-				msgType = OK
-				continue
-			}
-		}
-		if _, isError := msg.(error); isError {
-			msgType = Error
-		}
-
-		newMessages = append(newMessages, msg)
-	}
-
-	h.sendMessage(joinMessages(newMessages...), msgType)
+	msgType := DetectMessageType(messages...)
+	h.sendMessage(joinMessages(messages...), msgType, &h.TabSections[h.activeTab])
 }
 
 func joinMessages(messages ...any) (Label string) {
@@ -51,11 +23,11 @@ func joinMessages(messages ...any) (Label string) {
 }
 
 // sendMessage envía un mensaje al tui
-func (t *DevTUI) sendMessage(content string, msgType messageType, tabSection *TabSection) {
+func (t *DevTUI) sendMessage(content string, mt MessageType, tabSection *TabSection) {
 
 	t.tabContentsChan <- tabContent{
 		Content:    content,
-		Type:       msgType,
+		Type:       mt,
 		Time:       time.Now(),
 		tabSection: tabSection,
 	}

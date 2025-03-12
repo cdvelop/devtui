@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	. "github.com/cdvelop/messagetype"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -17,7 +18,7 @@ type tickMsg time.Time
 // tabContent imprime un mensaje en la tui
 type tabContent struct {
 	Content    string
-	Type       messageType
+	Type       MessageType
 	Time       time.Time
 	tabSection *TabSection
 }
@@ -48,6 +49,7 @@ type TabSection struct {
 	// internal use
 	tabContents          []tabContent // message contents
 	indexActiveEditField int          // Índice del campo de configuración seleccionado
+	tui                  *DevTUI
 }
 
 // Interface for handling tab field sectionFields
@@ -115,23 +117,24 @@ func NewTUI(c *TuiConfig) *DevTUI {
 		c.TabIndexStart = 0 // Set the default tab index to 0
 	}
 
-	// Recorremos c.TabSections y actualizamos el índice de cada campo.
-	for i := range c.TabSections {
-		section := &c.TabSections[i]
-		section.index = i
-		for j := range section.SectionFields {
-			section.SectionFields[j].index = j
-			section.SectionFields[j].cursor = 0
-		}
-		// Si es necesario asignar otros valores, se hace aquí.
-	}
-
 	tui := &DevTUI{
 		TuiConfig:       c,
 		activeTab:       c.TabIndexStart,
 		tabContentsChan: make(chan tabContent, 100),
 		currentTime:     time.Now().Format("15:04:05"),
 		tuiStyle:        newTuiStyle(c.Color),
+	}
+
+	// Recorremos c.TabSections y actualizamos el índice de cada campo.
+	for i := range c.TabSections {
+		section := &c.TabSections[i]
+		section.index = i
+		section.tui = tui
+		for j := range section.SectionFields {
+			section.SectionFields[j].index = j
+			section.SectionFields[j].cursor = 0
+		}
+		// Si es necesario asignar otros valores, se hace aquí.
 	}
 
 	tui.tea = tea.NewProgram(tui,

@@ -3,7 +3,6 @@ package devtui
 import (
 	"fmt"
 	"strings"
-	"sync"
 	"time"
 
 	. "github.com/cdvelop/messagetype"
@@ -14,15 +13,6 @@ import (
 
 func (cf *SectionField) SetCursorAtEnd() {
 	cf.cursor = len(cf.Value)
-}
-
-// Init inicializa el modelo
-func (h *DevTUI) Init() tea.Cmd {
-	return tea.Batch(
-		tea.EnterAltScreen,
-		h.listenToMessages(),
-		h.tickEverySecond(),
-	)
 }
 
 // listenToMessages crea un comando para escuchar mensajes del canal
@@ -38,17 +28,6 @@ func (h *DevTUI) tickEverySecond() tea.Cmd {
 	return tea.Every(time.Second, func(t time.Time) tea.Msg {
 		return tickMsg(t)
 	})
-}
-
-func (h *DevTUI) StartTUI(wg *sync.WaitGroup) {
-	defer wg.Done()
-
-	if _, err := h.tea.Run(); err != nil {
-		fmt.Println("Error running goCompiler:", err)
-		fmt.Println("\nPress any key to exit...")
-		var input string
-		fmt.Scanln(&input)
-	}
 }
 
 // Update maneja las actualizaciones del estado
@@ -169,10 +148,16 @@ func (h *DevTUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 	case channelMsg:
-		h.TabSections[h.activeTab].tabContents = append(h.TabSections[h.activeTab].tabContents, tabContent(msg))
+		// Start listening for new messages again after processing the current one
 		cmds = append(cmds, h.listenToMessages())
 
-		h.updateViewport()
+		// Convert the channel message to a tabContent type
+		tc := tabContent(msg)
+
+		// Only update the viewport if the message belongs to the currently active tab
+		if tc.tabSection.index == h.activeTab {
+			h.updateViewport()
+		}
 
 	case tea.WindowSizeMsg:
 
@@ -213,10 +198,10 @@ func (ts *TabSection) Write(p []byte) (n int, err error) {
 		// Detectar automáticamente el tipo de mensaje
 		msgType := DetectMessageType(msg)
 
-		h.sendMessage(msg, msgType)
+		ts.tui.sendMessage(msg, msgType, ts)
 		// Si es un error, escribirlo en el archivo de log
 		if msgType == Error {
-			h.LogToFile(msg)
+			ts.tui.LogToFile(msg)
 		}
 
 	}
@@ -239,7 +224,7 @@ func (h *DevTUI) cancelEditingConfig(cancel bool) {
 }
 
 // Add this helper function
-func (h *DevTUI) addTerminalPrint(msgType messageType, content string) {
+func (h *DevTUI) addTerminalPrint(msgType MessageType, content string) {
 	h.TabSections[h.activeTab].tabContents = append(
 		h.TabSections[h.activeTab].tabContents,
 		tabContent{

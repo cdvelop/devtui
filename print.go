@@ -2,8 +2,6 @@ package devtui
 
 import (
 	"fmt"
-	"os"
-	"path"
 	"strings"
 	"time"
 )
@@ -151,19 +149,10 @@ func (h *DevTUI) Write(p []byte) (n int, err error) {
 		// Detectar automáticamente el tipo de mensaje
 		msgType := detectMessageType(msg)
 
-		if h.tui != nil {
-			h.SendMessage(msg, msgType)
-		} else {
-			fmt.Println(msg)
-		}
+		h.SendMessage(msg, msgType)
 		// Si es un error, escribirlo en el archivo de log
 		if msgType == ErrorMsg {
-			logFile, err := os.OpenFile(path.Join(h.ch.config.WebFilesFolder, h.ch.config.AppName+".log"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-			if err == nil {
-				defer logFile.Close()
-				timestamp := time.Now().Format("2006-01-02 15:04:05")
-				logFile.WriteString(fmt.Sprintf("[%s] %s\n", timestamp, msg))
-			}
+			h.LogToFile(msg)
 		}
 
 	}

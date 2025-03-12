@@ -65,6 +65,8 @@ type TuiConfig struct {
 	ExitChan      chan bool    //  global chan to close app
 	TabSections   []TabSection // represent sections in the tui
 	Color         *ColorStyle
+
+	LogToFile func(messageErr string) // function to write log error
 }
 
 func NewTUI(c *TuiConfig) *DevTUI {

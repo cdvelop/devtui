@@ -10,7 +10,7 @@ func TestNewTUI(t *testing.T) {
 		TabIndexStart: 0,
 		ExitChan:      make(chan bool),
 		Color:         &ColorStyle{}, // Usando un ColorStyle vacío
-		LogToFile: func(messageErr string) {
+		LogToFile: func(messageErr any) {
 			// Mock function for logging
 		},
 	}

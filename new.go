@@ -70,7 +70,7 @@ type TuiConfig struct {
 	TabSections   []TabSection // represent sections in the tui
 	Color         *ColorStyle
 
-	LogToFile func(messageErr string) // function to write log error
+	LogToFile func(messageErr any) // function to write log error
 }
 
 func NewTUI(c *TuiConfig) *DevTUI {

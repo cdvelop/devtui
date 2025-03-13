@@ -62,7 +62,7 @@ func (t *DevTUI) renderLeftSectionForm() string {
 			continue
 		}
 
-		for i, field := range tabSection.SectionFields {
+		for i, field := range tabSection.FieldHanlders {
 			line := fmt.Sprintf("%s: %s", field.Label, field.Value)
 
 			if i == tabSection.indexActiveEditField {

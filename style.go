@@ -28,6 +28,16 @@ type tuiStyle struct {
 }
 
 func newTuiStyle(cs *ColorStyle) *tuiStyle {
+	// check if color is nil
+	if cs == nil {
+		cs = &ColorStyle{
+			ForeGround: "#F4F4F4",
+			Background: "#000000",
+			Highlight:  "#FF6600",
+			Lowlight:   "#666666",
+		}
+	}
+
 	t := &tuiStyle{
 		ColorStyle: cs,
 	}

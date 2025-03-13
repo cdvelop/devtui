@@ -41,9 +41,9 @@ func (h *DevTUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg: // Al presionar una tecla
 		if h.tabEditingConfig { // EDITING CONFIG IN SECTION
 
-			currentTab := &h.TabSections[h.activeTab]
+			currentTab := &h.tabSections[h.activeTab]
 
-			currentField := &h.TabSections[h.activeTab].FieldHandlers[currentTab.indexActiveEditField]
+			currentField := &h.tabSections[h.activeTab].FieldHandlers[currentTab.indexActiveEditField]
 
 			if currentField.Editable { // Si el campo es editable, permitir la edición
 
@@ -57,7 +57,7 @@ func (h *DevTUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					h.tabEditingConfig = false
 					return h, nil
 				case "esc": // Al presionar ESC, descartamos los cambios
-					currentField := &h.TabSections[h.activeTab].FieldHandlers[currentTab.indexActiveEditField]
+					currentField := &h.tabSections[h.activeTab].FieldHandlers[currentTab.indexActiveEditField]
 					// currentField.Value = GetConfigFields()[currentTab.indexActiveEditField].value // Restaurar valor original
 
 					// volvemos el cursor a su posición
@@ -67,17 +67,17 @@ func (h *DevTUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					h.addTerminalPrint(OK, "Exited config editing mode")
 					return h, nil
 				case "left": // Mover el cursor a la izquierda
-					currentField := &h.TabSections[h.activeTab].FieldHandlers[currentTab.indexActiveEditField]
+					currentField := &h.tabSections[h.activeTab].FieldHandlers[currentTab.indexActiveEditField]
 					if currentField.cursor > 0 {
 						currentField.cursor--
 					}
 				case "right": // Mover el cursor a la derecha
-					currentField := &h.TabSections[h.activeTab].FieldHandlers[currentTab.indexActiveEditField]
+					currentField := &h.tabSections[h.activeTab].FieldHandlers[currentTab.indexActiveEditField]
 					if currentField.cursor < len(currentField.Value) {
 						currentField.cursor++
 					}
 				default:
-					currentField := &h.TabSections[h.activeTab].FieldHandlers[currentTab.indexActiveEditField]
+					currentField := &h.tabSections[h.activeTab].FieldHandlers[currentTab.indexActiveEditField]
 					if msg.String() == "backspace" && currentField.cursor > 0 {
 						currentField.Value = currentField.Value[:currentField.cursor-1] + currentField.Value[currentField.cursor:]
 						currentField.cursor--
@@ -102,34 +102,33 @@ func (h *DevTUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					h.addTerminalPrint(msgType, content)
 					h.tabEditingConfig = false
 				}
-
 			}
 
 		} else {
 
 			switch msg.String() {
 			case "up": // Mover hacia arriba el indice del campo activo
-				currentTab := &h.TabSections[h.activeTab]
+				currentTab := &h.tabSections[h.activeTab]
 
 				if currentTab.indexActiveEditField > 0 {
 					currentTab.indexActiveEditField--
 				}
 			case "down": // Mover hacia abajo el indice del campo activo
-				currentTab := &h.TabSections[h.activeTab]
-				if currentTab.indexActiveEditField < len(h.TabSections[0].FieldHandlers)-1 {
+				currentTab := &h.tabSections[h.activeTab]
+				if currentTab.indexActiveEditField < len(h.tabSections[0].FieldHandlers)-1 {
 					currentTab.indexActiveEditField++
 				}
 
 			case "tab": // change tabSection
-				h.activeTab = (h.activeTab + 1) % len(h.TabSections)
+				h.activeTab = (h.activeTab + 1) % len(h.tabSections)
 				h.cancelEditingConfig(true)
 				h.updateViewport()
 			case "shift+tab": // change tabSection
 				h.cancelEditingConfig(true)
-				h.activeTab = (h.activeTab - 1 + len(h.TabSections)) % len(h.TabSections)
+				h.activeTab = (h.activeTab - 1 + len(h.tabSections)) % len(h.tabSections)
 				h.updateViewport()
 			case "ctrl+l":
-				// h.TabSections[h.activeTab].tabContents = []tabContent{}
+				// h.tabSections[h.activeTab].tabContents = []tabContent{}
 			case "enter":
 				if h.tabEditingConfig {
 					h.tabEditingConfig = false
@@ -147,7 +146,7 @@ func (h *DevTUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			}
 		}
-	case channelMsg:
+	case channelMsg: // Handle messages from the channel
 		// Start listening for new messages again after processing the current one
 		cmds = append(cmds, h.listenToMessages())
 
@@ -159,7 +158,7 @@ func (h *DevTUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			h.updateViewport()
 		}
 
-	case tea.WindowSizeMsg:
+	case tea.WindowSizeMsg: // update the viewport size
 
 		headerHeight := lipgloss.Height(h.headerView())
 		footerHeight := lipgloss.Height(h.footerView())
@@ -180,7 +179,7 @@ func (h *DevTUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			h.viewport.Height = msg.Height - verticalMarginHeight
 		}
 
-	case tickMsg:
+	case tickMsg: // update the time every second
 		h.currentTime = time.Now().Format("15:04:05")
 		cmds = append(cmds, h.tickEverySecond())
 	}
@@ -225,8 +224,8 @@ func (h *DevTUI) cancelEditingConfig(cancel bool) {
 
 // Add this helper function
 func (h *DevTUI) addTerminalPrint(msgType MessageType, content string) {
-	h.TabSections[h.activeTab].tabContents = append(
-		h.TabSections[h.activeTab].tabContents,
+	h.tabSections[h.activeTab].tabContents = append(
+		h.tabSections[h.activeTab].tabContents,
 		tabContent{
 			Type:    msgType,
 			Content: content,

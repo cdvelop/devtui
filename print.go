@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"time"
 
-	. "github.com/cdvelop/messagetype"
+	"github.com/cdvelop/messagetype"
 )
 
 // Print sends a normal Label or error to the tui in current tab
 func (h *DevTUI) Print(messages ...any) {
-	msgType := DetectMessageType(messages...)
-	h.sendMessage(joinMessages(messages...), msgType, &h.TabSections[h.activeTab])
+	msgType := messagetype.DetectMessageType(messages...)
+	h.sendMessage(joinMessages(messages...), msgType, &h.tabSections[h.activeTab])
 }
 
 func joinMessages(messages ...any) (Label string) {
@@ -23,7 +23,7 @@ func joinMessages(messages ...any) (Label string) {
 }
 
 // sendMessage envía un mensaje al tui
-func (t *DevTUI) sendMessage(content string, mt MessageType, tabSection *TabSection) {
+func (t *DevTUI) sendMessage(content string, mt messagetype.MessageType, tabSection *TabSection) {
 
 	t.tabContentsChan <- tabContent{
 		Content:    content,
@@ -39,13 +39,13 @@ func (t *DevTUI) formatMessage(msg tabContent) string {
 	// content := fmt.Sprintf("[%s] %s", timeStr, msg.Content)
 
 	switch msg.Type {
-	case Error:
+	case messagetype.Error:
 		msg.Content = t.errStyle.Render(msg.Content)
-	case Warning:
+	case messagetype.Warning:
 		msg.Content = t.warnStyle.Render(msg.Content)
-	case Info:
+	case messagetype.Info:
 		msg.Content = t.infoStyle.Render(msg.Content)
-	case OK:
+	case messagetype.OK:
 		msg.Content = t.okStyle.Render(msg.Content)
 		// default:
 		// 	msg.Content= msg.Content

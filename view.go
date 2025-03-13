@@ -17,7 +17,7 @@ func (h *DevTUI) View() string {
 
 // ContentView renderiza los mensajes para una sección de contenido
 func (h *DevTUI) ContentView() string {
-	tabContent := h.TabSections[h.activeTab].tabContents
+	tabContent := h.tabSections[h.activeTab].tabContents
 	var contentLines []string
 	for _, content := range tabContent {
 		formattedMsg := h.formatMessage(content)
@@ -27,7 +27,7 @@ func (h *DevTUI) ContentView() string {
 }
 
 func (h *DevTUI) headerView() string {
-	tab := h.TabSections[h.activeTab]
+	tab := h.tabSections[h.activeTab]
 	title := h.headerTitleStyle.Render(tab.Title)
 	line := h.lineHeadFootStyle.Render(strings.Repeat("─", max(0, h.viewport.Width-lipgloss.Width(title))))
 	return lipgloss.JoinHorizontal(lipgloss.Center, title, line)
@@ -55,7 +55,7 @@ func (t *DevTUI) renderLeftSectionForm() string {
 	editingStyle = editingStyle.
 		Foreground(lipgloss.Color(t.Background))
 
-	for indexSection, tabSection := range t.TabSections {
+	for indexSection, tabSection := range t.tabSections {
 
 		// break different index
 		if indexSection != t.activeTab {

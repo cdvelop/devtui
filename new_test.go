@@ -47,7 +47,7 @@ func TestCustomTabs(t *testing.T) {
 	tabs := []TabSection{
 		{
 			Title: "CUSTOM1",
-			FieldHanlders: []FieldHanlder{
+			FieldHandlers: []FieldHandler{
 				{
 					Name:     "testField",
 					Label:    "Test Field",
@@ -81,11 +81,11 @@ func TestCustomTabs(t *testing.T) {
 	}
 
 	// Check if section fields were set correctly
-	if len(tui.TabSections[0].FieldHanlders) != 1 {
-		t.Fatalf("Expected 1 section field, got %d", len(tui.TabSections[0].FieldHanlders))
+	if len(tui.TabSections[0].FieldHandlers) != 1 {
+		t.Fatalf("Expected 1 section field, got %d", len(tui.TabSections[0].FieldHandlers))
 	}
 
-	field := tui.TabSections[0].FieldHanlders[0]
+	field := tui.TabSections[0].FieldHandlers[0]
 	if field.Name != "testField" || field.Value != "test value" {
 		t.Errorf("Field not set correctly. Expected name 'testField' and value 'test value', got '%s' and '%s'",
 			field.Name, field.Value)
@@ -104,7 +104,7 @@ func TestCustomTabs(t *testing.T) {
 
 func TestSectionFieldIndexing(t *testing.T) {
 	// Create tab with multiple fields
-	fields := []FieldHanlder{
+	fields := []FieldHandler{
 		{Name: "field1", Value: "value1"},
 		{Name: "field2", Value: "value2"},
 		{Name: "field3", Value: "value3"},
@@ -113,7 +113,7 @@ func TestSectionFieldIndexing(t *testing.T) {
 	tabs := []TabSection{
 		{
 			Title:         "TestTab",
-			FieldHanlders: fields,
+			FieldHandlers: fields,
 		},
 	}
 
@@ -125,7 +125,7 @@ func TestSectionFieldIndexing(t *testing.T) {
 	tui := NewTUI(config)
 
 	// Check if field indexes were set correctly
-	for i, field := range tui.TabSections[0].FieldHanlders {
+	for i, field := range tui.TabSections[0].FieldHandlers {
 		if field.index != i {
 			t.Errorf("Field %s: Expected index %d, got %d", field.Name, i, field.index)
 		}

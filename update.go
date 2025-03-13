@@ -11,7 +11,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-func (cf *FieldHanlder) SetCursorAtEnd() {
+func (cf *FieldHandler) SetCursorAtEnd() {
 	cf.cursor = len(cf.Value)
 }
 
@@ -43,7 +43,7 @@ func (h *DevTUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			currentTab := &h.TabSections[h.activeTab]
 
-			currentField := &h.TabSections[h.activeTab].FieldHanlders[currentTab.indexActiveEditField]
+			currentField := &h.TabSections[h.activeTab].FieldHandlers[currentTab.indexActiveEditField]
 
 			if currentField.Editable { // Si el campo es editable, permitir la edición
 
@@ -57,7 +57,7 @@ func (h *DevTUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					h.tabEditingConfig = false
 					return h, nil
 				case "esc": // Al presionar ESC, descartamos los cambios
-					currentField := &h.TabSections[h.activeTab].FieldHanlders[currentTab.indexActiveEditField]
+					currentField := &h.TabSections[h.activeTab].FieldHandlers[currentTab.indexActiveEditField]
 					// currentField.Value = GetConfigFields()[currentTab.indexActiveEditField].value // Restaurar valor original
 
 					// volvemos el cursor a su posición
@@ -67,17 +67,17 @@ func (h *DevTUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					h.addTerminalPrint(OK, "Exited config editing mode")
 					return h, nil
 				case "left": // Mover el cursor a la izquierda
-					currentField := &h.TabSections[h.activeTab].FieldHanlders[currentTab.indexActiveEditField]
+					currentField := &h.TabSections[h.activeTab].FieldHandlers[currentTab.indexActiveEditField]
 					if currentField.cursor > 0 {
 						currentField.cursor--
 					}
 				case "right": // Mover el cursor a la derecha
-					currentField := &h.TabSections[h.activeTab].FieldHanlders[currentTab.indexActiveEditField]
+					currentField := &h.TabSections[h.activeTab].FieldHandlers[currentTab.indexActiveEditField]
 					if currentField.cursor < len(currentField.Value) {
 						currentField.cursor++
 					}
 				default:
-					currentField := &h.TabSections[h.activeTab].FieldHanlders[currentTab.indexActiveEditField]
+					currentField := &h.TabSections[h.activeTab].FieldHandlers[currentTab.indexActiveEditField]
 					if msg.String() == "backspace" && currentField.cursor > 0 {
 						currentField.Value = currentField.Value[:currentField.cursor-1] + currentField.Value[currentField.cursor:]
 						currentField.cursor--
@@ -116,7 +116,7 @@ func (h *DevTUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			case "down": // Mover hacia abajo el indice del campo activo
 				currentTab := &h.TabSections[h.activeTab]
-				if currentTab.indexActiveEditField < len(h.TabSections[0].FieldHanlders)-1 {
+				if currentTab.indexActiveEditField < len(h.TabSections[0].FieldHandlers)-1 {
 					currentTab.indexActiveEditField++
 				}
 

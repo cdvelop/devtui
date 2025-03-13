@@ -44,7 +44,7 @@ type DevTUI struct {
 type TabSection struct {
 	index         int            // index of the tab
 	Title         string         // eg: "BUILD", "TEST"
-	FieldHanlders []FieldHanlder // Field actions configured for the section
+	FieldHandlers []FieldHandler // Field actions configured for the section
 	SectionFooter string         // eg: "Press 't' to compile", "Press 'r' to run tests"
 	// internal use
 	tabContents          []tabContent // message contents
@@ -53,7 +53,7 @@ type TabSection struct {
 }
 
 // Interface for handling tab field sectionFields
-type FieldHanlder struct {
+type FieldHandler struct {
 	Name             string                                               // eg: "port", "Server Port", "8080"
 	Label            string                                               // eg: "Server Port"
 	Value            string                                               // eg: "8080"
@@ -79,7 +79,7 @@ func NewTUI(c *TuiConfig) *DevTUI {
 	if len(c.TabSections) == 0 {
 		defaultTab := TabSection{
 			Title: "BUILD",
-			FieldHanlders: []FieldHanlder{
+			FieldHandlers: []FieldHandler{
 				{
 					Name:     "editableField",
 					Label:    "Editable Field",
@@ -108,7 +108,7 @@ func NewTUI(c *TuiConfig) *DevTUI {
 
 		testTab := TabSection{
 			Title:         "DEPLOY",
-			FieldHanlders: []FieldHanlder{},
+			FieldHandlers: []FieldHandler{},
 			SectionFooter: "deploy footer example",
 			tabContents:   []tabContent{},
 		}
@@ -130,9 +130,9 @@ func NewTUI(c *TuiConfig) *DevTUI {
 		section := &c.TabSections[i]
 		section.index = i
 		section.tui = tui
-		for j := range section.FieldHanlders {
-			section.FieldHanlders[j].index = j
-			section.FieldHanlders[j].cursor = 0
+		for j := range section.FieldHandlers {
+			section.FieldHandlers[j].index = j
+			section.FieldHandlers[j].cursor = 0
 		}
 		// Si es necesario asignar otros valores, se hace aquí.
 	}

@@ -104,7 +104,7 @@ func (h *DevTUI) renderFooterInput() string {
 	}
 
 	// Definir el estilo para el valor del campo
-	valueStyle := lipgloss.NewStyle().
+	inputValueStyle := lipgloss.NewStyle().
 		Width(valueWidth).
 		Padding(0, horizontalPadding). // Añadir padding consistente
 		Background(lipgloss.Color(h.Lowlight)).
@@ -112,11 +112,11 @@ func (h *DevTUI) renderFooterInput() string {
 
 	// Si está en modo edición, cambiar el color del texto a Highlight
 	if showCursor {
-		valueStyle = valueStyle.Foreground(lipgloss.Color(h.Highlight))
+		inputValueStyle = inputValueStyle.Foreground(lipgloss.Color(h.Highlight))
 	}
 
 	// Renderizar el valor con el estilo adecuado
-	styledValue := valueStyle.Render(valueText)
+	styledValue := inputValueStyle.Render(valueText)
 
 	// Crear un estilo para el espacio entre elementos
 	spacerStyle := lipgloss.NewStyle().Width(horizontalPadding).Render("")

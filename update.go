@@ -11,7 +11,8 @@ import (
 )
 
 func (cf *FieldHandler) SetCursorAtEnd() {
-	cf.cursor = len(cf.Value)
+	// Calculate cursor position based on rune count, not byte count
+	cf.cursor = len([]rune(cf.Value))
 }
 
 // listenToMessages crea un comando para escuchar mensajes del canal

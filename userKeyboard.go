@@ -51,14 +51,30 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 
 		case tea.KeyBackspace: // Borrar carácter a la izquierda
 			if currentField.cursor > 0 {
-				currentField.Value = currentField.Value[:currentField.cursor-1] + currentField.Value[currentField.cursor:]
-				currentField.cursor--
+				// Convert to runes to handle multi-byte characters correctly
+				runes := []rune(currentField.Value)
+				if currentField.cursor <= len(runes) {
+					newRunes := append(runes[:currentField.cursor-1], runes[currentField.cursor:]...)
+					currentField.Value = string(newRunes)
+					currentField.cursor--
+				}
 			}
 
-		default:
-			// Soportar entrada de caracteres (runes)
-			if msg.Type == tea.KeyRunes && len(msg.Runes) > 0 {
-				currentField.Value = currentField.Value[:currentField.cursor] + string(msg.Runes) + currentField.Value[currentField.cursor:]
+		case tea.KeyRunes:
+			// Handle normal character input - convert everything to runes for proper handling
+			if len(msg.Runes) > 0 {
+				runes := []rune(currentField.Value)
+				if currentField.cursor > len(runes) {
+					currentField.cursor = len(runes)
+				}
+
+				// Insert the new runes at cursor position
+				newRunes := make([]rune, 0, len(runes)+len(msg.Runes))
+				newRunes = append(newRunes, runes[:currentField.cursor]...)
+				newRunes = append(newRunes, msg.Runes...)
+				newRunes = append(newRunes, runes[currentField.cursor:]...)
+
+				currentField.Value = string(newRunes)
 				currentField.cursor += len(msg.Runes)
 			}
 		}

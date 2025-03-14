@@ -10,6 +10,7 @@ import (
 // footerView renderiza la vista del footer
 // Si hay campos activos, muestra el campo actual como input
 // Si no hay campos, muestra una barra de desplazamiento estándar
+
 func (h *DevTUI) footerView() string {
 	// Si hay campos disponibles, mostrar el input (independiente de si estamos en modo edición)
 	if len(h.tabSections[h.activeTab].FieldHandlers) > 0 {
@@ -17,9 +18,14 @@ func (h *DevTUI) footerView() string {
 	}
 
 	// Si no hay campos, mostrar scrollbar estándar
-	info := h.footerInfoStyle.Render(fmt.Sprintf("%3.f%%", h.viewport.ScrollPercent()*100))
+	info := h.renderScrollInfo()
 	line := h.lineHeadFootStyle.Render(strings.Repeat("─", max(0, h.viewport.Width-lipgloss.Width(info))))
 	return lipgloss.JoinHorizontal(lipgloss.Center, line, info)
+}
+
+// renderScrollInfo returns the formatted scroll percentage
+func (h *DevTUI) renderScrollInfo() string {
+	return h.footerInfoStyle.Render(fmt.Sprintf("%3.f%%", h.viewport.ScrollPercent()*100))
 }
 
 // renderFooterInput renderiza un campo de entrada en el footer
@@ -38,44 +44,75 @@ func (h *DevTUI) renderFooterInput() string {
 
 	field := &tabSection.FieldHandlers[tabSection.indexActiveEditField]
 
-	// Construir la representación del campo
-	line := fmt.Sprintf("%s: %s", field.Label, field.Value)
+	// Calcular el ancho para la etiqueta (15% del viewport)
+	labelWidth := int(float64(h.viewport.Width) * 0.15)
 
-	// Aplicar el estilo según el estado del campo
-	var styledContent string
+	// Truncar la etiqueta si es necesario (aseguramos que se trunca en una sola línea)
+	labelText := field.Label
+	if len(labelText) > labelWidth-1 { // -1 para dejar espacio para el ":"
+		if labelWidth > 3 {
+			labelText = labelText[:labelWidth-3-1] + "..." // -1 para el ":"
+		} else {
+			labelText = labelText[:max(1, labelWidth-1)]
+		}
+	}
+
+	// Crear un estilo para la etiqueta igual al del header
+	// Usar el headerTitleStyle como base para mantener consistencia visual
+
+	// Formatear la etiqueta usando el estilo del header
+	paddedLabel := h.headerTitleStyle.Render(labelText + ":")
+
+	// Obtener el indicador de porcentaje con el estilo actual
+	info := h.renderScrollInfo()
+	// Calcular el espacio disponible para el valor del campo
+	infoWidth := lipgloss.Width(info)
+	valueWidth := h.viewport.Width - lipgloss.Width(paddedLabel) - infoWidth
 
 	// Verificar si se debe mostrar el cursor (solo si estamos en modo edición y el campo es editable)
 	showCursor := h.tabEditingConfig && field.Editable
 
+	// Preparar el valor del campo
+	valueText := field.Value
+
+	// Añadir cursor si corresponde
 	if showCursor {
 		// Asegurar que el cursor está dentro de los límites
+		runes := []rune(field.Value)
 		if field.cursor < 0 {
 			field.cursor = 0
 		}
-		if field.cursor > len(field.Value) {
-			field.cursor = len(field.Value)
+		if field.cursor > len(runes) {
+			field.cursor = len(runes)
 		}
 
-		// Calcular la posición del cursor en la línea completa (etiqueta + valor)
-		cursorPos := field.cursor + len(field.Label) + 2 // +2 por ": "
-
-		// Validar que la posición del cursor no exceda la longitud de la línea
-		if cursorPos <= len(line) {
-			line = line[:cursorPos] + "▋" + line[cursorPos:]
+		// Insertar el cursor en la posición correcta usando slices de runes para manejar
+		// correctamente caracteres multibyte
+		if field.cursor <= len(runes) {
+			beforeCursor := string(runes[:field.cursor])
+			afterCursor := string(runes[field.cursor:])
+			valueText = beforeCursor + "▋" + afterCursor
+		} else {
+			valueText = field.Value + "▋"
 		}
-
-		styledContent = h.fieldEditingStyle.Render(line)
-	} else {
-		// Campo seleccionado pero no en modo edición o no editable
-		styledContent = h.fieldSelectedStyle.Render(line)
 	}
 
-	// Calcular el espacio restante a la derecha (asegurando que no sea negativo)
-	contentWidth := lipgloss.Width(styledContent)
-	remainingWidth := max(0, h.viewport.Width-contentWidth-2) // -2 por el padding izquierdo
-	rightPadding := strings.Repeat(" ", remainingWidth)
+	// Definir el estilo para el valor del campo
+	valueStyle := lipgloss.NewStyle().
+		Width(valueWidth).
+		Background(lipgloss.Color(h.Lowlight)).
+		Foreground(lipgloss.Color(h.ForeGround))
 
-	return lipgloss.JoinHorizontal(lipgloss.Center, styledContent, rightPadding)
+	// Si está en modo edición, cambiar el color del texto a Highlight
+	if showCursor {
+		valueStyle = valueStyle.Foreground(lipgloss.Color(h.Highlight))
+	}
+
+	// Renderizar el valor con el estilo adecuado
+	styledValue := valueStyle.Render(valueText)
+
+	// Unir todos los componentes horizontalmente (sin saltos de línea)
+	return lipgloss.JoinHorizontal(lipgloss.Left, paddedLabel, styledValue, info)
 }
 
 // max devuelve el máximo entre dos enteros
@@ -84,36 +121,4 @@ func max(a, b int) int {
 		return a
 	}
 	return b
-}
-
-func (t *DevTUI) exampleRenderSectionForm() string {
-	var lines []string
-
-	for indexSection, tabSection := range t.tabSections {
-
-		// break different index
-		if indexSection != t.activeTab {
-			continue
-		}
-
-		for i, field := range tabSection.FieldHandlers {
-			line := fmt.Sprintf("%s: %s", field.Label, field.Value)
-
-			if i == tabSection.indexActiveEditField {
-				if t.tabEditingConfig {
-					cursorPos := field.cursor + len(field.Label) + 2
-					line = line[:cursorPos] + "▋" + line[cursorPos:]
-					line = t.fieldEditingStyle.Render(line)
-				} else {
-					line = t.fieldSelectedStyle.Render(line)
-				}
-			} else {
-				line = t.fieldLineStyle.Render(line)
-			}
-
-			lines = append(lines, line)
-		}
-	}
-
-	return strings.Join(lines, "\n")
 }

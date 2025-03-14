@@ -28,7 +28,7 @@ func (h *DevTUI) ContentView() string {
 
 func (h *DevTUI) headerView() string {
 	tab := h.tabSections[h.activeTab]
-	title := h.headerTitleStyle.Render(tab.Title)
+	title := h.headerTitleStyle.Render(h.AppName + "/" + tab.Title)
 	line := h.lineHeadFootStyle.Render(strings.Repeat("─", max(0, h.viewport.Width-lipgloss.Width(title))))
 	return lipgloss.JoinHorizontal(lipgloss.Center, title, line)
 }

@@ -8,18 +8,11 @@ import (
 )
 
 func main() {
-	// Crear una configuración por defecto
-	config := &devtui.TuiConfig{
-		TabIndexStart: 0,               // Iniciar en la primera pestaña
-		ExitChan:      make(chan bool), // Canal para señalar salida
-		Color:         nil,             // Usar colores por defecto
-		LogToFile: func(messageErr any) {
-			fmt.Printf("Error log: %v\n", messageErr)
-		},
-	}
 
 	// Inicializar la UI
-	tui := devtui.NewTUI(config)
+	tui := devtui.DefaultTUIForTest(func(messageErr any) {
+		fmt.Println("Error: ", messageErr)
+	})
 
 	// Usar un WaitGroup para esperar a que la UI termine
 	var wg sync.WaitGroup

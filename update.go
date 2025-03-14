@@ -1,7 +1,6 @@
 package devtui
 
 import (
-	"fmt"
 	"strings"
 	"time"
 
@@ -39,113 +38,18 @@ func (h *DevTUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg: // Al presionar una tecla
-		if h.tabEditingConfig { // EDITING CONFIG IN SECTION
-
-			currentTab := &h.tabSections[h.activeTab]
-
-			currentField := &h.tabSections[h.activeTab].FieldHandlers[currentTab.indexActiveEditField]
-
-			if currentField.Editable { // Si el campo es editable, permitir la edición
-
-				switch msg.String() {
-				case "enter": // Al presionar ENTER, guardamos los cambios o ejecutamos la acción
-					if _, err := currentField.FieldValueChange(currentField.Value); err != nil {
-						h.addTerminalPrint(Error, fmt.Sprintf("Error updating field: %v %v", currentField.Name, err))
-					}
-					// return the cursor to its position in the field
-					currentField.SetCursorAtEnd()
-					h.tabEditingConfig = false
-					return h, nil
-				case "esc": // Al presionar ESC, descartamos los cambios
-					currentField := &h.tabSections[h.activeTab].FieldHandlers[currentTab.indexActiveEditField]
-					// currentField.Value = GetConfigFields()[currentTab.indexActiveEditField].value // Restaurar valor original
-
-					// volvemos el cursor a su posición
-					currentField.SetCursorAtEnd()
-
-					h.tabEditingConfig = false
-					h.addTerminalPrint(OK, "Exited config editing mode")
-					return h, nil
-				case "left": // Mover el cursor a la izquierda
-					currentField := &h.tabSections[h.activeTab].FieldHandlers[currentTab.indexActiveEditField]
-					if currentField.cursor > 0 {
-						currentField.cursor--
-					}
-				case "right": // Mover el cursor a la derecha
-					currentField := &h.tabSections[h.activeTab].FieldHandlers[currentTab.indexActiveEditField]
-					if currentField.cursor < len(currentField.Value) {
-						currentField.cursor++
-					}
-				default:
-					currentField := &h.tabSections[h.activeTab].FieldHandlers[currentTab.indexActiveEditField]
-					if msg.String() == "backspace" && currentField.cursor > 0 {
-						currentField.Value = currentField.Value[:currentField.cursor-1] + currentField.Value[currentField.cursor:]
-						currentField.cursor--
-					} else if len(msg.String()) == 1 {
-						currentField.Value = currentField.Value[:currentField.cursor] + msg.String() + currentField.Value[currentField.cursor:]
-						currentField.cursor++
-					}
-				}
-			} else { // Si el campo no es editable, solo ejecutar la acción
-
-				switch msg.String() {
-				case "enter":
-
-					msgType := OK
-					// content eg: "Browser Opened"
-					content, err := currentField.FieldValueChange(currentField.Value)
-					if err != nil {
-						msgType = Error
-						content = fmt.Sprintf("%s %s %s", currentField.Label, content, err.Error())
-					}
-					currentField.Value = content
-					h.addTerminalPrint(msgType, content)
-					h.tabEditingConfig = false
-				}
+		continueProcessing, keyCmd := h.HandleKeyboard(msg)
+		if !continueProcessing {
+			if keyCmd != nil {
+				return h, keyCmd
 			}
-
-		} else {
-
-			switch msg.String() {
-			case "up": // Mover hacia arriba el indice del campo activo
-				currentTab := &h.tabSections[h.activeTab]
-
-				if currentTab.indexActiveEditField > 0 {
-					currentTab.indexActiveEditField--
-				}
-			case "down": // Mover hacia abajo el indice del campo activo
-				currentTab := &h.tabSections[h.activeTab]
-				if currentTab.indexActiveEditField < len(h.tabSections[0].FieldHandlers)-1 {
-					currentTab.indexActiveEditField++
-				}
-
-			case "tab": // change tabSection
-				h.activeTab = (h.activeTab + 1) % len(h.tabSections)
-				h.cancelEditingConfig(true)
-				h.updateViewport()
-			case "shift+tab": // change tabSection
-				h.cancelEditingConfig(true)
-				h.activeTab = (h.activeTab - 1 + len(h.tabSections)) % len(h.tabSections)
-				h.updateViewport()
-			case "ctrl+l":
-				// h.tabSections[h.activeTab].tabContents = []tabContent{}
-			case "enter":
-				if h.tabEditingConfig {
-					h.tabEditingConfig = false
-					h.addTerminalPrint(Warning, "Exited config editing mode")
-				} else {
-					h.tabEditingConfig = true
-					h.addTerminalPrint(Warning, "Entered config editing mode")
-				}
-
-				h.updateViewport()
-			case "ctrl+c":
-				close(h.ExitChan) // Cerrar el canal para señalizar a todas las goroutines
-				return h, tea.Quit
-			default:
-
-			}
+			return h, nil
 		}
+
+		if keyCmd != nil {
+			cmds = append(cmds, keyCmd)
+		}
+
 	case channelMsg: // Handle messages from the channel
 		// Start listening for new messages again after processing the current one
 		cmds = append(cmds, h.listenToMessages())
@@ -182,6 +86,12 @@ func (h *DevTUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tickMsg: // update the time every second
 		h.currentTime = time.Now().Format("15:04:05")
 		cmds = append(cmds, h.tickEverySecond())
+
+	case tea.FocusMsg:
+		h.focused = true
+	case tea.BlurMsg:
+		h.focused = false
+
 	}
 	// Handle keyboard and mouse events in the viewport
 	h.viewport, cmd = h.viewport.Update(msg)
@@ -212,14 +122,22 @@ func (h *DevTUI) updateViewport() {
 	h.viewport.GotoBottom()
 }
 
-func (h *DevTUI) cancelEditingConfig(cancel bool) {
-	if cancel {
-		h.tabEditingConfig = false
-		h.addTerminalPrint(OK, "Exited config editing mode")
-	} else {
+func (h *DevTUI) editingConfigOpen(open bool, currentField *FieldHandler, msg string) {
+
+	if open {
 		h.tabEditingConfig = true
-		h.addTerminalPrint(Warning, "Entered config editing mode")
+	} else {
+		h.tabEditingConfig = false
 	}
+
+	if currentField != nil {
+		currentField.SetCursorAtEnd()
+	}
+
+	if msg != "" {
+		h.addTerminalPrint(Warning, msg)
+	}
+
 }
 
 // Add this helper function

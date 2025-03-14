@@ -17,14 +17,16 @@ type tickMsg time.Time
 // DevTUI mantiene el estado de la aplicación
 type DevTUI struct {
 	*TuiConfig
-	tabSections []TabSection // represent sections in the tui
 	*tuiStyle
 
 	ready    bool
 	viewport viewport.Model
 
-	activeTab        int  // current tab index
-	tabEditingConfig bool // global flag to edit config
+	focused bool // is the app focused
+
+	tabSections      []TabSection // represent sections in the tui
+	activeTab        int          // current tab index
+	tabEditingConfig bool         // global flag to edit config
 
 	currentTime     string
 	tabContentsChan chan tabContent
@@ -32,7 +34,8 @@ type DevTUI struct {
 }
 
 type TuiConfig struct {
-	TabIndexStart int       // is the index of the tab to start
+	AppName       string    // app name eg: "MyApp"
+	TabIndexStart int       // is the index of the tab section to start
 	ExitChan      chan bool //  global chan to close app
 	Color         *ColorStyle
 
@@ -40,12 +43,16 @@ type TuiConfig struct {
 }
 
 func NewTUI(c *TuiConfig) *DevTUI {
+	if c.AppName == "" {
+		c.AppName = "DevTUI"
+	}
 
 	tui := &DevTUI{
 		TuiConfig: c,
+		focused:   true, // assume the app is focused
 		tabSections: []TabSection{ // default tab section
 			{
-				Title: "DEFAULT",
+				Title: defaultTabName,
 				FieldHandlers: []FieldHandler{
 					{
 						Name:     "editableField",

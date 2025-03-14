@@ -6,6 +6,8 @@ import (
 	. "github.com/cdvelop/messagetype"
 )
 
+const defaultTabName = "DEFAULT"
+
 // Interface for handling tab field sectionFields
 type FieldHandler struct {
 	Name             string                                                // eg: "port", "Server Port", "8080"
@@ -48,7 +50,7 @@ func (t *DevTUI) AddTabSections(sections ...TabSection) *DevTUI {
 	// Check if there's a "DEFAULT" tab to replace
 	defaultTabIndex := -1
 	for i, tab := range t.tabSections {
-		if tab.Title == "DEFAULT" {
+		if tab.Title == defaultTabName {
 			defaultTabIndex = i
 			break
 		}

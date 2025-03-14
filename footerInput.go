@@ -47,6 +47,9 @@ func (h *DevTUI) renderFooterInput() string {
 	// Calcular el ancho para la etiqueta (15% del viewport)
 	labelWidth := int(float64(h.viewport.Width) * 0.15)
 
+	// Obtener el padding utilizado en el header/footer para mantener consistencia
+	horizontalPadding := 1 // Este valor viene del Padding(0, 1) en headerTitleStyle
+
 	// Truncar la etiqueta si es necesario (aseguramos que se trunca en una sola línea)
 	labelText := field.Label
 	if len(labelText) > labelWidth-1 { // -1 para dejar espacio para el ":"
@@ -55,19 +58,22 @@ func (h *DevTUI) renderFooterInput() string {
 		} else {
 			labelText = labelText[:max(1, labelWidth-1)]
 		}
+	} else {
+		// Rellenar con espacios para que todas las etiquetas ocupen el mismo ancho
+		labelText = labelText + strings.Repeat(" ", labelWidth-len(labelText)-1) // -1 para el ":"
 	}
-
-	// Crear un estilo para la etiqueta igual al del header
-	// Usar el headerTitleStyle como base para mantener consistencia visual
 
 	// Formatear la etiqueta usando el estilo del header
 	paddedLabel := h.headerTitleStyle.Render(labelText + ":")
 
 	// Obtener el indicador de porcentaje con el estilo actual
 	info := h.renderScrollInfo()
+
 	// Calcular el espacio disponible para el valor del campo
+	// Considerar espacios de separación entre elementos
 	infoWidth := lipgloss.Width(info)
-	valueWidth := h.viewport.Width - lipgloss.Width(paddedLabel) - infoWidth
+	separationSpace := horizontalPadding * 2 // Espacio antes y después del valor
+	valueWidth := h.viewport.Width - lipgloss.Width(paddedLabel) - infoWidth - separationSpace
 
 	// Verificar si se debe mostrar el cursor (solo si estamos en modo edición y el campo es editable)
 	showCursor := h.tabEditingConfig && field.Editable
@@ -100,6 +106,7 @@ func (h *DevTUI) renderFooterInput() string {
 	// Definir el estilo para el valor del campo
 	valueStyle := lipgloss.NewStyle().
 		Width(valueWidth).
+		Padding(0, horizontalPadding). // Añadir padding consistente
 		Background(lipgloss.Color(h.Lowlight)).
 		Foreground(lipgloss.Color(h.ForeGround))
 
@@ -111,8 +118,18 @@ func (h *DevTUI) renderFooterInput() string {
 	// Renderizar el valor con el estilo adecuado
 	styledValue := valueStyle.Render(valueText)
 
-	// Unir todos los componentes horizontalmente (sin saltos de línea)
-	return lipgloss.JoinHorizontal(lipgloss.Left, paddedLabel, styledValue, info)
+	// Crear un estilo para el espacio entre elementos
+	spacerStyle := lipgloss.NewStyle().Width(horizontalPadding).Render("")
+
+	// Unir todos los componentes horizontalmente con espacios consistentes
+	return lipgloss.JoinHorizontal(
+		lipgloss.Left,
+		paddedLabel,
+		spacerStyle, // Espacio entre label y value
+		styledValue,
+		spacerStyle, // Espacio entre value e info
+		info,
+	)
 }
 
 // max devuelve el máximo entre dos enteros

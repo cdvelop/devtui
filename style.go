@@ -12,13 +12,19 @@ type ColorStyle struct {
 type tuiStyle struct {
 	*ColorStyle
 
-	contentBorder     lipgloss.Border
-	headerTitleStyle  lipgloss.Style
-	footerInfoStyle   lipgloss.Style
+	contentBorder    lipgloss.Border
+	headerTitleStyle lipgloss.Style
+
+	footerInfoStyle lipgloss.Style
+
+	fieldLineStyle     lipgloss.Style
+	fieldSelectedStyle lipgloss.Style
+	fieldEditingStyle  lipgloss.Style
+
 	textContentStyle  lipgloss.Style
 	lineHeadFootStyle lipgloss.Style // header right and footer left line
 
-	// Estilos que antes eran globales
+	// Estilos globales mensajes
 	okStyle   lipgloss.Style
 	errStyle  lipgloss.Style
 	warnStyle lipgloss.Style
@@ -61,6 +67,18 @@ func newTuiStyle(cs *ColorStyle) *tuiStyle {
 		Foreground(lipgloss.Color(t.ForeGround))
 
 	t.footerInfoStyle = t.headerTitleStyle
+
+	t.fieldLineStyle = lipgloss.NewStyle().
+		Padding(0, 2)
+
+	t.fieldSelectedStyle = t.fieldLineStyle
+	t.fieldSelectedStyle = t.fieldSelectedStyle.
+		Bold(true).
+		Background(lipgloss.Color(t.Highlight)).
+		Foreground(lipgloss.Color(t.ForeGround))
+
+	t.fieldEditingStyle = t.fieldSelectedStyle.
+		Foreground(lipgloss.Color(t.Background))
 
 	// Estilo para los mensajes
 	t.textContentStyle = lipgloss.NewStyle().

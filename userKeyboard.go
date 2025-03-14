@@ -31,10 +31,12 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 			}
 
 			h.editingConfigOpen(false, currentField, msg)
+			h.updateViewport() // Asegurar que se actualice la vista para mostrar el mensaje
 			return false, nil
 
 		case "esc": // Al presionar ESC, descartamos los cambios
 			h.editingConfigOpen(false, currentField, "Exited config mode")
+			h.updateViewport() // Asegurar que se actualice la vista para mostrar el mensaje
 			return false, nil
 
 		case "left": // Mover el cursor a la izquierda
@@ -69,6 +71,13 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 			currentField.Value = content
 			h.addTerminalPrint(msgType, content)
 			h.tabEditingConfig = false
+			h.updateViewport() // Asegurar que se actualice la vista para mostrar el mensaje
+			return false, nil
+
+		case "esc": // Permitir también salir con ESC para campos no editables
+			h.editingConfigOpen(false, currentField, "Exited config mode")
+			h.updateViewport() // Asegurar que se actualice la vista para mostrar el mensaje
+			return false, nil
 		}
 	}
 

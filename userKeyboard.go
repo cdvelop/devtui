@@ -94,15 +94,10 @@ func (h *DevTUI) handleNormalModeKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 	totalFields := len(currentTab.FieldHandlers)
 
 	switch msg.Type {
-	case tea.KeyUp: // Mover hacia arriba el indice del campo activo
-		if currentTab.indexActiveEditField > 0 {
-			currentTab.indexActiveEditField--
-		}
-
-	case tea.KeyDown: // Mover hacia abajo el indice del campo activo
-		if currentTab.indexActiveEditField < totalFields-1 {
-			currentTab.indexActiveEditField++
-		}
+	case tea.KeyUp, tea.KeyDown:
+		// Las teclas arriba y abajo ya no modifican el campo activo
+		// Solo controlarán el desplazamiento del viewport
+		// No hacemos nada aquí para permitir que el manejo del viewport siga su curso normal
 
 	case tea.KeyLeft: // Navegar al campo anterior (ciclo continuo)
 		if totalFields > 0 {

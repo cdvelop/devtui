@@ -195,30 +195,30 @@ func TestHandleKeyboard(t *testing.T) {
 func TestAdditionalKeyboardFeatures(t *testing.T) {
 	h := prepareForTesting()
 
-	// Test: Navegación entre campos con flechas
-	t.Run("Field navigation with arrows", func(t *testing.T) {
+	// Test: Navegación entre campos con flechas up y down no afecta a los inputs
+	t.Run("Arrow keys in normal mode", func(t *testing.T) {
 		// Configuración inicial - normal mode
 		h.tabEditingConfig = false
 		h.tabSections[0].indexActiveEditField = 0
+		initialIndex := h.tabSections[0].indexActiveEditField
 
-		// Navegar hacia abajo
+		// Intentar navegar con flechas up o down - no debería cambiar inputs
 		continueParsing, _ := h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyDown})
-
 		if !continueParsing {
 			t.Errorf("Expected continueParsing to be true after Down key")
 		}
-
-		if h.tabSections[0].indexActiveEditField != 1 {
-			t.Errorf("Expected indexActiveEditField to move to 1, got %d",
-				h.tabSections[0].indexActiveEditField)
+		if h.tabSections[0].indexActiveEditField != initialIndex {
+			t.Errorf("Expected indexActiveEditField to remain %d, but got %d",
+				initialIndex, h.tabSections[0].indexActiveEditField)
 		}
 
-		// Navegar hacia arriba
-		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyUp})
-
-		if h.tabSections[0].indexActiveEditField != 0 {
-			t.Errorf("Expected indexActiveEditField to move back to 0, got %d",
-				h.tabSections[0].indexActiveEditField)
+		continueParsing, _ = h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyUp})
+		if !continueParsing {
+			t.Errorf("Expected continueParsing to be true after Up key")
+		}
+		if h.tabSections[0].indexActiveEditField != initialIndex {
+			t.Errorf("Expected indexActiveEditField to remain %d, but got %d",
+				initialIndex, h.tabSections[0].indexActiveEditField)
 		}
 	})
 

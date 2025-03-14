@@ -11,65 +11,76 @@ import (
 // Si hay campos activos, muestra el campo actual como input
 // Si no hay campos, muestra una barra de desplazamiento estándar
 func (h *DevTUI) footerView() string {
-	// Si estamos en modo edición y hay campos disponibles, mostrar el input
-	if h.tabEditingConfig && len(h.tabSections[h.activeTab].FieldHandlers) > 0 {
+	// Si hay campos disponibles, mostrar el input (independiente de si estamos en modo edición)
+	if len(h.tabSections[h.activeTab].FieldHandlers) > 0 {
 		return h.renderFooterInput()
 	}
 
-	// Si no hay campos o no estamos editando, mostrar scrollbar estándar
+	// Si no hay campos, mostrar scrollbar estándar
 	info := h.footerInfoStyle.Render(fmt.Sprintf("%3.f%%", h.viewport.ScrollPercent()*100))
 	line := h.lineHeadFootStyle.Render(strings.Repeat("─", max(0, h.viewport.Width-lipgloss.Width(info))))
 	return lipgloss.JoinHorizontal(lipgloss.Center, line, info)
 }
 
 // renderFooterInput renderiza un campo de entrada en el footer
-// Si el campo es editable, muestra un cursor en la posición actual
+// Si el campo es editable y estamos en modo edición, muestra un cursor en la posición actual
 func (h *DevTUI) renderFooterInput() string {
 	// Obtener el campo activo
-	tabSection := h.tabSections[h.activeTab]
-	if tabSection.indexActiveEditField >= len(tabSection.FieldHandlers) {
-		return "" // Protección contra índices fuera de rango
+	tabSection := &h.tabSections[h.activeTab]
+	if len(tabSection.FieldHandlers) == 0 {
+		return "" // No hay campos disponibles
 	}
 
-	field := tabSection.FieldHandlers[tabSection.indexActiveEditField]
+	// Verificar que el índice activo esté en rango
+	if tabSection.indexActiveEditField >= len(tabSection.FieldHandlers) {
+		tabSection.indexActiveEditField = 0 // Reiniciar a 0 si está fuera de rango
+	}
+
+	field := &tabSection.FieldHandlers[tabSection.indexActiveEditField]
 
 	// Construir la representación del campo
-	var displayContent string
+	line := fmt.Sprintf("%s: %s", field.Label, field.Value)
 
-	// Si el campo es editable y estamos en modo edición, mostrar cursor
-	if field.Editable {
-		// Insertar el cursor en la posición correcta dentro del valor
+	// Aplicar el estilo según el estado del campo
+	var styledContent string
+
+	// Verificar si se debe mostrar el cursor (solo si estamos en modo edición y el campo es editable)
+	showCursor := h.tabEditingConfig && field.Editable
+
+	if showCursor {
+		// Asegurar que el cursor está dentro de los límites
+		if field.cursor < 0 {
+			field.cursor = 0
+		}
 		if field.cursor > len(field.Value) {
 			field.cursor = len(field.Value)
 		}
 
-		beforeCursor := field.Value[:field.cursor]
-		afterCursor := ""
-		if field.cursor < len(field.Value) {
-			afterCursor = field.Value[field.cursor:]
+		// Calcular la posición del cursor en la línea completa (etiqueta + valor)
+		cursorPos := field.cursor + len(field.Label) + 2 // +2 por ": "
+
+		// Validar que la posición del cursor no exceda la longitud de la línea
+		if cursorPos <= len(line) {
+			line = line[:cursorPos] + "▋" + line[cursorPos:]
 		}
 
-		// Construir el texto con el cursor
-		displayContent = fmt.Sprintf("%s: %s▋%s", field.Label, beforeCursor, afterCursor)
+		styledContent = h.fieldEditingStyle.Render(line)
 	} else {
-		// Campo no editable, mostrar sin cursor
-		displayContent = fmt.Sprintf("%s: %s", field.Label, field.Value)
+		// Campo seleccionado pero no en modo edición o no editable
+		styledContent = h.fieldSelectedStyle.Render(line)
 	}
 
-	// Aplicar estilo
-	styledContent := h.footerInputStyle.Render(displayContent)
+	// Crear el resultado con exactamente 2 espacios de padding izquierdo
+	// y el resto del espacio a la derecha, garantizando que nunca se use otro formato
+	const leftPadding = "  " // Exactamente 2 espacios
 
-	// Calcular ancho visual del contenido estilizado
+	// Calcular el espacio restante a la derecha (asegurando que no sea negativo)
 	contentWidth := lipgloss.Width(styledContent)
+	remainingWidth := max(0, h.viewport.Width-contentWidth-2) // -2 por el padding izquierdo
+	rightPadding := strings.Repeat(" ", remainingWidth)
 
-	// Calcular padding para centrado exacto
-	padding := (h.viewport.Width - contentWidth) / 2
-	leftPadding := strings.Repeat(" ", max(0, padding))
-	rightPadding := strings.Repeat(" ", max(0, h.viewport.Width-contentWidth-padding))
-
+	// Retornar el contenido con alineación izquierda garantizada
 	return leftPadding + styledContent + rightPadding
-
-	return lipgloss.JoinHorizontal(lipgloss.Center, line, styledContent)
 }
 
 // max devuelve el máximo entre dos enteros
@@ -80,7 +91,7 @@ func max(a, b int) int {
 	return b
 }
 
-func (t *DevTUI) renderLeftSectionForm() string {
+func (t *DevTUI) exampleRenderSectionForm() string {
 	var lines []string
 
 	for indexSection, tabSection := range t.tabSections {

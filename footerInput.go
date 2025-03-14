@@ -70,17 +70,12 @@ func (h *DevTUI) renderFooterInput() string {
 		styledContent = h.fieldSelectedStyle.Render(line)
 	}
 
-	// Crear el resultado con exactamente 2 espacios de padding izquierdo
-	// y el resto del espacio a la derecha, garantizando que nunca se use otro formato
-	const leftPadding = "  " // Exactamente 2 espacios
-
 	// Calcular el espacio restante a la derecha (asegurando que no sea negativo)
 	contentWidth := lipgloss.Width(styledContent)
 	remainingWidth := max(0, h.viewport.Width-contentWidth-2) // -2 por el padding izquierdo
 	rightPadding := strings.Repeat(" ", remainingWidth)
 
-	// Retornar el contenido con alineación izquierda garantizada
-	return leftPadding + styledContent + rightPadding
+	return lipgloss.JoinHorizontal(lipgloss.Center, styledContent, rightPadding)
 }
 
 // max devuelve el máximo entre dos enteros

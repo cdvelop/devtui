@@ -86,5 +86,8 @@ func prepareForTesting() *DevTUI {
 	// Set up test environment
 	os.Setenv("TEST_MODE", "true")
 
+	// Set initial value for the field
+	h.tabSections[0].FieldHandlers[0].Value = "initial value"
+
 	return h
 }

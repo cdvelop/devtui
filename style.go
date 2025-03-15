@@ -14,6 +14,7 @@ type tuiStyle struct {
 
 	contentBorder    lipgloss.Border
 	headerTitleStyle lipgloss.Style
+	labelWidth       int // Ancho estándar para etiquetas
 
 	footerInfoStyle lipgloss.Style
 
@@ -46,6 +47,7 @@ func newTuiStyle(cs *ColorStyle) *tuiStyle {
 
 	t := &tuiStyle{
 		ColorStyle: cs,
+		labelWidth: 15, // Definir un ancho estándar en caracteres para etiquetas
 	}
 
 	// El borde del contenido necesita conectarse con las pestañas

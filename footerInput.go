@@ -45,8 +45,8 @@ func (h *DevTUI) renderFooterInput() string {
 
 	field := &tabSection.FieldHandlers[tabSection.indexActiveEditField]
 
-	// Calcular el ancho para la etiqueta (15% del viewport)
-	labelWidth := int(float64(h.viewport.Width) * 0.15)
+	// Usar el ancho estándar de etiquetas definido en el estilo
+	labelWidth := h.labelWidth
 
 	// Obtener el padding utilizado en el header/footer para mantener consistencia
 	horizontalPadding := 1 // Este valor viene del Padding(0, 1) en headerTitleStyle

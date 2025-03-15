@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/cdvelop/tinystring"
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -28,7 +29,12 @@ func (h *DevTUI) ContentView() string {
 
 func (h *DevTUI) headerView() string {
 	tab := h.tabSections[h.activeTab]
-	title := h.headerTitleStyle.Render(h.AppName + "/" + tab.Title)
+
+	// Truncar o rellenar el título según el ancho estándar de etiquetas
+	headerText := h.AppName + "/" + tab.Title
+	truncatedHeader := tinystring.Convert(headerText).Truncate(h.labelWidth, 0).String()
+
+	title := h.headerTitleStyle.Render(truncatedHeader)
 	line := h.lineHeadFootStyle.Render(strings.Repeat("─", max(0, h.viewport.Width-lipgloss.Width(title))))
 	return lipgloss.JoinHorizontal(lipgloss.Center, title, line)
 }

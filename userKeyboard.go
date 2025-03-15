@@ -3,6 +3,8 @@ package devtui
 import (
 	"fmt"
 
+	"slices"
+
 	"github.com/cdvelop/messagetype"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -54,7 +56,7 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 				// Convert to runes to handle multi-byte characters correctly
 				runes := []rune(currentField.Value)
 				if currentField.cursor <= len(runes) {
-					newRunes := append(runes[:currentField.cursor-1], runes[currentField.cursor:]...)
+					newRunes := slices.Delete(runes, currentField.cursor-1, currentField.cursor)
 					currentField.Value = string(newRunes)
 					currentField.cursor--
 				}

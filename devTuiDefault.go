@@ -1,6 +1,9 @@
 package devtui
 
-import "os"
+import (
+	"errors"
+	"os"
+)
 
 // NewDefaultTUI creates a DevTUI instance with basic default configuration
 // useful for unit tests and for quick initialization in real applications
@@ -47,11 +50,11 @@ func DefaultTUIForTest(LogToFile func(messageErr any)) *DevTUI {
 				},
 				{
 					Label:    "Field 2",
-					Value:    "tab 2 value 2",
+					Value:    "error value",
 					Editable: true,
 					cursor:   0,
 					FieldValueChange: func(value string) (string, error) {
-						return "Tab 2 field 2: " + value, nil
+						return "", errors.New("Error message test field 2 " + value)
 					},
 				},
 			},

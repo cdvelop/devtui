@@ -102,11 +102,11 @@ func (h *DevTUI) renderFooterInput() string {
 		Width(valueWidth).
 		Padding(0, horizontalPadding). // Añadir padding consistente
 		Background(lipgloss.Color(h.Lowlight)).
-		Foreground(lipgloss.Color(h.ForeGround))
+		Foreground(lipgloss.Color(h.Background))
 
-	// Si está en modo edición, cambiar el color del texto a Highlight
+	// Si está en modo edición, cambiar el color del texto a ForeGround
 	if showCursor {
-		inputValueStyle = inputValueStyle.Foreground(lipgloss.Color(h.Highlight))
+		inputValueStyle = inputValueStyle.Foreground(lipgloss.Color(h.ForeGround))
 	}
 
 	// Renderizar el valor con el estilo adecuado

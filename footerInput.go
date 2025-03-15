@@ -51,11 +51,14 @@ func (h *DevTUI) renderFooterInput() string {
 	// Obtener el padding utilizado en el header/footer para mantener consistencia
 	horizontalPadding := 1 // Este valor viene del Padding(0, 1) en headerTitleStyle
 
-	// Truncar o rellenar la etiqueta según sea necesario
-	labelText := tinystring.Convert(field.Label).Truncate(labelWidth, 1).String() // 1 para reservar espacio para el ":"
+	// Truncar la etiqueta si es necesario y añadir ":" al final
+	labelText := tinystring.Convert(field.Label).Truncate(labelWidth-1, 0).String() + ":"
 
-	// Formatear la etiqueta usando el estilo del header
-	paddedLabel := h.headerTitleStyle.Render(labelText + ":")
+	// Aplicar el estilo base para garantizar un ancho fijo
+	fixedWidthLabel := h.labelStyle.Render(labelText)
+
+	// Aplicar el estilo visual (colores) manteniendo el ancho fijo
+	paddedLabel := h.headerTitleStyle.Render(fixedWidthLabel)
 
 	// Obtener el indicador de porcentaje con el estilo actual
 	info := h.renderScrollInfo()

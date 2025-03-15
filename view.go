@@ -30,11 +30,16 @@ func (h *DevTUI) ContentView() string {
 func (h *DevTUI) headerView() string {
 	tab := h.tabSections[h.activeTab]
 
-	// Truncar o rellenar el título según el ancho estándar de etiquetas
+	// Truncar el título si es necesario
 	headerText := h.AppName + "/" + tab.Title
 	truncatedHeader := tinystring.Convert(headerText).Truncate(h.labelWidth, 0).String()
 
-	title := h.headerTitleStyle.Render(truncatedHeader)
+	// Aplicar el estilo base para garantizar un ancho fijo
+	fixedWidthHeader := h.labelStyle.Render(truncatedHeader)
+
+	// Aplicar el estilo visual manteniendo el ancho fijo
+	title := h.headerTitleStyle.Render(fixedWidthHeader)
+
 	line := h.lineHeadFootStyle.Render(strings.Repeat("─", max(0, h.viewport.Width-lipgloss.Width(title))))
 	return lipgloss.JoinHorizontal(lipgloss.Center, title, line)
 }

@@ -1,6 +1,8 @@
 package devtui
 
-import "github.com/charmbracelet/lipgloss"
+import (
+	"github.com/charmbracelet/lipgloss"
+)
 
 type ColorStyle struct {
 	ForeGround string // eg: #F4F4F4
@@ -15,6 +17,7 @@ type tuiStyle struct {
 	contentBorder    lipgloss.Border
 	headerTitleStyle lipgloss.Style
 	labelWidth       int // Ancho estándar para etiquetas
+	labelStyle       lipgloss.Style
 
 	footerInfoStyle lipgloss.Style
 
@@ -49,6 +52,11 @@ func newTuiStyle(cs *ColorStyle) *tuiStyle {
 		ColorStyle: cs,
 		labelWidth: 15, // Definir un ancho estándar en caracteres para etiquetas
 	}
+
+	t.labelStyle = lipgloss.NewStyle().
+		Width(t.labelWidth).
+		Align(lipgloss.Left).
+		Padding(0, 0)
 
 	// El borde del contenido necesita conectarse con las pestañas
 	t.contentBorder = lipgloss.Border{

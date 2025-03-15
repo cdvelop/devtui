@@ -4,7 +4,7 @@ import (
 	"strings"
 	"time"
 
-	. "github.com/cdvelop/messagetype"
+	"github.com/cdvelop/messagetype"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -106,11 +106,11 @@ func (ts *TabSection) Write(p []byte) (n int, err error) {
 	msg := strings.TrimSpace(string(p))
 	if msg != "" {
 		// Detectar automáticamente el tipo de mensaje
-		msgType := DetectMessageType(msg)
+		msgType := messagetype.DetectMessageType(msg)
 
 		ts.tui.sendMessage(msg, msgType, ts)
 		// Si es un error, escribirlo en el archivo de log
-		if msgType == Error {
+		if msgType == messagetype.Error {
 			ts.tui.LogToFile(msg)
 		}
 
@@ -136,13 +136,13 @@ func (h *DevTUI) editingConfigOpen(open bool, currentField *FieldHandler, msg st
 	}
 
 	if msg != "" {
-		h.addTerminalPrint(Warning, msg)
+		h.addTerminalPrint(messagetype.Warning, msg)
 	}
 
 }
 
 // Add this helper function
-func (h *DevTUI) addTerminalPrint(msgType MessageType, content string) {
+func (h *DevTUI) addTerminalPrint(msgType messagetype.MessageType, content string) {
 	h.tabSections[h.activeTab].tabContents = append(
 		h.tabSections[h.activeTab].tabContents,
 		tabContent{

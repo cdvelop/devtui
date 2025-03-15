@@ -3,7 +3,7 @@ package devtui
 import (
 	"time"
 
-	. "github.com/cdvelop/messagetype"
+	"github.com/cdvelop/messagetype"
 )
 
 const defaultTabName = "DEFAULT"
@@ -23,7 +23,7 @@ type FieldHandler struct {
 // tabContent imprime un mensaje en la tui
 type tabContent struct {
 	Content    string
-	Type       MessageType
+	Type       messagetype.MessageType
 	Time       time.Time
 	tabSection *TabSection
 }

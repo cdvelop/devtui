@@ -3,7 +3,7 @@ package devtui
 import (
 	"fmt"
 
-	. "github.com/cdvelop/messagetype"
+	"github.com/cdvelop/messagetype"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -27,7 +27,7 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 		case tea.KeyEnter: // Guardar cambios o ejecutar acción
 			msg, err := currentField.FieldValueChange(currentField.Value)
 			if err != nil {
-				h.addTerminalPrint(Error, fmt.Sprintf("Error: %v %v", currentField.Label, err))
+				h.addTerminalPrint(messagetype.Error, fmt.Sprintf("Error: %v %v", currentField.Label, err))
 			}
 
 			h.editingConfigOpen(false, currentField, msg)
@@ -81,11 +81,11 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 	} else { // Si el campo no es editable, solo ejecutar la acción
 		switch msg.Type {
 		case tea.KeyEnter:
-			msgType := OK
+			msgType := messagetype.OK
 			// content eg: "Browser Opened"
 			content, err := currentField.FieldValueChange(currentField.Value)
 			if err != nil {
-				msgType = Error
+				msgType = messagetype.Error
 				content = fmt.Sprintf("%s %s %s", currentField.Label, content, err.Error())
 			}
 			currentField.Value = content
@@ -146,10 +146,10 @@ func (h *DevTUI) handleNormalModeKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 		if totalFields > 0 {
 			field := &currentTab.FieldHandlers[currentTab.indexActiveEditField]
 			if !field.Editable {
-				msgType := OK
+				msgType := messagetype.OK
 				content, err := field.FieldValueChange(field.Value)
 				if err != nil {
-					msgType = Error
+					msgType = messagetype.Error
 					content = fmt.Sprintf("%s %s %s", field.Label, content, err.Error())
 				}
 				field.Value = content

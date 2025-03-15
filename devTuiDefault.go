@@ -14,7 +14,7 @@ func DefaultTUIForTest(LogToFile func(messageErr any)) *DevTUI {
 			FieldHandlers: []FieldHandler{
 				{
 					Label:    "Field 1  (Editable)",
-					Value:    "initial value",
+					Value:    "initial test value",
 					Editable: true,
 					cursor:   0,
 					FieldValueChange: func(value string) (string, error) {

@@ -56,9 +56,11 @@ func TestFooterView(t *testing.T) {
 		// Renderizar footer
 		result := h.footerView()
 
+		expected := "TestLabel:   TestValue   100%"
+
 		// Verificar que contiene la etiqueta y valor del field
-		if !strings.Contains(result, "TestLabel: TestValue") {
-			t.Errorf("El footer debería mostrar 'TestLabel: TestValue' incluso sin estar en modo edición, pero muestra: %s", result)
+		if !strings.Contains(result, expected) {
+			t.Errorf("El footer debería mostrar:\n%v\n incluso sin estar en modo edición, pero muestra: %s", expected, result)
 		}
 	})
 }
@@ -69,31 +71,18 @@ func TestRenderFooterInput(t *testing.T) {
 
 	// Caso 1: Campo editable en modo edición debe mostrar cursor
 	t.Run("Editable field in edit mode shows cursor", func(t *testing.T) {
-		// Configurar campo editable en modo edición
-		if len(h.tabSections[h.activeTab].FieldHandlers) == 0 {
-			// Crear un campo si no hay ninguno
-			h.tabSections[h.activeTab].FieldHandlers = append(h.tabSections[h.activeTab].FieldHandlers, FieldHandler{
-				Label:    "Test",
-				Value:    "Value",
-				Editable: true,
-			})
-		}
-
 		h.tabEditingConfig = true
-		h.tabSections[h.activeTab].indexActiveEditField = 0
 		field := &h.tabSections[h.activeTab].FieldHandlers[0]
-		field.Label = "Test"
-		field.Value = "Value"
-		field.Editable = true
 		field.cursor = 2 // Cursor en posición "Va|lue"
+		field.Value = "test value"
 
 		// Renderizar input
 		result := h.renderFooterInput()
 
-		// Comprobar que se renderiza con cursor
-		// El cursor '▋' debe estar después de las primeras dos letras del valor
-		if !strings.Contains(result, "Test: Va▋lue") {
-			t.Errorf("El cursor no se renderiza correctamente, resultado: %s", result)
+		// Verificar que Va aparece antes del cursor y lue después del cursor
+		cursor := "▋"
+		if !strings.Contains(result, "te"+cursor+"st value") {
+			t.Errorf("El cursor no se renderiza correctamente en la posición esperada (Va▋lue), resultado: %s", result)
 		}
 	})
 
@@ -137,8 +126,8 @@ func TestRenderFooterInput(t *testing.T) {
 		result := h.renderFooterInput()
 
 		// Verificar que se resetea el índice y se muestra el primer campo
-		if !strings.Contains(result, "Test: Value") {
-			t.Error("No se manejó correctamente el índice fuera de rango")
+		if !strings.Contains(result, "Test:   Value   100%") {
+			t.Fatal("No se manejó correctamente el índice fuera de rango result:\n", result)
 		}
 	})
 

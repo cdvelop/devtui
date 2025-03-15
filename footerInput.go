@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/cdvelop/tinystring"
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -50,18 +51,8 @@ func (h *DevTUI) renderFooterInput() string {
 	// Obtener el padding utilizado en el header/footer para mantener consistencia
 	horizontalPadding := 1 // Este valor viene del Padding(0, 1) en headerTitleStyle
 
-	// Truncar la etiqueta si es necesario (aseguramos que se trunca en una sola línea)
-	labelText := field.Label
-	if len(labelText) > labelWidth-1 { // -1 para dejar espacio para el ":"
-		if labelWidth > 3 {
-			labelText = labelText[:labelWidth-3-1] + "..." // -1 para el ":"
-		} else {
-			labelText = labelText[:max(1, labelWidth-1)]
-		}
-	} else {
-		// Rellenar con espacios para que todas las etiquetas ocupen el mismo ancho
-		labelText = labelText + strings.Repeat(" ", labelWidth-len(labelText)-1) // -1 para el ":"
-	}
+	// Truncar o rellenar la etiqueta según sea necesario
+	labelText := tinystring.Convert(field.Label).Truncate(labelWidth, 1).String() // 1 para reservar espacio para el ":"
 
 	// Formatear la etiqueta usando el estilo del header
 	paddedLabel := h.headerTitleStyle.Render(labelText + ":")
@@ -130,12 +121,4 @@ func (h *DevTUI) renderFooterInput() string {
 		spacerStyle, // Espacio entre value e info
 		info,
 	)
-}
-
-// max devuelve el máximo entre dos enteros
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
 }

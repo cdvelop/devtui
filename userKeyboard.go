@@ -35,7 +35,8 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 				currentField.Value = currentField.tempEditValue // Aplicar los cambios solo si hubo modificaciones
 				msg, err := currentField.FieldValueChange(currentField.Value)
 				if err != nil {
-					currentTab.addNewContent(messagetype.Error, fmt.Sprintf("Error: %v %v", currentField.Label, err))
+					// Si hay un error, mostrarlo en la pestaña actual
+					currentTab.addNewContent(messagetype.Error, fmt.Sprintf("%v %v", currentField.Label, err))
 				}
 				h.editingConfigOpen(false, currentField, msg)
 			} else {

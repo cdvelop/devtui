@@ -19,7 +19,7 @@ type FieldHandler struct {
 	cursor int // cursor position in text value
 }
 
-// tabContent imprime un mensaje en la tui
+// tabContent imprime contenido en la tui con id único
 type tabContent struct {
 	Id         string
 	Content    string

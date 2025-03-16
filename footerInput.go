@@ -74,8 +74,23 @@ func (h *DevTUI) renderFooterInput() string {
 		valueText = field.tempEditValue
 	}
 
+	// Definir el estilo para el valor del campo
+	inputValueStyle := lipgloss.NewStyle().
+		Width(valueWidth).
+		Padding(0, horizontalPadding). // Añadir padding consistente
+		Background(lipgloss.Color(h.Lowlight)).
+		Foreground(lipgloss.Color(h.Background))
+
+	// si el campo no es editable cambiar el color del fondo y del texto
+	if !field.Editable {
+		inputValueStyle = inputValueStyle.Background(lipgloss.Color(h.ForeGround)).
+			Foreground(lipgloss.Color(h.Background))
+	}
+
 	// Añadir cursor si corresponde
 	if showCursor {
+		// Si está en modo edición, cambiar el color del texto a ForeGround
+		inputValueStyle = inputValueStyle.Foreground(lipgloss.Color(h.ForeGround))
 		// Asegurar que el cursor está dentro de los límites
 		runes := []rune(field.tempEditValue)
 		if field.cursor < 0 {
@@ -94,18 +109,6 @@ func (h *DevTUI) renderFooterInput() string {
 		} else {
 			valueText = field.tempEditValue + "▋"
 		}
-	}
-
-	// Definir el estilo para el valor del campo
-	inputValueStyle := lipgloss.NewStyle().
-		Width(valueWidth).
-		Padding(0, horizontalPadding). // Añadir padding consistente
-		Background(lipgloss.Color(h.Lowlight)).
-		Foreground(lipgloss.Color(h.Background))
-
-	// Si está en modo edición, cambiar el color del texto a ForeGround
-	if showCursor {
-		inputValueStyle = inputValueStyle.Foreground(lipgloss.Color(h.ForeGround))
 	}
 
 	// Renderizar el valor con el estilo adecuado

@@ -342,4 +342,34 @@ func TestAdditionalKeyboardFeatures(t *testing.T) {
 			t.Errorf("Expected cursor to move right to position 3, got %d", field.cursor)
 		}
 	})
+
+	// Test: Pressing enter without changing the value shouldn't trigger save action
+	t.Run("Editing mode - Enter without changes", func(t *testing.T) {
+		// Reset para esta prueba
+		h := prepareForTesting()
+
+		// Setup: Enter editing mode
+		h.editModeActivated = true
+		h.tabSections[0].indexActiveEditField = 0
+		field := &h.tabSections[0].FieldHandlers[0]
+		originalValue := "test value"
+		field.Value = originalValue
+		field.tempEditValue = originalValue // Mismo valor que el original
+
+		continueParsing, _ := h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
+
+		if continueParsing {
+			t.Errorf("Expected continueParsing to be false after Enter in editing mode")
+		}
+
+		if h.editModeActivated {
+			t.Errorf("Expected to exit editing mode after Enter")
+		}
+
+		// Verificar que el valor sigue siendo el mismo
+		if field.Value != originalValue {
+			t.Errorf("Expected value to remain '%s', got '%s'",
+				originalValue, field.Value)
+		}
+	})
 }

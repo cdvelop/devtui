@@ -31,22 +31,25 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 
 		switch msg.Type {
 		case tea.KeyEnter: // Guardar cambios o ejecutar acción
-			if currentField.tempEditValue != "" {
-				currentField.Value = currentField.tempEditValue // Aplicar los cambios
-			}
-			msg, err := currentField.FieldValueChange(currentField.Value)
-			if err != nil {
-				h.addTerminalPrint(messagetype.Error, fmt.Sprintf("Error: %v %v", currentField.Label, err))
+			if currentField.tempEditValue != "" && currentField.tempEditValue != currentField.Value {
+				currentField.Value = currentField.tempEditValue // Aplicar los cambios solo si hubo modificaciones
+				msg, err := currentField.FieldValueChange(currentField.Value)
+				if err != nil {
+					h.addTerminalPrint(messagetype.Error, fmt.Sprintf("Error: %v %v", currentField.Label, err))
+				}
+				h.editingConfigOpen(false, currentField, msg)
+			} else {
+				// Si no hubo cambios, solo salimos del modo edición sin mostrar mensajes
+				h.editingConfigOpen(false, currentField, "")
 			}
 
 			currentField.tempEditValue = "" // Limpiar el valor temporal
-			h.editingConfigOpen(false, currentField, msg)
-			h.updateViewport() // Asegurar que se actualice la vista para mostrar el mensaje
+			h.updateViewport()              // Asegurar que se actualice la vista para mostrar el mensaje
 			return false, nil
 
 		case tea.KeyEsc: // Al presionar ESC, descartamos los cambios y salimos del modo edición
 			currentField.tempEditValue = "" // Limpiar el valor temporal
-			h.editingConfigOpen(false, currentField, "Exited config mode")
+			h.editingConfigOpen(false, currentField, "")
 			h.updateViewport() // Asegurar que se actualice la vista para mostrar el mensaje
 			return false, nil
 
@@ -123,7 +126,7 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 			return false, nil
 
 		case tea.KeyEsc: // Permitir también salir con ESC para campos no editables
-			h.editingConfigOpen(false, currentField, "Exited config mode")
+			h.editingConfigOpen(false, currentField, "")
 			h.updateViewport() // Asegurar que se actualice la vista para mostrar el mensaje
 			return false, nil
 		}
@@ -187,7 +190,7 @@ func (h *DevTUI) handleNormalModeKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 				field.tempEditValue = field.Value
 				field.cursor = 0 // Asegurarnos de que el cursor comience al principio
 				h.editModeActivated = true
-				h.editingConfigOpen(true, field, "Entered config editing mode press 'esc' to exit")
+				h.editingConfigOpen(true, field, "")
 			}
 			h.updateViewport()
 		}

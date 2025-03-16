@@ -13,6 +13,7 @@ type FieldHandler struct {
 	Name             string                                                // eg: "port", "Server Port", "8080"
 	Label            string                                                // eg: "Server Port"
 	Value            string                                                // eg: "8080"
+	tempEditValue    string                                                // use for edit
 	Editable         bool                                                  // if no editable eject the action FieldValueChange directly
 	FieldValueChange func(newValue string) (execMessage string, err error) //eg: "8080" -> "9090" execMessage: "Port changed from 8080 to 9090"
 	//internal use

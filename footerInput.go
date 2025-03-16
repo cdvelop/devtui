@@ -34,9 +34,6 @@ func (h *DevTUI) renderScrollInfo() string {
 func (h *DevTUI) renderFooterInput() string {
 	// Obtener el campo activo
 	tabSection := &h.tabSections[h.activeTab]
-	if len(tabSection.FieldHandlers) == 0 {
-		return "" // No hay campos disponibles
-	}
 
 	// Verificar que el índice activo esté en rango
 	if tabSection.indexActiveEditField >= len(tabSection.FieldHandlers) {
@@ -68,17 +65,19 @@ func (h *DevTUI) renderFooterInput() string {
 	infoWidth := lipgloss.Width(info)
 	separationSpace := horizontalPadding * 2 // Espacio antes y después del valor
 	valueWidth := h.viewport.Width - lipgloss.Width(paddedLabel) - infoWidth - separationSpace
-
-	// Verificar si se debe mostrar el cursor (solo si estamos en modo edición y el campo es editable)
-	showCursor := h.tabEditingConfig && field.Editable
-
+	var showCursor bool
 	// Preparar el valor del campo
 	valueText := field.Value
+	// solo si estamos en modo edición y el campo es editable
+	if h.editModeActivated && field.Editable {
+		showCursor = true
+		valueText = field.tempEditValue
+	}
 
 	// Añadir cursor si corresponde
 	if showCursor {
 		// Asegurar que el cursor está dentro de los límites
-		runes := []rune(field.Value)
+		runes := []rune(field.tempEditValue)
 		if field.cursor < 0 {
 			field.cursor = 0
 		}
@@ -93,7 +92,7 @@ func (h *DevTUI) renderFooterInput() string {
 			afterCursor := string(runes[field.cursor:])
 			valueText = beforeCursor + "▋" + afterCursor
 		} else {
-			valueText = field.Value + "▋"
+			valueText = field.tempEditValue + "▋"
 		}
 	}
 

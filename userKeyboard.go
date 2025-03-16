@@ -12,7 +12,7 @@ import (
 // HandleKeyboard processes keyboard input and updates the model state
 // returns whether the update function should continue processing or return early
 func (h *DevTUI) HandleKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
-	if h.tabEditingConfig { // EDITING CONFIG IN SECTION
+	if h.editModeActivated { // EDITING CONFIG IN SECTION
 		return h.handleEditingConfigKeyboard(msg)
 	} else {
 		return h.handleNormalModeKeyboard(msg)
@@ -27,16 +27,21 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 	if currentField.Editable { // Si el campo es editable, permitir la edición
 		switch msg.Type {
 		case tea.KeyEnter: // Guardar cambios o ejecutar acción
+			if currentField.tempEditValue != "" {
+				currentField.Value = currentField.tempEditValue // Aplicar los cambios
+			}
 			msg, err := currentField.FieldValueChange(currentField.Value)
 			if err != nil {
 				h.addTerminalPrint(messagetype.Error, fmt.Sprintf("Error: %v %v", currentField.Label, err))
 			}
 
+			currentField.tempEditValue = "" // Limpiar el valor temporal
 			h.editingConfigOpen(false, currentField, msg)
 			h.updateViewport() // Asegurar que se actualice la vista para mostrar el mensaje
 			return false, nil
 
 		case tea.KeyEsc: // Al presionar ESC, descartamos los cambios y salimos del modo edición
+			currentField.tempEditValue = "" // Limpiar el valor temporal
 			h.editingConfigOpen(false, currentField, "Exited config mode")
 			h.updateViewport() // Asegurar que se actualice la vista para mostrar el mensaje
 			return false, nil
@@ -47,17 +52,26 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 			}
 
 		case tea.KeyRight: // Mover el cursor a la derecha dentro del texto
-			if currentField.cursor < len(currentField.Value) {
+			value := currentField.Value
+			if currentField.tempEditValue != "" {
+				value = currentField.tempEditValue
+			}
+			if currentField.cursor < len(value) {
 				currentField.cursor++
 			}
 
 		case tea.KeyBackspace: // Borrar carácter a la izquierda
 			if currentField.cursor > 0 {
+				// Si aún no hay valor temporal, copiar el valor original
+				if currentField.tempEditValue == "" {
+					currentField.tempEditValue = currentField.Value
+				}
+
 				// Convert to runes to handle multi-byte characters correctly
-				runes := []rune(currentField.Value)
+				runes := []rune(currentField.tempEditValue)
 				if currentField.cursor <= len(runes) {
 					newRunes := slices.Delete(runes, currentField.cursor-1, currentField.cursor)
-					currentField.Value = string(newRunes)
+					currentField.tempEditValue = string(newRunes)
 					currentField.cursor--
 				}
 			}
@@ -65,7 +79,12 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 		case tea.KeyRunes:
 			// Handle normal character input - convert everything to runes for proper handling
 			if len(msg.Runes) > 0 {
-				runes := []rune(currentField.Value)
+				// Si aún no hay valor temporal, copiar el valor original
+				if currentField.tempEditValue == "" {
+					currentField.tempEditValue = currentField.Value
+				}
+
+				runes := []rune(currentField.tempEditValue)
 				if currentField.cursor > len(runes) {
 					currentField.cursor = len(runes)
 				}
@@ -75,8 +94,7 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 				newRunes = append(newRunes, runes[:currentField.cursor]...)
 				newRunes = append(newRunes, msg.Runes...)
 				newRunes = append(newRunes, runes[currentField.cursor:]...)
-
-				currentField.Value = string(newRunes)
+				currentField.tempEditValue = string(newRunes)
 				currentField.cursor += len(msg.Runes)
 			}
 		}
@@ -92,7 +110,7 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 			}
 			currentField.Value = content
 			h.addTerminalPrint(msgType, content)
-			h.tabEditingConfig = false
+			h.editModeActivated = false
 			h.updateViewport() // Asegurar que se actualice la vista para mostrar el mensaje
 			return false, nil
 
@@ -158,7 +176,8 @@ func (h *DevTUI) handleNormalModeKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 				h.addTerminalPrint(msgType, content)
 			} else {
 				// Para campos editables, activar modo de edición explícitamente
-				h.tabEditingConfig = true
+				field.tempEditValue = field.Value
+				h.editModeActivated = true
 				h.editingConfigOpen(true, field, "Entered config editing mode press 'esc' to exit")
 			}
 			h.updateViewport()
@@ -179,10 +198,10 @@ func (h *DevTUI) checkAutoEditMode() {
 
 	// Entrar automáticamente en modo edición si hay un solo campo editable
 	if len(currentTab.FieldHandlers) == 1 && currentTab.FieldHandlers[0].Editable {
-		h.tabEditingConfig = true
+		h.editModeActivated = true
 		currentTab.indexActiveEditField = 0
 	} else {
 		// Si hay múltiples campos, no entrar en modo edición automáticamente
-		h.tabEditingConfig = false
+		h.editModeActivated = false
 	}
 }

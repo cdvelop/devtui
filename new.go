@@ -24,9 +24,9 @@ type DevTUI struct {
 
 	focused bool // is the app focused
 
-	tabSections      []TabSection // represent sections in the tui
-	activeTab        int          // current tab index
-	tabEditingConfig bool         // global flag to edit config
+	tabSections       []TabSection // represent sections in the tui
+	activeTab         int          // current tab index
+	editModeActivated bool         // global flag to edit config
 
 	currentTime     string
 	tabContentsChan chan tabContent

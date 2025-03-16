@@ -12,7 +12,7 @@ func TestHandleKeyboard(t *testing.T) {
 
 	// Test case: Normal mode, changing tabs with tab key
 	t.Run("Normal mode - Tab key", func(t *testing.T) {
-		h.tabEditingConfig = false
+		h.editModeActivated = false
 		continueParsing, _ := h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyTab}) // Ignoramos el comando
 
 		if !continueParsing {
@@ -22,22 +22,22 @@ func TestHandleKeyboard(t *testing.T) {
 
 	// Test case: Normal mode, pressing enter to enter editing mode
 	t.Run("Normal mode - Enter key", func(t *testing.T) {
-		h.tabEditingConfig = false
+		h.editModeActivated = false
 		continueParsing, _ := h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyEnter}) // Ignoramos el comando
 
 		if !continueParsing {
 			t.Errorf("Expected continueParsing to be true, got false")
 		}
 
-		if !h.tabEditingConfig {
-			t.Errorf("Expected tabEditingConfig to be true after pressing Enter")
+		if !h.editModeActivated {
+			t.Errorf("Expected editModeActivated to be true after pressing Enter")
 		}
 	})
 
 	// Test case: Editing mode, pressing escape to exit
 	t.Run("Editing mode - Escape key", func(t *testing.T) {
 		// Setup: Enter editing mode first
-		h.tabEditingConfig = true
+		h.editModeActivated = true
 		h.tabSections[0].indexActiveEditField = 0
 
 		continueParsing, _ := h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyEsc})
@@ -46,7 +46,7 @@ func TestHandleKeyboard(t *testing.T) {
 			t.Errorf("Expected continueParsing to be false after Esc in editing mode")
 		}
 
-		if h.tabEditingConfig {
+		if h.editModeActivated {
 			t.Errorf("Expected to exit editing mode after Esc")
 		}
 	})
@@ -57,10 +57,10 @@ func TestHandleKeyboard(t *testing.T) {
 		h := prepareForTesting()
 
 		// Setup: Enter editing mode
-		h.tabEditingConfig = true
+		h.editModeActivated = true
 		h.tabSections[0].indexActiveEditField = 0
 		field := &h.tabSections[0].FieldHandlers[0]
-		initialValue := field.Value
+		initialValue := field.Value // 'initial value'
 
 		// Por defecto, el cursor estará al inicio (posición 0)
 		// Simulamos escribir 'x' en esa posición
@@ -73,12 +73,12 @@ func TestHandleKeyboard(t *testing.T) {
 		expectedValue := "x" + initialValue
 		expectedCursor := 1 // Cursor debe moverse una posición a la derecha
 
-		if field.Value != expectedValue {
-			t.Errorf("Expected value to be '%s', got '%s'", expectedValue, field.Value)
+		if field.tempEditValue != expectedValue {
+			t.Fatalf("Expected value to be '%s', got '%s'", expectedValue, field.tempEditValue)
 		}
 
 		if field.cursor != expectedCursor {
-			t.Errorf("Expected cursor to be at position %d, got %d", expectedCursor, field.cursor)
+			t.Fatalf("Expected cursor to be at position %d, got %d", expectedCursor, field.cursor)
 		}
 
 		// Ahora probemos añadiendo otro carácter 'y' en la nueva posición del cursor
@@ -92,11 +92,11 @@ func TestHandleKeyboard(t *testing.T) {
 		expectedCursor = 2
 
 		if field.Value != expectedValue {
-			t.Errorf("Expected value to be '%s', got '%s'", expectedValue, field.Value)
+			t.Fatalf("Expected value to be '%s', got '%s'", expectedValue, field.Value)
 		}
 
 		if field.cursor != expectedCursor {
-			t.Errorf("Expected cursor to be at position %d, got %d", expectedCursor, field.cursor)
+			t.Fatalf("Expected cursor to be at position %d, got %d", expectedCursor, field.cursor)
 		}
 	})
 
@@ -106,7 +106,7 @@ func TestHandleKeyboard(t *testing.T) {
 		h := prepareForTesting()
 
 		// Setup: Enter editing mode
-		h.tabEditingConfig = true
+		h.editModeActivated = true
 		h.tabSections[0].indexActiveEditField = 0
 		field := &h.tabSections[0].FieldHandlers[0]
 
@@ -155,7 +155,7 @@ func TestHandleKeyboard(t *testing.T) {
 		h := prepareForTesting()
 
 		// Setup: Enter editing mode
-		h.tabEditingConfig = true
+		h.editModeActivated = true
 		h.tabSections[0].indexActiveEditField = 0
 		originalField := &h.tabSections[0].FieldHandlers[0]
 		originalField.Value = "test"
@@ -166,7 +166,7 @@ func TestHandleKeyboard(t *testing.T) {
 			t.Errorf("Expected continueParsing to be false after Enter in editing mode")
 		}
 
-		if h.tabEditingConfig {
+		if h.editModeActivated {
 			t.Errorf("Expected to exit editing mode after Enter")
 		}
 	})
@@ -174,7 +174,7 @@ func TestHandleKeyboard(t *testing.T) {
 	// Test case: Normal mode, Ctrl+C should return quit command
 	t.Run("Normal mode - Ctrl+C", func(t *testing.T) {
 		h := prepareForTesting() // Reset para esta prueba
-		h.tabEditingConfig = false
+		h.editModeActivated = false
 
 		// Asegurarnos de que ExitChan está correctamente inicializado para esta prueba
 		h.ExitChan = make(chan bool)
@@ -195,10 +195,58 @@ func TestHandleKeyboard(t *testing.T) {
 func TestAdditionalKeyboardFeatures(t *testing.T) {
 	h := prepareForTesting()
 
+	// Test: Cancelación de edición con ESC debe restaurar el valor original
+	t.Run("Editing mode - Cancel with ESC discards changes", func(t *testing.T) {
+		// Reset para esta prueba
+		h := prepareForTesting()
+
+		// Setup: Enter editing mode
+		h.editModeActivated = true
+		h.tabSections[0].indexActiveEditField = 0
+		field := &h.tabSections[0].FieldHandlers[0]
+		originalValue := "Original value"
+		field.Value = originalValue
+
+		// Modificamos el valor añadiendo caracteres
+		h.HandleKeyboard(tea.KeyMsg{
+			Type:  tea.KeyRunes,
+			Runes: []rune{'m', 'o', 'd', 'i', 'f', 'i', 'e', 'd'},
+		})
+
+		expectedTemValue := "modified"
+
+		// Verificamos que el campo tempEditValue fue modificado
+		if field.tempEditValue != expectedTemValue {
+			t.Fatalf("Setup failed: Expected tempEditValue to be '%s', got '%s'", expectedTemValue, field.tempEditValue)
+		}
+
+		// Ahora presionamos ESC para cancelar
+		continueParsing, _ := h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyEsc})
+
+		if continueParsing {
+			t.Errorf("Expected continueParsing to be false after ESC in editing mode")
+		}
+
+		if h.editModeActivated {
+			t.Errorf("Expected to exit editing mode after ESC")
+		}
+
+		// Verificamos que el valor volvió al original
+		if field.Value != originalValue {
+			t.Errorf("After ESC: Expected value to be restored to '%s', got '%s'",
+				originalValue, field.Value)
+		}
+
+		// Verificamos que el campo tempEditValue fue limpiado
+		if field.tempEditValue != "" {
+			t.Errorf("After ESC: Expected tempEditValue to be empty, got '%s'", field.tempEditValue)
+		}
+	})
+
 	// Test: Navegación entre campos con flechas up y down no afecta a los inputs
 	t.Run("Arrow keys in normal mode", func(t *testing.T) {
 		// Configuración inicial - normal mode
-		h.tabEditingConfig = false
+		h.editModeActivated = false
 		h.tabSections[0].indexActiveEditField = 0
 		initialIndex := h.tabSections[0].indexActiveEditField
 
@@ -228,7 +276,7 @@ func TestAdditionalKeyboardFeatures(t *testing.T) {
 		h := prepareForTesting()
 
 		// Configuración inicial - modo edición
-		h.tabEditingConfig = true
+		h.editModeActivated = true
 		h.tabSections[0].indexActiveEditField = 0
 		field := &h.tabSections[0].FieldHandlers[0]
 		field.Value = "hello"

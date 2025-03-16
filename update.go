@@ -126,9 +126,9 @@ func (h *DevTUI) updateViewport() {
 func (h *DevTUI) editingConfigOpen(open bool, currentField *FieldHandler, msg string) {
 
 	if open {
-		h.tabEditingConfig = true
+		h.editModeActivated = true
 	} else {
-		h.tabEditingConfig = false
+		h.editModeActivated = false
 	}
 
 	if currentField != nil {

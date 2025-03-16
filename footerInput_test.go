@@ -41,7 +41,7 @@ func TestFooterView(t *testing.T) {
 		field.Value = "TestValue Rendered"
 
 		// Desactivar modo edición para verificar que aún así se muestra el campo
-		h.tabEditingConfig = false
+		h.editModeActivated = false
 		tabSection := &h.tabSections[h.activeTab]
 		tabSection.indexActiveEditField = 0
 
@@ -61,10 +61,10 @@ func TestRenderFooterInput(t *testing.T) {
 
 	// Caso 1: Campo editable en modo edición debe mostrar cursor
 	t.Run("Editable field in edit mode shows cursor", func(t *testing.T) {
-		h.tabEditingConfig = true
+		h.editModeActivated = true
 		field := &h.tabSections[h.activeTab].FieldHandlers[0]
 		field.cursor = 2 // Cursor en posición "Va|lue"
-		field.Value = "test value"
+		field.tempEditValue = "test value"
 
 		// Renderizar input
 		result := h.renderFooterInput()
@@ -88,7 +88,7 @@ func TestRenderFooterInput(t *testing.T) {
 			})
 		}
 
-		h.tabEditingConfig = true
+		h.editModeActivated = true
 		h.tabSections[h.activeTab].indexActiveEditField = 0
 		field := &h.tabSections[h.activeTab].FieldHandlers[0]
 		field.Label = "Test"
@@ -128,7 +128,7 @@ func TestRenderFooterInput(t *testing.T) {
 			{Label: "Test", Value: "Value", Editable: true},
 		}
 		h.tabSections[h.activeTab].indexActiveEditField = 0
-		h.tabEditingConfig = false // No en modo edición
+		h.editModeActivated = false // No en modo edición
 
 		// El estilo debe ser fieldSelectedStyle en vez de fieldEditingStyle
 		originalFieldSelectedStyle := h.fieldSelectedStyle
@@ -160,13 +160,13 @@ func TestAutoEditMode(t *testing.T) {
 		h.tabSections[h.activeTab].FieldHandlers = []FieldHandler{
 			{Label: "Test", Value: "Value", Editable: true},
 		}
-		h.tabEditingConfig = false // Iniciar no en modo edición
+		h.editModeActivated = false // Iniciar no en modo edición
 
 		// Llamar al método que verifica si debe activar modo edición automático
 		h.checkAutoEditMode()
 
 		// Verificar que se activó el modo edición
-		if !h.tabEditingConfig {
+		if !h.editModeActivated {
 			t.Error("El modo edición debería activarse automáticamente con un solo campo editable")
 		}
 	})
@@ -177,13 +177,13 @@ func TestAutoEditMode(t *testing.T) {
 			{Label: "Test1", Value: "Value1", Editable: true},
 			{Label: "Test2", Value: "Value2", Editable: true},
 		}
-		h.tabEditingConfig = false // Iniciar no en modo edición
+		h.editModeActivated = false // Iniciar no en modo edición
 
 		// Llamar al método que verifica si debe activar modo edición automático
 		h.checkAutoEditMode()
 
 		// Verificar que NO se activó el modo edición
-		if h.tabEditingConfig {
+		if h.editModeActivated {
 			t.Error("El modo edición NO debería activarse automáticamente con múltiples campos")
 		}
 	})
@@ -193,13 +193,13 @@ func TestAutoEditMode(t *testing.T) {
 		h.tabSections[h.activeTab].FieldHandlers = []FieldHandler{
 			{Label: "Test", Value: "Value", Editable: false},
 		}
-		h.tabEditingConfig = false // Iniciar no en modo edición
+		h.editModeActivated = false // Iniciar no en modo edición
 
 		// Llamar al método que verifica si debe activar modo edición automático
 		h.checkAutoEditMode()
 
 		// Verificar que NO se activó el modo edición
-		if h.tabEditingConfig {
+		if h.editModeActivated {
 			t.Error("El modo edición NO debería activarse automáticamente con un campo no editable")
 		}
 	})
@@ -216,7 +216,7 @@ func TestInputNavigation(t *testing.T) {
 		{Label: "Field3", Value: "Value3", Editable: true},
 	}
 	h.tabSections[h.activeTab].indexActiveEditField = 0
-	h.tabEditingConfig = false
+	h.editModeActivated = false
 
 	t.Run("Right key navigates to next field", func(t *testing.T) {
 		// Simular pulsación de tecla derecha
@@ -276,14 +276,14 @@ func TestInputNavigation(t *testing.T) {
 		}
 
 		// Asegurar que no estamos en modo edición
-		h.tabEditingConfig = false
+		h.editModeActivated = false
 		h.tabSections[h.activeTab].indexActiveEditField = 0
 
 		// Simular pulsación de Enter
 		_, _ = h.handleNormalModeKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
 
 		// Verificar que entramos en modo edición
-		if !h.tabEditingConfig {
+		if !h.editModeActivated {
 			t.Error("Enter debería activar el modo edición")
 		}
 	})
@@ -298,21 +298,21 @@ func TestInputNavigation(t *testing.T) {
 		}
 
 		// Asegurar que estamos en modo edición
-		h.tabEditingConfig = true
+		h.editModeActivated = true
 		h.tabSections[h.activeTab].indexActiveEditField = 0
 
 		// Simular pulsación de Esc
 		_, _ = h.handleEditingConfigKeyboard(tea.KeyMsg{Type: tea.KeyEscape})
 
 		// Verificar que salimos del modo edición
-		if h.tabEditingConfig {
+		if h.editModeActivated {
 			t.Error("Esc debería salir del modo edición")
 		}
 	})
 
 	t.Run("Left/right moves cursor in edit mode", func(t *testing.T) {
 		// Configurar para edición
-		h.tabEditingConfig = true
+		h.editModeActivated = true
 		h.tabSections[h.activeTab].indexActiveEditField = 0
 		field := &h.tabSections[h.activeTab].FieldHandlers[0]
 		field.cursor = 3

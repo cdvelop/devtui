@@ -60,11 +60,10 @@ func (h *DevTUI) renderFooterInput() string {
 	// Obtener el indicador de porcentaje con el estilo actual
 	info := h.renderScrollInfo()
 
-	// Calcular el espacio disponible para el valor del campo
-	// Considerar espacios de separación entre elementos
-	infoWidth := lipgloss.Width(info)
-	separationSpace := horizontalPadding * 2 // Espacio antes y después del valor
-	valueWidth := h.viewport.Width - lipgloss.Width(paddedLabel) - infoWidth - separationSpace
+	// OR if you need truncation:
+	labelText = tinystring.Convert(field.Label).Truncate(labelWidth-1, 0).String()
+	valueWidth, _ := h.calculateInputWidths(labelText)
+
 	var showCursor bool
 	// Preparar el valor del campo
 	valueText := field.Value

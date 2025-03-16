@@ -25,6 +25,10 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 	currentField := &h.tabSections[h.activeTab].FieldHandlers[currentTab.indexActiveEditField]
 
 	if currentField.Editable { // Si el campo es editable, permitir la edición
+		// Calcular el ancho máximo disponible para el texto
+		// Esto sigue la misma lógica que en footerInput.go
+		_, availableTextWidth := h.calculateInputWidths(currentField.Label)
+
 		switch msg.Type {
 		case tea.KeyEnter: // Guardar cambios o ejecutar acción
 			if currentField.tempEditValue != "" {
@@ -89,13 +93,17 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 					currentField.cursor = len(runes)
 				}
 
-				// Insert the new runes at cursor position
-				newRunes := make([]rune, 0, len(runes)+len(msg.Runes))
-				newRunes = append(newRunes, runes[:currentField.cursor]...)
-				newRunes = append(newRunes, msg.Runes...)
-				newRunes = append(newRunes, runes[currentField.cursor:]...)
-				currentField.tempEditValue = string(newRunes)
-				currentField.cursor += len(msg.Runes)
+				// Verificar si agregar los nuevos caracteres excedería el ancho disponible
+				if len(runes)+len(msg.Runes) < availableTextWidth {
+					// Insert the new runes at cursor position
+					newRunes := make([]rune, 0, len(runes)+len(msg.Runes))
+					newRunes = append(newRunes, runes[:currentField.cursor]...)
+					newRunes = append(newRunes, msg.Runes...)
+					newRunes = append(newRunes, runes[currentField.cursor:]...)
+					currentField.tempEditValue = string(newRunes)
+					currentField.cursor += len(msg.Runes)
+				}
+				// Si excede el ancho, simplemente no agregar los caracteres
 			}
 		}
 	} else { // Si el campo no es editable, solo ejecutar la acción
@@ -177,6 +185,7 @@ func (h *DevTUI) handleNormalModeKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 			} else {
 				// Para campos editables, activar modo de edición explícitamente
 				field.tempEditValue = field.Value
+				field.cursor = 0 // Asegurarnos de que el cursor comience al principio
 				h.editModeActivated = true
 				h.editingConfigOpen(true, field, "Entered config editing mode press 'esc' to exit")
 			}
@@ -200,6 +209,10 @@ func (h *DevTUI) checkAutoEditMode() {
 	if len(currentTab.FieldHandlers) == 1 && currentTab.FieldHandlers[0].Editable {
 		h.editModeActivated = true
 		currentTab.indexActiveEditField = 0
+		// Inicializar tempEditValue y cursor
+		field := &currentTab.FieldHandlers[0]
+		field.tempEditValue = field.Value
+		field.cursor = 0
 	} else {
 		// Si hay múltiples campos, no entrar en modo edición automáticamente
 		h.editModeActivated = false

@@ -1,8 +1,6 @@
 package devtui
 
 import (
-	"time"
-
 	"github.com/cdvelop/messagetype"
 )
 
@@ -23,9 +21,9 @@ type FieldHandler struct {
 
 // tabContent imprime un mensaje en la tui
 type tabContent struct {
+	Id         string
 	Content    string
 	Type       messagetype.MessageType
-	Time       time.Time
 	tabSection *TabSection
 }
 

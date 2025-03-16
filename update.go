@@ -136,19 +136,13 @@ func (h *DevTUI) editingConfigOpen(open bool, currentField *FieldHandler, msg st
 	}
 
 	if msg != "" {
-		h.addTerminalPrint(messagetype.Warning, msg)
+		tabSection := &h.tabSections[h.activeTab]
+		tabSection.addNewContent(messagetype.Warning, msg)
 	}
 
 }
 
 // Add this helper function
-func (h *DevTUI) addTerminalPrint(msgType messagetype.MessageType, content string) {
-	h.tabSections[h.activeTab].tabContents = append(
-		h.tabSections[h.activeTab].tabContents,
-		tabContent{
-			Type:    msgType,
-			Content: content,
-			Time:    time.Now(),
-		},
-	)
+func (t *TabSection) addNewContent(msgType messagetype.MessageType, content string) {
+	t.tabContents = append(t.tabContents, t.tui.newContent(content, msgType, t))
 }

@@ -35,7 +35,7 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 				currentField.Value = currentField.tempEditValue // Aplicar los cambios solo si hubo modificaciones
 				msg, err := currentField.FieldValueChange(currentField.Value)
 				if err != nil {
-					h.addTerminalPrint(messagetype.Error, fmt.Sprintf("Error: %v %v", currentField.Label, err))
+					currentTab.addNewContent(messagetype.Error, fmt.Sprintf("Error: %v %v", currentField.Label, err))
 				}
 				h.editingConfigOpen(false, currentField, msg)
 			} else {
@@ -120,7 +120,7 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 				content = fmt.Sprintf("%s %s %s", currentField.Label, content, err.Error())
 			}
 			currentField.Value = content
-			h.addTerminalPrint(msgType, content)
+			currentTab.addNewContent(msgType, content)
 			h.editModeActivated = false
 			h.updateViewport() // Asegurar que se actualice la vista para mostrar el mensaje
 			return false, nil
@@ -184,7 +184,7 @@ func (h *DevTUI) handleNormalModeKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 					content = fmt.Sprintf("%s %s %s", field.Label, content, err.Error())
 				}
 				field.Value = content
-				h.addTerminalPrint(msgType, content)
+				currentTab.addNewContent(msgType, content)
 			} else {
 				// Para campos editables, activar modo de edición explícitamente
 				field.tempEditValue = field.Value

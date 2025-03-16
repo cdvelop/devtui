@@ -2,7 +2,6 @@ package devtui
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/cdvelop/messagetype"
 )
@@ -22,20 +21,29 @@ func joinMessages(messages ...any) (Label string) {
 	return
 }
 
-// sendMessage envía un mensaje al tui
+// sendMessage envía un mensaje al tui por el canal de mensajes
 func (t *DevTUI) sendMessage(content string, mt messagetype.MessageType, tabSection *TabSection) {
+	t.tabContentsChan <- t.newContent(content, mt, tabSection)
+}
 
-	t.tabContentsChan <- tabContent{
+func (h *DevTUI) newContent(content string, mt messagetype.MessageType, tabSection *TabSection) tabContent {
+
+	newId, _ := h.id.GetNewID()
+
+	return tabContent{
+		Id:         newId,
 		Content:    content,
 		Type:       mt,
-		Time:       time.Now(),
 		tabSection: tabSection,
 	}
 }
 
 // formatMessage formatea un mensaje según su tipo
 func (t *DevTUI) formatMessage(msg tabContent) string {
-	timeStr := t.timeStyle.Render(msg.Time.Format("15:04:05"))
+
+	timeStr := t.timeStyle.Render(t.id.UnixSecondsToTime(msg.Id))
+
+	// timeStr := t.timeStyle.Render(msg.Time.Format("15:04:05"))
 	// content := fmt.Sprintf("[%s] %s", timeStr, msg.Content)
 
 	switch msg.Type {

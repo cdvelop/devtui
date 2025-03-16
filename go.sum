@@ -4,8 +4,8 @@ github.com/cdvelop/messagetype v0.0.8 h1:FwSGx6WrS4zSGyAY4C4vHBpPaJPBfMFDigD8UU3
 github.com/cdvelop/messagetype v0.0.8/go.mod h1:v4pxzCwP/JGGlwqpfmy/XMug5oeAKK/0nk4A6e/iEjM=
 github.com/cdvelop/tinystring v0.0.14 h1:h7LSW4bSZ2YfMeYnAhBMeyiGJsUaCflRST5gmdVGaTw=
 github.com/cdvelop/tinystring v0.0.14/go.mod h1:85ltrACJtjf1Zu/o8kqwHGKAiN0oBwb+TR2tkXdURJo=
-github.com/cdvelop/unixid v0.0.59 h1:d7Vw8uIxn0nn3ak14/LqTlkW9+4eC7vnnXjyLpYRmhA=
-github.com/cdvelop/unixid v0.0.59/go.mod h1:xKzBnMWeikehrG1VlX3PYa84AJfiQNJ/GjlUOY7zwVA=
+github.com/cdvelop/unixid v0.0.60 h1:xqvZ/Pk9IWthvesUUhAOBj4ZRFAuCf2HWsWkFG+4Ags=
+github.com/cdvelop/unixid v0.0.60/go.mod h1:xKzBnMWeikehrG1VlX3PYa84AJfiQNJ/GjlUOY7zwVA=
 github.com/charmbracelet/bubbles v0.20.0 h1:jSZu6qD8cRQ6k9OMfR1WlM+ruM8fkPWkHvQWD9LIutE=
 github.com/charmbracelet/bubbles v0.20.0/go.mod h1:39slydyswPy+uVOHZ5x/GjwVAFkCsV8IIVy+4MhzwwU=
 github.com/charmbracelet/bubbletea v1.3.4 h1:kCg7B+jSCFPLYRA52SDZjr51kG/fMUEoPoZrkaDHyoI=

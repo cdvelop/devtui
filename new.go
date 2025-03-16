@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/cdvelop/unixid"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -18,6 +19,8 @@ type tickMsg time.Time
 type DevTUI struct {
 	*TuiConfig
 	*tuiStyle
+
+	id *unixid.UnixID
 
 	ready    bool
 	viewport viewport.Model
@@ -89,6 +92,13 @@ func NewTUI(c *TuiConfig) *DevTUI {
 		tea.WithAltScreen(),       // use the full size of the terminal in its "alternate screen buffer"
 		tea.WithMouseCellMotion(), // turn on mouse support so we can track the mouse wheel
 	)
+
+	// Initialize the unique ID generator
+	id, err := unixid.NewUnixID()
+	if err != nil {
+		c.LogToFile(err)
+	}
+	tui.id = id
 
 	return tui
 }

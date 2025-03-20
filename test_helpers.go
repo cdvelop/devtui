@@ -134,8 +134,8 @@ func VerifyAsyncMessages(t *testing.T, messages []tuiMessage, expectedCount int)
 	// Check completion message
 	if len(messages) > 0 {
 		lastMsg := messages[len(messages)-1]
-		if lastMsg.Type != messagetype.OK {
-			t.Errorf("Final message should be of type OK, got %v", lastMsg.Type)
+		if lastMsg.Type != messagetype.Success {
+			t.Errorf("Final message should be of type Success, got %v", lastMsg.Type)
 		}
 	}
 }
@@ -161,7 +161,7 @@ func MockAsyncProcessor(steps int, delay time.Duration) func(string, chan<- tuiM
 			// Send completion
 			msgChan <- tuiMessage{
 				Content: "Completed processing " + value,
-				Type:    messagetype.OK,
+				Type:    messagetype.Success,
 			}
 		}()
 	}

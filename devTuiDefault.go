@@ -71,7 +71,7 @@ func DefaultTUIForTest(LogToFile func(messageErr any)) *DevTUI {
 						// Send completion message
 						msgChan <- tuiMessage{
 							Content:    "Operation completed successfully for: " + newValue,
-							Type:       messagetype.OK,
+							Type:       messagetype.Success,
 							tabSection: nil,
 						}
 					},

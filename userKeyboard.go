@@ -113,7 +113,7 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 	} else { // Si el campo no es editable, solo ejecutar la acción
 		switch msg.Type {
 		case tea.KeyEnter:
-			msgType := messagetype.OK
+			msgType := messagetype.Success
 			// content eg: "Browser Opened"
 			content, err := currentField.ChangeValue(currentField.Value)
 			if err != nil {
@@ -178,7 +178,7 @@ func (h *DevTUI) handleNormalModeKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 		if totalFields > 0 {
 			field := &currentTab.FieldHandlers[currentTab.indexActiveEditField]
 			if !field.Editable {
-				msgType := messagetype.OK
+				msgType := messagetype.Success
 				content, err := field.ChangeValue(field.Value)
 				if err != nil {
 					msgType = messagetype.Error

@@ -106,7 +106,7 @@ func TestRenderFooterInput(t *testing.T) {
 
 	// Nuevo test - Caso 4: Verificar que se maneja correctamente el índice fuera de rango
 	t.Run("Index out of range is handled correctly", func(t *testing.T) {
-		expectedValue := "Value index OK"
+		expectedValue := "Value index Success"
 		// Configurar un índice activo fuera de rango
 		h.tabSections[h.activeTab].FieldHandlers = []fieldHandler{
 			{Name: "Test", Value: expectedValue},

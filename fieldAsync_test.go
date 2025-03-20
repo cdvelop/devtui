@@ -70,8 +70,8 @@ func TestAsyncFieldProcessing(t *testing.T) {
 	// Check if the last message is a completion message
 	if len(messages) > 0 {
 		lastMsg := messages[len(messages)-1]
-		if lastMsg.Type != messagetype.OK {
-			t.Errorf("Final message should be of type OK, got %v", lastMsg.Type)
+		if lastMsg.Type != messagetype.Success {
+			t.Errorf("Final message should be of type Success, got %v", lastMsg.Type)
 		}
 	}
 
@@ -111,8 +111,8 @@ func TestAsyncFieldIntegration(t *testing.T) {
 	// Verify the last message is a completion message
 	if len(messages) > 0 {
 		lastMsg := messages[len(messages)-1]
-		if lastMsg.Type != messagetype.OK {
-			t.Errorf("Final message should be of type OK, got %v", lastMsg.Type)
+		if lastMsg.Type != messagetype.Success {
+			t.Errorf("Final message should be of type Success, got %v", lastMsg.Type)
 		}
 
 		// Check if the message contains our test value

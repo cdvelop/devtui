@@ -4,8 +4,7 @@ const defaultTabName = "DEFAULT"
 
 // Interface for handling tab field sectionFields
 type FieldHandler struct {
-	Name          string                                                // eg: "port", "Server Port", "8080"
-	Label         string                                                // eg: "Server Port"
+	Name          string                                                // eg: "Server Port"
 	Value         string                                                // eg: "8080"
 	tempEditValue string                                                // use for edit
 	Editable      bool                                                  // if no editable eject the action ChangeValue directly

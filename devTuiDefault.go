@@ -18,7 +18,7 @@ func DefaultTUIForTest(LogToFile func(messageErr any)) *DevTUI {
 			index: 0,
 			FieldHandlers: []FieldHandler{
 				{
-					Label:    "Field 1  (Editable)",
+					Name:     "Field 1  (Editable)",
 					Value:    "initial test value",
 					Editable: true,
 					cursor:   0,
@@ -27,7 +27,7 @@ func DefaultTUIForTest(LogToFile func(messageErr any)) *DevTUI {
 					},
 				},
 				{
-					Label:    "Field 2 (Non-Editable)",
+					Name:     "Field 2 (Non-Editable)",
 					Value:    "special action",
 					Editable: false,
 					ChangeValue: func(value string) (string, error) {
@@ -42,7 +42,7 @@ func DefaultTUIForTest(LogToFile func(messageErr any)) *DevTUI {
 			index: 1,
 			FieldHandlers: []FieldHandler{
 				{
-					Label:    "Field 1",
+					Name:     "Field 1",
 					Value:    "tab 2 value 1",
 					Editable: true,
 					cursor:   0,
@@ -52,8 +52,7 @@ func DefaultTUIForTest(LogToFile func(messageErr any)) *DevTUI {
 				},
 				{
 					// Field 2 with the async field
-					Name:     "async-operation",
-					Label:    "Async Operation",
+					Name:     "Async Operation",
 					Value:    "Start",
 					Editable: true,
 					IsAsync:  true,

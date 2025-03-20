@@ -7,16 +7,16 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-// Print sends a normal Label or error to the tui in current tab
+// Print sends a normal Name or error to the tui in current tab
 func (h *DevTUI) Print(messages ...any) {
 	msgType := messagetype.DetectMessageType(messages...)
 	h.sendMessage(joinMessages(messages...), msgType, &h.tabSections[h.activeTab])
 }
 
-func joinMessages(messages ...any) (Label string) {
+func joinMessages(messages ...any) (Name string) {
 	var space string
 	for _, m := range messages {
-		Label += space + fmt.Sprint(m)
+		Name += space + fmt.Sprint(m)
 		space = " "
 	}
 	return

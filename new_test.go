@@ -44,7 +44,6 @@ func TestCustomTabs(t *testing.T) {
 				},
 			},
 		},
-		SectionFooter: "custom footer",
 	}
 
 	config := &TuiConfig{

@@ -20,13 +20,11 @@ type FieldHandler struct {
 
 // represent the tab section in the tui
 type TabSection struct {
-	index         int            // index of the tab
-	Title         string         // eg: "BUILD", "TEST"
-	FieldHandlers []FieldHandler // Field actions configured for the section
-	SectionFooter string         // eg: "Press 't' to compile", "Press 'r' to run tests"
-	// internal use
-	tabMessages          []Message // message contents
-	indexActiveEditField int       // Índice del campo de configuración seleccionado
+	index                int            // index of the tab
+	Title                string         // eg: "BUILD", "TEST"
+	FieldHandlers        []FieldHandler // Field actions configured for the section
+	tabMessages          []Message      // message contents
+	indexActiveEditField int            // Índice del campo de configuración seleccionado
 	tui                  *DevTUI
 }
 

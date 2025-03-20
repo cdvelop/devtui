@@ -69,9 +69,9 @@ func (h *DevTUI) ProcessFieldValueChange(field *FieldHandler, newValue string) {
 
 		// Start listening for async messages if not already listening
 		h.tea.Send(tea.Cmd(h.listenForAsyncMessages(h.asyncMessageChan)))
-	} else if field.FieldValueChange != nil {
+	} else if field.ChangeValue != nil {
 		// Handle synchronous field value change
-		execMessage, err := field.FieldValueChange(newValue)
+		execMessage, err := field.ChangeValue(newValue)
 		tabSection := &h.tabSections[h.activeTab]
 
 		if err != nil {

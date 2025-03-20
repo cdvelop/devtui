@@ -22,7 +22,7 @@ func DefaultTUIForTest(LogToFile func(messageErr any)) *DevTUI {
 					Value:    "initial test value",
 					Editable: true,
 					cursor:   0,
-					FieldValueChange: func(value string) (string, error) {
+					ChangeValue: func(value string) (string, error) {
 						return "Saved value: " + value, nil
 					},
 				},
@@ -30,7 +30,7 @@ func DefaultTUIForTest(LogToFile func(messageErr any)) *DevTUI {
 					Label:    "Field 2 (Non-Editable)",
 					Value:    "special action",
 					Editable: false,
-					FieldValueChange: func(value string) (string, error) {
+					ChangeValue: func(value string) (string, error) {
 						return "Action executed", nil
 					},
 				},
@@ -46,7 +46,7 @@ func DefaultTUIForTest(LogToFile func(messageErr any)) *DevTUI {
 					Value:    "tab 2 value 1",
 					Editable: true,
 					cursor:   0,
-					FieldValueChange: func(value string) (string, error) {
+					ChangeValue: func(value string) (string, error) {
 						return "Tab 2 saved: " + value, nil
 					},
 				},

@@ -65,7 +65,7 @@ func NewTUI(c *TuiConfig) *DevTUI {
 						Label:    "Editable Field",
 						Value:    "initial editable value",
 						Editable: true,
-						FieldValueChange: func(newValue string) (string, error) {
+						ChangeValue: func(newValue string) (string, error) {
 							// Agregar la lógica de cambio de valor deseada
 							return fmt.Sprintf("Value changed to %s", newValue), nil
 						},
@@ -75,7 +75,7 @@ func NewTUI(c *TuiConfig) *DevTUI {
 						Label:    "Non-Editable Field",
 						Value:    "non-editable value",
 						Editable: false,
-						FieldValueChange: func(newValue string) (string, error) {
+						ChangeValue: func(newValue string) (string, error) {
 							// Agregar la acción deseada para el campo no editable
 							return "Action executed", nil
 						},

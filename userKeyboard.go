@@ -33,7 +33,7 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 		case tea.KeyEnter: // Guardar cambios o ejecutar acción
 			if currentField.tempEditValue != "" && currentField.tempEditValue != currentField.Value {
 				currentField.Value = currentField.tempEditValue // Aplicar los cambios solo si hubo modificaciones
-				msg, err := currentField.FieldValueChange(currentField.Value)
+				msg, err := currentField.ChangeValue(currentField.Value)
 				if err != nil {
 					// Si hay un error, mostrarlo en la pestaña actual
 					currentTab.addNewContent(messagetype.Error, fmt.Sprintf("%v %v", currentField.Label, err))
@@ -115,7 +115,7 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 		case tea.KeyEnter:
 			msgType := messagetype.OK
 			// content eg: "Browser Opened"
-			content, err := currentField.FieldValueChange(currentField.Value)
+			content, err := currentField.ChangeValue(currentField.Value)
 			if err != nil {
 				msgType = messagetype.Error
 				content = fmt.Sprintf("%s %s %s", currentField.Label, content, err.Error())
@@ -179,7 +179,7 @@ func (h *DevTUI) handleNormalModeKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 			field := &currentTab.FieldHandlers[currentTab.indexActiveEditField]
 			if !field.Editable {
 				msgType := messagetype.OK
-				content, err := field.FieldValueChange(field.Value)
+				content, err := field.ChangeValue(field.Value)
 				if err != nil {
 					msgType = messagetype.Error
 					content = fmt.Sprintf("%s %s %s", field.Label, content, err.Error())

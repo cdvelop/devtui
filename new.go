@@ -11,7 +11,7 @@ import (
 )
 
 // channelMsg es un tipo especial para mensajes del canal
-type channelMsg tabContent
+type channelMsg Message
 
 // Print representa un mensaje de actualización
 type tickMsg time.Time
@@ -33,8 +33,10 @@ type DevTUI struct {
 	editModeActivated bool         // global flag to edit config
 
 	currentTime     string
-	tabContentsChan chan tabContent
-	tea             *tea.Program
+	tabContentsChan chan Message
+	// Channel for async field value change messages
+	asyncMessageChan chan Message
+	tea              *tea.Program
 }
 
 type TuiConfig struct {
@@ -80,13 +82,14 @@ func NewTUI(c *TuiConfig) *DevTUI {
 					},
 				},
 				SectionFooter: "build footer example",
-				tabContents:   []tabContent{},
+				tabMessages:   []Message{},
 			},
 		},
-		activeTab:       c.TabIndexStart,
-		tabContentsChan: make(chan tabContent, 100),
-		currentTime:     time.Now().Format("15:04:05"),
-		tuiStyle:        newTuiStyle(c.Color),
+		activeTab:        c.TabIndexStart,
+		tabContentsChan:  make(chan Message, 100),
+		asyncMessageChan: make(chan Message),
+		currentTime:      time.Now().Format("15:04:05"),
+		tuiStyle:         newTuiStyle(c.Color),
 	}
 
 	tui.tea = tea.NewProgram(tui,

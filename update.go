@@ -10,6 +10,9 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+// AsyncMessageMsg is a message from an async field handler
+type AsyncMessageMsg Message
+
 func (cf *FieldHandler) SetCursorAtEnd() {
 	// Calculate cursor position based on rune count, not byte count
 	cf.cursor = len([]rune(cf.Value))
@@ -20,6 +23,13 @@ func (h *DevTUI) listenToMessages() tea.Cmd {
 	return func() tea.Msg {
 		msg := <-h.tabContentsChan
 		return channelMsg(msg)
+	}
+}
+
+// listenForAsyncMessages creates a command to wait for async field messages
+func (h *DevTUI) listenForAsyncMessages(asyncMsgChan chan Message) tea.Cmd {
+	return func() tea.Msg {
+		return AsyncMessageMsg(<-asyncMsgChan)
 	}
 }
 
@@ -51,15 +61,23 @@ func (h *DevTUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmds = append(cmds, keyCmd)
 		}
 
+	case AsyncMessageMsg:
+		// Process async message from field handler
+		asyncMsg := Message(msg)
+		h.sendMessage(asyncMsg.Content, asyncMsg.Type, asyncMsg.TabSection)
+
+		// Continue listening for more async messages
+		cmds = append(cmds, h.listenForAsyncMessages(h.asyncMessageChan))
+
 	case channelMsg: // Handle messages from the channel
 		// Start listening for new messages again after processing the current one
 		cmds = append(cmds, h.listenToMessages())
 
 		// Convert the channel message to a tabContent type
-		tc := tabContent(msg)
+		tc := Message(msg)
 
 		// Only update the viewport if the message belongs to the currently active tab
-		if tc.tabSection.index == h.activeTab {
+		if tc.TabSection.index == h.activeTab {
 			h.updateViewport()
 		}
 
@@ -144,5 +162,5 @@ func (h *DevTUI) editingConfigOpen(open bool, currentField *FieldHandler, msg st
 
 // Add this helper function
 func (t *TabSection) addNewContent(msgType messagetype.Type, content string) {
-	t.tabContents = append(t.tabContents, t.tui.newContent(content, msgType, t))
+	t.tabMessages = append(t.tabMessages, t.tui.newContent(content, msgType, t))
 }

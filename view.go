@@ -18,7 +18,7 @@ func (h *DevTUI) View() string {
 
 // ContentView renderiza los mensajes para una sección de contenido
 func (h *DevTUI) ContentView() string {
-	tabContent := h.tabSections[h.activeTab].tabContents
+	tabContent := h.tabSections[h.activeTab].tabMessages
 	var contentLines []string
 	for _, content := range tabContent {
 		formattedMsg := h.formatMessage(content)

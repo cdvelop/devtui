@@ -172,7 +172,7 @@ func (h *DevTUI) handleNormalModeKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 		h.updateViewport()
 
 	case tea.KeyCtrlL:
-		// h.tabSections[h.activeTab].tabContents = []tabContent{}
+		// h.tabSections[h.activeTab].tabMessages = []tabContent{}
 
 	case tea.KeyEnter: //Enter para entrar en modo edición, ejecuta la acción directamente si el campo no es editable
 		if totalFields > 0 {

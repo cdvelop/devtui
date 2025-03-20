@@ -1,8 +1,10 @@
 package devtui
 
 import (
-	"errors"
 	"os"
+	"time"
+
+	"github.com/cdvelop/messagetype"
 )
 
 // NewDefaultTUI creates a DevTUI instance with basic default configuration
@@ -49,12 +51,30 @@ func DefaultTUIForTest(LogToFile func(messageErr any)) *DevTUI {
 					},
 				},
 				{
-					Label:    "Field 2",
-					Value:    "error value",
+					// Field 2 with the async field
+					Name:     "async-operation",
+					Label:    "Async Operation",
+					Value:    "Start",
 					Editable: true,
-					cursor:   0,
-					FieldValueChange: func(value string) (string, error) {
-						return "", errors.New("Error message test field 2 " + value)
+					IsAsync:  true,
+					AsyncFieldValueChange: func(newValue string, msgChan chan<- Message) {
+						// Simulate a long-running operation
+						for i := range 5 {
+							// Send progress messages
+							msgChan <- Message{
+								Content:    "Processing step " + string(rune('A'+i)) + " for value: " + newValue,
+								Type:       messagetype.Info,
+								TabSection: nil, // This will be set by the TUI
+							}
+							time.Sleep(time.Millisecond * 100) // Shortened for tests
+						}
+
+						// Send completion message
+						msgChan <- Message{
+							Content:    "Operation completed successfully for: " + newValue,
+							Type:       messagetype.OK,
+							TabSection: nil,
+						}
 					},
 				},
 			},

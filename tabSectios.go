@@ -1,9 +1,5 @@
 package devtui
 
-import (
-	"github.com/cdvelop/messagetype"
-)
-
 const defaultTabName = "DEFAULT"
 
 // Interface for handling tab field sectionFields
@@ -14,17 +10,12 @@ type FieldHandler struct {
 	tempEditValue    string                                                // use for edit
 	Editable         bool                                                  // if no editable eject the action FieldValueChange directly
 	FieldValueChange func(newValue string) (execMessage string, err error) //eg: "8080" -> "9090" execMessage: "Port changed from 8080 to 9090"
+	// Async handler that can send multiple messages over time
+	AsyncFieldValueChange func(newValue string, messageChan chan<- Message)
+	IsAsync               bool // Flag indicating if this handler uses async processing
 	//internal use
 	index  int
 	cursor int // cursor position in text value
-}
-
-// tabContent imprime contenido en la tui con id único
-type tabContent struct {
-	Id         string
-	Content    string
-	Type       messagetype.Type
-	tabSection *TabSection
 }
 
 // represent the tab section in the tui
@@ -34,8 +25,8 @@ type TabSection struct {
 	FieldHandlers []FieldHandler // Field actions configured for the section
 	SectionFooter string         // eg: "Press 't' to compile", "Press 'r' to run tests"
 	// internal use
-	tabContents          []tabContent // message contents
-	indexActiveEditField int          // Índice del campo de configuración seleccionado
+	tabMessages          []Message // message contents
+	indexActiveEditField int       // Índice del campo de configuración seleccionado
 	tui                  *DevTUI
 }
 
@@ -100,4 +91,14 @@ func (t *DevTUI) addNewTabSections(sections ...TabSection) {
 // GetTotalTabSections returns the total number of tab sections
 func (t *DevTUI) GetTotalTabSections() int {
 	return len(t.tabSections)
+}
+
+// SetAsyncMessageChannel sets the async message channel for testing purposes
+func (h *DevTUI) SetAsyncMessageChannel(channel chan Message) {
+	h.asyncMessageChan = channel
+}
+
+// GetTabSections returns a copy of the tab sections for testing purposes
+func (h *DevTUI) GetTabSections() []TabSection {
+	return h.tabSections
 }

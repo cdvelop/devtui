@@ -1,9 +1,7 @@
-package devtui_test
+package devtui
 
 import (
 	"testing"
-
-	. "github.com/cdvelop/devtui"
 )
 
 func TestNewTUI(t *testing.T) {
@@ -31,9 +29,9 @@ func TestNewTUI(t *testing.T) {
 
 func TestCustomTabs(t *testing.T) {
 	// Create a custom configuration with custom tabs
-	customSection := TabSection{
+	customSection := tabSection{
 		Title: "CUSTOM1",
-		FieldHandlers: []FieldHandler{
+		FieldHandlers: []fieldHandler{
 			{
 				Name:     "Test Field",
 				Value:    "test value",
@@ -70,8 +68,8 @@ func TestCustomTabs(t *testing.T) {
 
 func TestMultipleTabSections(t *testing.T) {
 	// Test adding multiple tab sections
-	section1 := TabSection{Title: "Tab1"}
-	section2 := TabSection{Title: "Tab2"}
+	section1 := tabSection{Title: "Tab1"}
+	section2 := tabSection{Title: "Tab2"}
 
 	config := &TuiConfig{
 		TabIndexStart: 0,

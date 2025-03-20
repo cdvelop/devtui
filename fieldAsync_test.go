@@ -1,10 +1,9 @@
-package devtui_test
+package devtui
 
 import (
 	"testing"
 	"time"
 
-	"github.com/cdvelop/devtui"
 	"github.com/cdvelop/messagetype"
 )
 
@@ -15,7 +14,7 @@ func TestAsyncFieldProcessing(t *testing.T) {
 	}
 
 	// Initialize the TUI with our mock logger
-	tui := devtui.DefaultTUIForTest(mockLogger)
+	tui := DefaultTUIForTest(mockLogger)
 
 	// Get the async field from Tab 2, Field 2
 	asyncField := &tui.GetTabSections()[1].FieldHandlers[1]
@@ -30,7 +29,7 @@ func TestAsyncFieldProcessing(t *testing.T) {
 	}
 
 	// Create a channel to receive messages
-	msgChan := make(chan devtui.TuiMessage, 10) // Buffered to avoid blocking
+	msgChan := make(chan tuiMessage, 10) // Buffered to avoid blocking
 
 	// Use a shorter timeout to prevent tests from hanging
 	timeout := time.After(2 * time.Second)
@@ -44,7 +43,7 @@ func TestAsyncFieldProcessing(t *testing.T) {
 	}()
 
 	// Collect messages until either done signal or timeout
-	var messages []devtui.TuiMessage
+	var messages []tuiMessage
 	collecting := true
 
 	for collecting {
@@ -79,7 +78,7 @@ func TestAsyncFieldProcessing(t *testing.T) {
 	// Verify all non-final messages are progress messages
 	for i := 0; i < len(messages)-1; i++ {
 		if messages[i].Type != messagetype.Info {
-			t.Errorf("TuiMessage %d should be of type Info, got %v", i+1, messages[i].Type)
+			t.Errorf("tuiMessage %d should be of type Info, got %v", i+1, messages[i].Type)
 		}
 	}
 }
@@ -91,7 +90,7 @@ func TestAsyncFieldIntegration(t *testing.T) {
 	}
 
 	// Initialize the TUI with our mock logger
-	tui := devtui.DefaultTUIForTest(mockLogger)
+	tui := DefaultTUIForTest(mockLogger)
 
 	// Use the helper functions from test_helpers.go
 	tabIndex := 1
@@ -100,7 +99,7 @@ func TestAsyncFieldIntegration(t *testing.T) {
 
 	// We need to use RunAsyncFieldTest instead of CollectAsyncMessages
 	// because RunAsyncFieldTest handles the channel setup correctly
-	messages := devtui.RunAsyncFieldTest(t, tui, tabIndex, fieldIndex, testValue)
+	messages := RunAsyncFieldTest(t, tui, tabIndex, fieldIndex, testValue)
 
 	// Verify we got at least one message
 	if len(messages) == 0 {

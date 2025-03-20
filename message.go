@@ -2,20 +2,20 @@ package devtui
 
 import "github.com/cdvelop/messagetype"
 
-// TuiMessage represents a message sent asynchronously or synchronously in the TUI
-type TuiMessage struct {
+// tuiMessage represents a message sent asynchronously or synchronously in the TUI
+type tuiMessage struct {
 	id         string // Unique ID for the message
 	Content    string
 	Type       messagetype.Type
-	TabSection *TabSection
+	tabSection *tabSection
 }
 
-func (h *DevTUI) newTuiMessage(content string, mt messagetype.Type, tabSection *TabSection) TuiMessage {
+func (t *tabSection) newTuiMessage(content string, mt messagetype.Type) tuiMessage {
 
-	return TuiMessage{
-		id:         h.id.GetNewID(),
+	return tuiMessage{
+		id:         t.tui.id.GetNewID(),
 		Content:    content,
 		Type:       mt,
-		TabSection: tabSection,
+		tabSection: t,
 	}
 }

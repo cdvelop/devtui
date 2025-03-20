@@ -23,12 +23,12 @@ func joinMessages(messages ...any) (Name string) {
 }
 
 // sendMessage envía un mensaje al tui por el canal de mensajes
-func (t *DevTUI) sendMessage(content string, mt messagetype.Type, tabSection *TabSection) {
-	t.tabContentsChan <- t.newTuiMessage(content, mt, tabSection)
+func (t *DevTUI) sendMessage(content string, mt messagetype.Type, ts *tabSection) {
+	t.tabContentsChan <- ts.newTuiMessage(content, mt)
 }
 
 // formatMessage formatea un mensaje según su tipo
-func (t *DevTUI) formatMessage(msg TuiMessage) string {
+func (t *DevTUI) formatMessage(msg tuiMessage) string {
 
 	timeStr := t.timeStyle.Render(t.id.UnixSecondsToTime(msg.id))
 
@@ -52,7 +52,7 @@ func (t *DevTUI) formatMessage(msg TuiMessage) string {
 }
 
 // ProcessFieldValueChange handles both synchronous and asynchronous field value changes
-func (h *DevTUI) ProcessFieldValueChange(field *FieldHandler, newValue string) {
+func (h *DevTUI) ProcessFieldValueChange(field *fieldHandler, newValue string) {
 	if field.IsAsync && field.AsyncFieldValueChange != nil {
 		// Start a goroutine to handle async processing
 		go field.AsyncFieldValueChange(newValue, h.asyncMessageChan)

@@ -12,11 +12,11 @@ import (
 func DefaultTUIForTest(LogToFile func(messageErr any)) *DevTUI {
 
 	// Create basic tabSections for testing/demo
-	tabSections := []TabSection{
+	tabSections := []tabSection{
 		{
 			Title: "Tab 1",
 			index: 0,
-			FieldHandlers: []FieldHandler{
+			FieldHandlers: []fieldHandler{
 				{
 					Name:     "Field 1  (Editable)",
 					Value:    "initial test value",
@@ -40,7 +40,7 @@ func DefaultTUIForTest(LogToFile func(messageErr any)) *DevTUI {
 		{
 			Title: "Tab 2",
 			index: 1,
-			FieldHandlers: []FieldHandler{
+			FieldHandlers: []fieldHandler{
 				{
 					Name:     "Field 1",
 					Value:    "tab 2 value 1",
@@ -56,23 +56,23 @@ func DefaultTUIForTest(LogToFile func(messageErr any)) *DevTUI {
 					Value:    "Start",
 					Editable: true,
 					IsAsync:  true,
-					AsyncFieldValueChange: func(newValue string, msgChan chan<- TuiMessage) {
+					AsyncFieldValueChange: func(newValue string, msgChan chan<- tuiMessage) {
 						// Simulate a long-running operation
 						for i := range 5 {
 							// Send progress messages
-							msgChan <- TuiMessage{
+							msgChan <- tuiMessage{
 								Content:    "Processing step " + string(rune('A'+i)) + " for value: " + newValue,
 								Type:       messagetype.Info,
-								TabSection: nil, // This will be set by the TUI
+								tabSection: nil, // This will be set by the TUI
 							}
 							time.Sleep(time.Millisecond * 100) // Shortened for tests
 						}
 
 						// Send completion message
-						msgChan <- TuiMessage{
+						msgChan <- tuiMessage{
 							Content:    "Operation completed successfully for: " + newValue,
 							Type:       messagetype.OK,
-							TabSection: nil,
+							tabSection: nil,
 						}
 					},
 				},

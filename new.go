@@ -11,7 +11,7 @@ import (
 )
 
 // channelMsg es un tipo especial para mensajes del canal
-type channelMsg TuiMessage
+type channelMsg tuiMessage
 
 // Print representa un mensaje de actualización
 type tickMsg time.Time
@@ -28,14 +28,14 @@ type DevTUI struct {
 
 	focused bool // is the app focused
 
-	tabSections       []TabSection // represent sections in the tui
+	tabSections       []tabSection // represent sections in the tui
 	activeTab         int          // current tab index
 	editModeActivated bool         // global flag to edit config
 
 	currentTime     string
-	tabContentsChan chan TuiMessage
+	tabContentsChan chan tuiMessage
 	// Channel for async field value change messages
-	asyncMessageChan chan TuiMessage
+	asyncMessageChan chan tuiMessage
 	tea              *tea.Program
 }
 
@@ -56,10 +56,10 @@ func NewTUI(c *TuiConfig) *DevTUI {
 	tui := &DevTUI{
 		TuiConfig: c,
 		focused:   true, // assume the app is focused
-		tabSections: []TabSection{ // default tab section
+		tabSections: []tabSection{ // default tab section
 			{
 				Title: defaultTabName,
-				FieldHandlers: []FieldHandler{
+				FieldHandlers: []fieldHandler{
 					{
 						Name:     "Editable Field",
 						Value:    "initial editable value",
@@ -79,12 +79,12 @@ func NewTUI(c *TuiConfig) *DevTUI {
 						},
 					},
 				},
-				tabMessages: []TuiMessage{},
+				tuiMessages: []tuiMessage{},
 			},
 		},
 		activeTab:        c.TabIndexStart,
-		tabContentsChan:  make(chan TuiMessage, 100),
-		asyncMessageChan: make(chan TuiMessage),
+		tabContentsChan:  make(chan tuiMessage, 100),
+		asyncMessageChan: make(chan tuiMessage),
 		currentTime:      time.Now().Format("15:04:05"),
 		tuiStyle:         newTuiStyle(c.Color),
 	}

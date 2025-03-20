@@ -3,14 +3,14 @@ package devtui
 const defaultTabName = "DEFAULT"
 
 // Interface for handling tab field sectionFields
-type FieldHandler struct {
+type fieldHandler struct {
 	Name          string                                                // eg: "Server Port"
 	Value         string                                                // eg: "8080"
 	tempEditValue string                                                // use for edit
 	Editable      bool                                                  // if no editable eject the action ChangeValue directly
 	ChangeValue   func(newValue string) (execMessage string, err error) //eg: "8080" -> "9090" execMessage: "Port changed from 8080 to 9090"
 	// Async handler that can send multiple messages over time
-	AsyncFieldValueChange func(newValue string, messageChan chan<- TuiMessage)
+	AsyncFieldValueChange func(newValue string, messageChan chan<- tuiMessage)
 	IsAsync               bool // Flag indicating if this handler uses async processing
 	//internal use
 	index  int
@@ -18,18 +18,18 @@ type FieldHandler struct {
 }
 
 // represent the tab section in the tui
-type TabSection struct {
+type tabSection struct {
 	index                int            // index of the tab
 	Title                string         // eg: "BUILD", "TEST"
-	FieldHandlers        []FieldHandler // Field actions configured for the section
-	tabMessages          []TuiMessage   // message contents
+	FieldHandlers        []fieldHandler // Field actions configured for the section
+	tuiMessages          []tuiMessage   // message contents
 	indexActiveEditField int            // Índice del campo de configuración seleccionado
 	tui                  *DevTUI
 }
 
 // AddTabSections adds one or more TabSections to the DevTUI
 // If a tab with title "DEFAULT" exists, it will be replaced by the first tab section
-func (t *DevTUI) AddTabSections(sections ...TabSection) *DevTUI {
+func (t *DevTUI) AddTabSections(sections ...tabSection) *DevTUI {
 	if len(sections) == 0 {
 		return t
 	}
@@ -61,8 +61,8 @@ func (t *DevTUI) AddTabSections(sections ...TabSection) *DevTUI {
 	return t
 }
 
-// Helper method to initialize a single TabSection
-func (t *DevTUI) initTabSection(section TabSection, index int) TabSection {
+// Helper method to initialize a single tabSection
+func (t *DevTUI) initTabSection(section tabSection, index int) tabSection {
 	newSection := section
 	newSection.index = index
 	newSection.tui = t
@@ -77,7 +77,7 @@ func (t *DevTUI) initTabSection(section TabSection, index int) TabSection {
 }
 
 // Helper method to add multiple tab sections
-func (t *DevTUI) addNewTabSections(sections ...TabSection) {
+func (t *DevTUI) addNewTabSections(sections ...tabSection) {
 	startIdx := len(t.tabSections)
 	for i, section := range sections {
 		newSection := t.initTabSection(section, startIdx+i)
@@ -91,11 +91,11 @@ func (t *DevTUI) GetTotalTabSections() int {
 }
 
 // SetAsyncMessageChannel sets the async message channel for testing purposes
-func (h *DevTUI) SetAsyncMessageChannel(channel chan TuiMessage) {
+func (h *DevTUI) SetAsyncMessageChannel(channel chan tuiMessage) {
 	h.asyncMessageChan = channel
 }
 
 // GetTabSections returns a copy of the tab sections for testing purposes
-func (h *DevTUI) GetTabSections() []TabSection {
+func (h *DevTUI) GetTabSections() []tabSection {
 	return h.tabSections
 }

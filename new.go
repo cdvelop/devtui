@@ -2,6 +2,7 @@ package devtui
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/cdvelop/unixid"
@@ -94,7 +95,7 @@ func NewTUI(c *TuiConfig) *DevTUI {
 	)
 
 	// Initialize the unique ID generator
-	id, err := unixid.NewUnixID()
+	id, err := unixid.NewUnixID(sync.Mutex{})
 	if err != nil {
 		c.LogToFile(err)
 	}

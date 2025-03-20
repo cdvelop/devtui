@@ -23,7 +23,7 @@ type FieldHandler struct {
 type tabContent struct {
 	Id         string
 	Content    string
-	Type       messagetype.MessageType
+	Type       messagetype.Type
 	tabSection *TabSection
 }
 

@@ -143,6 +143,6 @@ func (h *DevTUI) editingConfigOpen(open bool, currentField *FieldHandler, msg st
 }
 
 // Add this helper function
-func (t *TabSection) addNewContent(msgType messagetype.MessageType, content string) {
+func (t *TabSection) addNewContent(msgType messagetype.Type, content string) {
 	t.tabContents = append(t.tabContents, t.tui.newContent(content, msgType, t))
 }

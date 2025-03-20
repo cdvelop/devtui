@@ -22,16 +22,14 @@ func joinMessages(messages ...any) (Label string) {
 }
 
 // sendMessage envía un mensaje al tui por el canal de mensajes
-func (t *DevTUI) sendMessage(content string, mt messagetype.MessageType, tabSection *TabSection) {
+func (t *DevTUI) sendMessage(content string, mt messagetype.Type, tabSection *TabSection) {
 	t.tabContentsChan <- t.newContent(content, mt, tabSection)
 }
 
-func (h *DevTUI) newContent(content string, mt messagetype.MessageType, tabSection *TabSection) tabContent {
-
-	newId, _ := h.id.GetNewID()
+func (h *DevTUI) newContent(content string, mt messagetype.Type, tabSection *TabSection) tabContent {
 
 	return tabContent{
-		Id:         newId,
+		Id:         h.id.GetNewID(),
 		Content:    content,
 		Type:       mt,
 		tabSection: tabSection,

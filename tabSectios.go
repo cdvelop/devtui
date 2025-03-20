@@ -10,7 +10,7 @@ type FieldHandler struct {
 	Editable      bool                                                  // if no editable eject the action ChangeValue directly
 	ChangeValue   func(newValue string) (execMessage string, err error) //eg: "8080" -> "9090" execMessage: "Port changed from 8080 to 9090"
 	// Async handler that can send multiple messages over time
-	AsyncFieldValueChange func(newValue string, messageChan chan<- Message)
+	AsyncFieldValueChange func(newValue string, messageChan chan<- TuiMessage)
 	IsAsync               bool // Flag indicating if this handler uses async processing
 	//internal use
 	index  int
@@ -22,7 +22,7 @@ type TabSection struct {
 	index                int            // index of the tab
 	Title                string         // eg: "BUILD", "TEST"
 	FieldHandlers        []FieldHandler // Field actions configured for the section
-	tabMessages          []Message      // message contents
+	tabMessages          []TuiMessage   // message contents
 	indexActiveEditField int            // Índice del campo de configuración seleccionado
 	tui                  *DevTUI
 }
@@ -91,7 +91,7 @@ func (t *DevTUI) GetTotalTabSections() int {
 }
 
 // SetAsyncMessageChannel sets the async message channel for testing purposes
-func (h *DevTUI) SetAsyncMessageChannel(channel chan Message) {
+func (h *DevTUI) SetAsyncMessageChannel(channel chan TuiMessage) {
 	h.asyncMessageChan = channel
 }
 

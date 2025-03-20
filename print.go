@@ -24,21 +24,11 @@ func joinMessages(messages ...any) (Name string) {
 
 // sendMessage envía un mensaje al tui por el canal de mensajes
 func (t *DevTUI) sendMessage(content string, mt messagetype.Type, tabSection *TabSection) {
-	t.tabContentsChan <- t.newContent(content, mt, tabSection)
-}
-
-func (h *DevTUI) newContent(content string, mt messagetype.Type, tabSection *TabSection) Message {
-
-	return Message{
-		id:         h.id.GetNewID(),
-		Content:    content,
-		Type:       mt,
-		TabSection: tabSection,
-	}
+	t.tabContentsChan <- t.newTuiMessage(content, mt, tabSection)
 }
 
 // formatMessage formatea un mensaje según su tipo
-func (t *DevTUI) formatMessage(msg Message) string {
+func (t *DevTUI) formatMessage(msg TuiMessage) string {
 
 	timeStr := t.timeStyle.Render(t.id.UnixSecondsToTime(msg.id))
 

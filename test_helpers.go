@@ -9,7 +9,7 @@ import (
 )
 
 // RunAsyncFieldTest is a helper function for testing async field functionality
-func RunAsyncFieldTest(t *testing.T, tui *DevTUI, tabIndex, fieldIndex int, testValue string) []Message {
+func RunAsyncFieldTest(t *testing.T, tui *DevTUI, tabIndex, fieldIndex int, testValue string) []TuiMessage {
 	// Get the tab and field
 	tab := &tui.tabSections[tabIndex]
 	field := &tab.FieldHandlers[fieldIndex]
@@ -19,7 +19,7 @@ func RunAsyncFieldTest(t *testing.T, tui *DevTUI, tabIndex, fieldIndex int, test
 	}
 
 	// Create a channel to collect messages
-	msgChan := make(chan Message, 10)
+	msgChan := make(chan TuiMessage, 10)
 	tui.SetAsyncMessageChannel(msgChan)
 
 	// Process the field value change in a goroutine
@@ -38,11 +38,11 @@ func RunAsyncFieldTest(t *testing.T, tui *DevTUI, tabIndex, fieldIndex int, test
 
 // collectAsyncMessages collects async messages from a channel with a timeout
 func collectAsyncMessages(t *testing.T,
-	msgChan chan Message,
+	msgChan chan TuiMessage,
 	done chan bool,
-	timeout time.Duration) []Message {
+	timeout time.Duration) []TuiMessage {
 
-	var messages []Message
+	var messages []TuiMessage
 	timeoutChan := time.After(timeout)
 
 	collecting := true
@@ -51,7 +51,7 @@ func collectAsyncMessages(t *testing.T,
 		case msg, ok := <-msgChan:
 			if !ok {
 				// Canal cerrado
-				t.Log("Message channel closed")
+				t.Log("TuiMessage channel closed")
 				collecting = false
 				break
 			}
@@ -94,8 +94,8 @@ func collectAsyncMessages(t *testing.T,
 }
 
 // drainChannel recolecta todos los mensajes disponibles sin bloquear
-func drainChannel(ch chan Message) []Message {
-	var messages []Message
+func drainChannel(ch chan TuiMessage) []TuiMessage {
+	var messages []TuiMessage
 
 	// Intentar leer mensajes sin bloquear
 	for {
@@ -113,15 +113,15 @@ func drainChannel(ch chan Message) []Message {
 }
 
 // CollectAsyncMessages runs a function that triggers async messages and collects them with a timeout
-func CollectAsyncMessages(t *testing.T, triggerFn func(), timeout time.Duration) []Message {
+func CollectAsyncMessages(t *testing.T, triggerFn func(), timeout time.Duration) []TuiMessage {
 	// Create a channel to receive messages
-	msgChan := make(chan Message, 10)
+	msgChan := make(chan TuiMessage, 10)
 
 	// Run the trigger function that should send messages to the channel
 	go triggerFn()
 
 	// Collect messages with timeout
-	var messages []Message
+	var messages []TuiMessage
 	timeoutChan := time.After(timeout)
 	collecting := true
 
@@ -138,7 +138,7 @@ func CollectAsyncMessages(t *testing.T, triggerFn func(), timeout time.Duration)
 }
 
 // VerifyAsyncMessages checks that messages follow the expected pattern
-func VerifyAsyncMessages(t *testing.T, messages []Message, expectedCount int) {
+func VerifyAsyncMessages(t *testing.T, messages []TuiMessage, expectedCount int) {
 	if len(messages) != expectedCount {
 		t.Errorf("Expected %d messages, got %d", expectedCount, len(messages))
 	}
@@ -146,7 +146,7 @@ func VerifyAsyncMessages(t *testing.T, messages []Message, expectedCount int) {
 	// Check progress messages
 	for i := 0; i < len(messages)-1 && i < expectedCount-1; i++ {
 		if messages[i].Type != messagetype.Info {
-			t.Errorf("Message %d should be of type Info, got %v", i+1, messages[i].Type)
+			t.Errorf("TuiMessage %d should be of type Info, got %v", i+1, messages[i].Type)
 		}
 	}
 
@@ -160,8 +160,8 @@ func VerifyAsyncMessages(t *testing.T, messages []Message, expectedCount int) {
 }
 
 // MockAsyncProcessor creates a mock async processor function for testing
-func MockAsyncProcessor(steps int, delay time.Duration) func(string, chan<- Message) {
-	return func(value string, msgChan chan<- Message) {
+func MockAsyncProcessor(steps int, delay time.Duration) func(string, chan<- TuiMessage) {
+	return func(value string, msgChan chan<- TuiMessage) {
 		var wg sync.WaitGroup
 		wg.Add(1)
 
@@ -170,7 +170,7 @@ func MockAsyncProcessor(steps int, delay time.Duration) func(string, chan<- Mess
 
 			// Send progress messages
 			for i := 0; i < steps; i++ {
-				msgChan <- Message{
+				msgChan <- TuiMessage{
 					Content: "Step " + string(rune('A'+i)) + " for " + value,
 					Type:    messagetype.Info,
 				}
@@ -178,7 +178,7 @@ func MockAsyncProcessor(steps int, delay time.Duration) func(string, chan<- Mess
 			}
 
 			// Send completion
-			msgChan <- Message{
+			msgChan <- TuiMessage{
 				Content: "Completed processing " + value,
 				Type:    messagetype.OK,
 			}

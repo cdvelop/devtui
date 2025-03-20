@@ -30,7 +30,7 @@ func TestAsyncFieldProcessing(t *testing.T) {
 	}
 
 	// Create a channel to receive messages
-	msgChan := make(chan devtui.Message, 10) // Buffered to avoid blocking
+	msgChan := make(chan devtui.TuiMessage, 10) // Buffered to avoid blocking
 
 	// Use a shorter timeout to prevent tests from hanging
 	timeout := time.After(2 * time.Second)
@@ -44,7 +44,7 @@ func TestAsyncFieldProcessing(t *testing.T) {
 	}()
 
 	// Collect messages until either done signal or timeout
-	var messages []devtui.Message
+	var messages []devtui.TuiMessage
 	collecting := true
 
 	for collecting {
@@ -79,7 +79,7 @@ func TestAsyncFieldProcessing(t *testing.T) {
 	// Verify all non-final messages are progress messages
 	for i := 0; i < len(messages)-1; i++ {
 		if messages[i].Type != messagetype.Info {
-			t.Errorf("Message %d should be of type Info, got %v", i+1, messages[i].Type)
+			t.Errorf("TuiMessage %d should be of type Info, got %v", i+1, messages[i].Type)
 		}
 	}
 }

@@ -56,11 +56,11 @@ func DefaultTUIForTest(LogToFile func(messageErr any)) *DevTUI {
 					Value:    "Start",
 					Editable: true,
 					IsAsync:  true,
-					AsyncFieldValueChange: func(newValue string, msgChan chan<- Message) {
+					AsyncFieldValueChange: func(newValue string, msgChan chan<- TuiMessage) {
 						// Simulate a long-running operation
 						for i := range 5 {
 							// Send progress messages
-							msgChan <- Message{
+							msgChan <- TuiMessage{
 								Content:    "Processing step " + string(rune('A'+i)) + " for value: " + newValue,
 								Type:       messagetype.Info,
 								TabSection: nil, // This will be set by the TUI
@@ -69,7 +69,7 @@ func DefaultTUIForTest(LogToFile func(messageErr any)) *DevTUI {
 						}
 
 						// Send completion message
-						msgChan <- Message{
+						msgChan <- TuiMessage{
 							Content:    "Operation completed successfully for: " + newValue,
 							Type:       messagetype.OK,
 							TabSection: nil,

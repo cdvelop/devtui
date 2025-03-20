@@ -11,7 +11,7 @@ import (
 )
 
 // AsyncMessageMsg is a message from an async field handler
-type AsyncMessageMsg Message
+type AsyncMessageMsg TuiMessage
 
 func (cf *FieldHandler) SetCursorAtEnd() {
 	// Calculate cursor position based on rune count, not byte count
@@ -27,7 +27,7 @@ func (h *DevTUI) listenToMessages() tea.Cmd {
 }
 
 // listenForAsyncMessages creates a command to wait for async field messages
-func (h *DevTUI) listenForAsyncMessages(asyncMsgChan chan Message) tea.Cmd {
+func (h *DevTUI) listenForAsyncMessages(asyncMsgChan chan TuiMessage) tea.Cmd {
 	return func() tea.Msg {
 		return AsyncMessageMsg(<-asyncMsgChan)
 	}
@@ -63,7 +63,7 @@ func (h *DevTUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case AsyncMessageMsg:
 		// Process async message from field handler
-		asyncMsg := Message(msg)
+		asyncMsg := TuiMessage(msg)
 		h.sendMessage(asyncMsg.Content, asyncMsg.Type, asyncMsg.TabSection)
 
 		// Continue listening for more async messages
@@ -74,7 +74,7 @@ func (h *DevTUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, h.listenToMessages())
 
 		// Convert the channel message to a tabContent type
-		tc := Message(msg)
+		tc := TuiMessage(msg)
 
 		// Only update the viewport if the message belongs to the currently active tab
 		if tc.TabSection.index == h.activeTab {
@@ -162,5 +162,5 @@ func (h *DevTUI) editingConfigOpen(open bool, currentField *FieldHandler, msg st
 
 // Add this helper function
 func (t *TabSection) addNewContent(msgType messagetype.Type, content string) {
-	t.tabMessages = append(t.tabMessages, t.tui.newContent(content, msgType, t))
+	t.tabMessages = append(t.tabMessages, t.tui.newTuiMessage(content, msgType, t))
 }

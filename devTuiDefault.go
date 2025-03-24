@@ -1,95 +1,155 @@
 package devtui
 
 import (
-	"os"
 	"time"
 
 	"github.com/cdvelop/messagetype"
 )
 
+const defaultTabName = "DEFAULT"
+
+// Standard field implementation for test purposes
+type standardField struct {
+	name       string
+	value      string
+	editable   bool
+	changeFunc func(string) <-chan MessageUpdate
+}
+
+func (f *standardField) Name() string {
+	return f.name
+}
+
+func (f *standardField) Value() string {
+	return f.value
+}
+
+func (f *standardField) Editable() bool {
+	return f.editable
+}
+
+func (f *standardField) ChangeValue(newValue string) <-chan MessageUpdate {
+	if f.changeFunc != nil {
+		return f.changeFunc(newValue)
+	}
+
+	// Default implementation
+	updates := make(chan MessageUpdate)
+	go func() {
+		defer close(updates)
+		// Update the field value
+		f.value = newValue
+		// Send a success message
+		updates <- MessageUpdate{
+			Content: "Changed " + f.name + " to " + newValue,
+			Type:    messagetype.Success,
+		}
+	}()
+	return updates
+}
+
 // NewDefaultTUI creates a DevTUI instance with basic default configuration
 // useful for unit tests and for quick initialization in real applications
 func DefaultTUIForTest(LogToFile func(messageErr any)) *DevTUI {
-
-	// Create basic tabSections for testing/demo
-	tabSections := []tabSection{
-		{
-			Title: "Tab 1",
-			index: 0,
-			FieldHandlers: []fieldHandler{
-				{
-					Name:     "Field 1  (Editable)",
-					Value:    "initial test value",
-					Editable: true,
-					cursor:   0,
-					ChangeValue: func(value string) (string, error) {
-						return "Saved value: " + value, nil
-					},
-				},
-				{
-					Name:     "Field 2 (Non-Editable)",
-					Value:    "special action",
-					Editable: false,
-					ChangeValue: func(value string) (string, error) {
-						return "Action executed", nil
-					},
-				},
-			},
-			indexActiveEditField: 0,
-		},
-		{
-			Title: "Tab 2",
-			index: 1,
-			FieldHandlers: []fieldHandler{
-				{
-					Name:     "Field 1",
-					Value:    "tab 2 value 1",
-					Editable: true,
-					cursor:   0,
-					ChangeValue: func(value string) (string, error) {
-						return "Tab 2 saved: " + value, nil
-					},
-				},
-				{
-					// Field 2 with the async field
-					Name:     "Async Operation",
-					Value:    "Start",
-					Editable: true,
-					IsAsync:  true,
-					AsyncFieldValueChange: func(newValue string, msgChan chan<- tuiMessage) {
-						// Simulate a long-running operation
-						for i := range 5 {
-							// Send progress messages
-							msgChan <- tuiMessage{
-								Content:    "Processing step " + string(rune('A'+i)) + " for value: " + newValue,
-								Type:       messagetype.Info,
-								tabSection: nil, // This will be set by the TUI
-							}
-							time.Sleep(time.Millisecond * 100) // Shortened for tests
-						}
-
-						// Send completion message
-						msgChan <- tuiMessage{
-							Content:    "Operation completed successfully for: " + newValue,
-							Type:       messagetype.Success,
-							tabSection: nil,
-						}
-					},
-				},
-			},
-			indexActiveEditField: 0,
-		},
-	}
-
-	// Initialize the UI
-	h := NewTUI(&TuiConfig{
+	// Create a new DevTUI instance
+	devtui := NewTUI(&TuiConfig{
 		TabIndexStart: 0,               // Start with the first tab
 		ExitChan:      make(chan bool), // Channel to signal exit
 		Color:         nil,             // Use default colors
 		LogToFile:     LogToFile,
-	}).AddTabSections(tabSections...)
+	})
 
-	return h
+	// Create Tab 1 with basic fields
+	tab1 := devtui.NewTabSection("Tab 1",
+		&standardField{
+			name:     "Field 1 (Editable)",
+			value:    "initial test value",
+			editable: true,
+			changeFunc: func(newValue string) <-chan MessageUpdate {
+				updates := make(chan MessageUpdate)
+				go func() {
+					defer close(updates)
+					updates <- MessageUpdate{
+						Content: "Saved value: " + newValue,
+						Type:    messagetype.Success,
+					}
+				}()
+				return updates
+			},
+		},
+		&standardField{
+			name:     "Field 2 (Non-Editable)",
+			value:    "special action",
+			editable: false,
+			changeFunc: func(newValue string) <-chan MessageUpdate {
+				updates := make(chan MessageUpdate)
+				go func() {
+					defer close(updates)
+					updates <- MessageUpdate{
+						Content: "Action executed",
+						Type:    messagetype.Success,
+					}
+				}()
+				return updates
+			},
+		},
+	)
+
+	// Create Tab 2 with an async field
+	tab2 := devtui.NewTabSection("Tab 2",
+		&standardField{
+			name:     "Field 1",
+			value:    "tab 2 value 1",
+			editable: true,
+			changeFunc: func(newValue string) <-chan MessageUpdate {
+				updates := make(chan MessageUpdate)
+				go func() {
+					defer close(updates)
+					updates <- MessageUpdate{
+						Content: "Tab 2 saved: " + newValue,
+						Type:    messagetype.Success,
+					}
+				}()
+				return updates
+			},
+		},
+		&standardField{
+			name:     "Async Operation",
+			value:    "Start",
+			editable: true,
+			changeFunc: func(newValue string) <-chan MessageUpdate {
+				updates := make(chan MessageUpdate)
+
+				go func() {
+					defer close(updates)
+
+					// Simulate a long-running operation
+					for i := range 5 {
+						// Send progress messages
+						updates <- MessageUpdate{
+							Content: "Processing step " + string(rune('A'+i)) + " for value: " + newValue,
+							Type:    messagetype.Info,
+						}
+						time.Sleep(time.Millisecond * 100) // Shortened for tests
+					}
+
+					// Send completion message
+					updates <- MessageUpdate{
+						Content: "Operation completed successfully for: " + newValue,
+						Type:    messagetype.Success,
+					}
+				}()
+
+				return updates
+			},
+		},
+	)
+
+	// Ensure both tabs are properly initialized
+	_ = tab1
+	_ = tab2
+
+	return devtui
 }
 
 // prepareForTesting configures a DevTUI instance for use in unit tests
@@ -97,19 +157,11 @@ func prepareForTesting() *DevTUI {
 	// Create a logger that doesn't do anything during tests
 	testLogger := func(messageErr any) {
 		// In test mode, we don't need to log
-		if os.Getenv("TEST_MODE") != "true" {
-			// This is a no-op logger for tests
-		}
+		// This is a no-op logger for tests
 	}
 
 	// Get default TUI instance
 	h := DefaultTUIForTest(testLogger)
-
-	// Set up test environment
-	os.Setenv("TEST_MODE", "true")
-
-	// Set initial value for the field
-	h.tabSections[0].FieldHandlers[0].Value = "initial value"
 
 	return h
 }

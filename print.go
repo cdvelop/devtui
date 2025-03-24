@@ -51,23 +51,9 @@ func (t *DevTUI) formatMessage(msg tuiMessage) string {
 	return fmt.Sprintf("%s %s", timeStr, msg.Content)
 }
 
-// ProcessFieldValueChange handles both synchronous and asynchronous field value changes
+// ProcessFieldValueChange handles field value changes
 func (h *DevTUI) ProcessFieldValueChange(field *fieldHandler, newValue string) {
-	if field.IsAsync && field.AsyncFieldValueChange != nil {
-		// Start a goroutine to handle async processing
-		go field.AsyncFieldValueChange(newValue, h.asyncMessageChan)
-
-		// Start listening for async messages if not already listening
-		h.tea.Send(tea.Cmd(h.listenForAsyncMessages(h.asyncMessageChan)))
-	} else if field.ChangeValue != nil {
-		// Handle synchronous field value change
-		execMessage, err := field.ChangeValue(newValue)
-		tabSection := &h.tabSections[h.activeTab]
-
-		if err != nil {
-			tabSection.addNewContent(messagetype.Error, err.Error())
-		} else if execMessage != "" {
-			tabSection.addNewContent(messagetype.Info, execMessage)
-		}
-	}
+	field.ExecuteValueChange(newValue, &h.tabSections[h.activeTab])
+	// Start listening for async messages if not already listening
+	h.tea.Send(tea.Cmd(h.listenForAsyncMessages(h.asyncMessageChan)))
 }

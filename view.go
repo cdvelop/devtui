@@ -13,7 +13,6 @@ func (h *DevTUI) View() string {
 		return "\n  Initializing..."
 	}
 	return fmt.Sprintf("%s\n%s\n%s", h.headerView(), h.viewport.View(), h.footerView())
-	// return fmt.Sprintf("%s\n%s\n%s", h.headerView(), h.ContentView(), h.footerView())
 }
 
 // ContentView renderiza los mensajes para una sección de contenido
@@ -31,7 +30,7 @@ func (h *DevTUI) headerView() string {
 	tab := h.tabSections[h.activeTab]
 
 	// Truncar el título si es necesario
-	headerText := h.AppName + "/" + tab.Title
+	headerText := h.AppName + "/" + tab.title
 	truncatedHeader := tinystring.Convert(headerText).Truncate(h.labelWidth, 0).String()
 
 	// Aplicar el estilo base para garantizar un ancho fijo
@@ -42,4 +41,27 @@ func (h *DevTUI) headerView() string {
 
 	line := h.lineHeadFootStyle.Render(strings.Repeat("─", max(0, h.viewport.Width-lipgloss.Width(title))))
 	return lipgloss.JoinHorizontal(lipgloss.Center, title, line)
+}
+
+func (h *DevTUI) renderTabIndicators() string {
+	var indicators []string
+
+	for i, tab := range h.tabSections {
+		var indicator string
+		if i == h.activeTab {
+			indicator = h.activeTabStyle.Render(tab.title)
+		} else {
+			indicator = h.inactiveTabStyle.Render(tab.title)
+		}
+		indicators = append(indicators, indicator)
+	}
+
+	return lipgloss.JoinHorizontal(lipgloss.Top, indicators...)
+}
+
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
 }

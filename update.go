@@ -15,7 +15,7 @@ type AsyncMessageMsg tuiMessage
 
 func (cf *fieldHandler) SetCursorAtEnd() {
 	// Calculate cursor position based on rune count, not byte count
-	cf.cursor = len([]rune(cf.Value))
+	cf.cursor = len([]rune(cf.Value()))
 }
 
 // listenToMessages crea un comando para escuchar mensajes del canal
@@ -64,7 +64,24 @@ func (h *DevTUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case AsyncMessageMsg:
 		// Process async message from field handler
 		asyncMsg := tuiMessage(msg)
-		h.sendMessage(asyncMsg.Content, asyncMsg.Type, asyncMsg.tabSection)
+
+		// Check if this is an update to an existing message
+		if asyncMsg.id != "" {
+			// Find and update the existing message
+			for i, existingMsg := range h.tabSections[h.activeTab].tuiMessages {
+				if existingMsg.id == asyncMsg.id {
+					h.tabSections[h.activeTab].tuiMessages[i].Content = asyncMsg.Content
+					h.tabSections[h.activeTab].tuiMessages[i].Type = asyncMsg.Type
+					break
+				}
+			}
+		} else {
+			// If no ID, treat as a new message
+			h.sendMessage(asyncMsg.Content, asyncMsg.Type, asyncMsg.tabSection)
+		}
+
+		// Update the viewport to show the changes
+		h.updateViewport()
 
 		// Continue listening for more async messages
 		cmds = append(cmds, h.listenForAsyncMessages(h.asyncMessageChan))
@@ -157,10 +174,4 @@ func (h *DevTUI) editingConfigOpen(open bool, currentField *fieldHandler, msg st
 		tabSection := &h.tabSections[h.activeTab]
 		tabSection.addNewContent(messagetype.Warning, msg)
 	}
-
-}
-
-// Add this helper function
-func (t *tabSection) addNewContent(msgType messagetype.Type, content string) {
-	t.tuiMessages = append(t.tuiMessages, t.newTuiMessage(content, msgType))
 }

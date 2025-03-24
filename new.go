@@ -1,7 +1,6 @@
 package devtui
 
 import (
-	"fmt"
 	"sync"
 	"time"
 
@@ -36,7 +35,9 @@ type DevTUI struct {
 	tabContentsChan chan tuiMessage
 	// Channel for async field value change messages
 	asyncMessageChan chan tuiMessage
-	tea              *tea.Program
+	// Message tracker for handling message updates
+	messageTracker *messageTracker
+	tea            *tea.Program
 }
 
 type TuiConfig struct {
@@ -53,38 +54,23 @@ func NewTUI(c *TuiConfig) *DevTUI {
 		c.AppName = "DevTUI"
 	}
 
+	// Create message tracker
+	msgTracker := NewMessageTracker()
+
 	tui := &DevTUI{
 		TuiConfig: c,
 		focused:   true, // assume the app is focused
 		tabSections: []tabSection{ // default tab section
 			{
-				Title: defaultTabName,
-				FieldHandlers: []fieldHandler{
-					{
-						Name:     "Editable Field",
-						Value:    "initial editable value",
-						Editable: true,
-						ChangeValue: func(newValue string) (string, error) {
-							// Agregar la lógica de cambio de valor deseada
-							return fmt.Sprintf("Value changed to %s", newValue), nil
-						},
-					},
-					{
-						Name:     "Non-Editable Field",
-						Value:    "non-editable value",
-						Editable: false,
-						ChangeValue: func(newValue string) (string, error) {
-							// Agregar la acción deseada para el campo no editable
-							return "Action executed", nil
-						},
-					},
-				},
-				tuiMessages: []tuiMessage{},
+				title:         defaultTabName,
+				fieldHandlers: []fieldHandler{},
+				tuiMessages:   []tuiMessage{},
 			},
 		},
 		activeTab:        c.TabIndexStart,
 		tabContentsChan:  make(chan tuiMessage, 100),
 		asyncMessageChan: make(chan tuiMessage),
+		messageTracker:   msgTracker,
 		currentTime:      time.Now().Format("15:04:05"),
 		tuiStyle:         newTuiStyle(c.Color),
 	}
@@ -100,6 +86,12 @@ func NewTUI(c *TuiConfig) *DevTUI {
 		c.LogToFile(err)
 	}
 	tui.id = id
+
+	// Set the ID generator for the message tracker
+	tui.messageTracker.SetIDGenerator(tui.id)
+
+	// Initialize the default tab section
+	tui.tabSections[0].tui = tui
 
 	return tui
 }

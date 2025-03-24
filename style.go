@@ -28,6 +28,18 @@ type tuiStyle struct {
 	textContentStyle  lipgloss.Style
 	lineHeadFootStyle lipgloss.Style // header right and footer left line
 
+	// Styles for tab indicators
+	activeTabStyle   lipgloss.Style
+	inactiveTabStyle lipgloss.Style
+
+	// Styles for input fields
+	inputLabelStyle lipgloss.Style
+	inputValueStyle lipgloss.Style
+	cursorStyle     lipgloss.Style
+
+	// Navigation helper style
+	navHelpStyle lipgloss.Style
+
 	// Estilos globales mensajes
 	okStyle   lipgloss.Style
 	errStyle  lipgloss.Style
@@ -97,6 +109,37 @@ func newTuiStyle(cs *ColorStyle) *tuiStyle {
 
 	t.lineHeadFootStyle = lipgloss.NewStyle().
 		Foreground(lipgloss.Color(t.Highlight))
+
+	// Initialize tab indicator styles
+	t.activeTabStyle = lipgloss.NewStyle().
+		Bold(true).
+		Background(lipgloss.Color(t.Highlight)).
+		Foreground(lipgloss.Color(t.Background)).
+		Padding(0, 1)
+
+	t.inactiveTabStyle = lipgloss.NewStyle().
+		Foreground(lipgloss.Color(t.Lowlight)).
+		Padding(0, 1)
+
+	// Initialize input field styles
+	t.inputLabelStyle = lipgloss.NewStyle().
+		Width(t.labelWidth).
+		Align(lipgloss.Left).
+		Padding(0, 1).
+		Background(lipgloss.Color(t.Highlight)).
+		Foreground(lipgloss.Color(t.Background))
+
+	t.inputValueStyle = lipgloss.NewStyle().
+		Background(lipgloss.Color(t.Lowlight)).
+		Foreground(lipgloss.Color(t.ForeGround))
+
+	t.cursorStyle = lipgloss.NewStyle().
+		Background(lipgloss.Color(t.ForeGround)).
+		Foreground(lipgloss.Color(t.Background))
+
+	// Navigation helper style
+	t.navHelpStyle = lipgloss.NewStyle().
+		Foreground(lipgloss.Color(t.Lowlight))
 
 	// Inicializar los estilos que antes eran globales
 	t.okStyle = lipgloss.NewStyle().

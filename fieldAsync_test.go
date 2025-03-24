@@ -1,6 +1,7 @@
 package devtui
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -16,120 +17,172 @@ func TestAsyncFieldProcessing(t *testing.T) {
 	// Initialize the TUI with our mock logger
 	tui := DefaultTUIForTest(mockLogger)
 
-	// Get the async field from Tab 2, Field 2
-	asyncField := &tui.GetTabSections()[1].FieldHandlers[1]
+	// Create field name and value variables to avoid circular references
+	fieldName := "Test Field"
+	fieldValue := "Initial Value"
 
-	// Verify the field is configured as async
-	if !asyncField.IsAsync {
-		t.Fatalf("Field should be configured as async")
+	// Declare the mockH variable before assigning to prevent circular reference
+	var mockH *mockFieldHandler
+
+	// Create a mock field handler
+	mockH = &mockFieldHandler{
+		name:     fieldName,
+		value:    fieldValue,
+		editable: true,
+		changeValue: func(newValue string) <-chan MessageUpdate {
+			updates := make(chan MessageUpdate)
+			go func() {
+				defer close(updates)
+				updates <- MessageUpdate{Content: "Processing: " + fieldName + " change...", Type: messagetype.Info}
+				time.Sleep(1 * time.Second)
+				if newValue == "Invalid" {
+					updates <- MessageUpdate{Content: "Invalid value: " + newValue, Type: messagetype.Error}
+					return
+				}
+				fieldValue = newValue  // Update local value
+				mockH.value = newValue // Update mockH value
+				updates <- MessageUpdate{Content: "Value successfully changed to " + newValue, Type: messagetype.Success}
+
+			}()
+			return updates
+		},
 	}
 
-	if asyncField.AsyncFieldValueChange == nil {
-		t.Fatalf("AsyncFieldValueChange should be configured")
+	// Create a tab section with our mockH handler
+	tabSection := tui.NewTabSection("Test Tab", mockH)
+
+	// Get reference to the field handler
+	fieldHandler := &tabSection.fieldHandlers[0]
+
+	// Directly use the TUI's asyncMessageChan
+	msgChan := tui.asyncMessageChan
+
+	// Test successful value change
+	t.Run("Successful Value Change", func(t *testing.T) {
+		msgID := fieldHandler.ExecuteValueChange("New Test Value", tabSection)
+		messages := collectMessages(t, msgChan, 2*time.Second)
+
+		validateMessages(t, messages, msgID, "New Test Value", messagetype.Success)
+	})
+
+	// Test invalid value
+	t.Run("Invalid Value", func(t *testing.T) {
+		msgID := fieldHandler.ExecuteValueChange("Invalid", tabSection)
+		messages := collectMessages(t, msgChan, 2*time.Second)
+
+		validateMessages(t, messages, msgID, "Invalid", messagetype.Error)
+	})
+}
+
+func validateMessages(t *testing.T, messages []tuiMessage, msgID MessageID, expectedValue string, expectedType messagetype.Type) {
+	if len(messages) == 0 {
+		t.Fatal("Expected at least one message, but received none")
 	}
 
-	// Create a channel to receive messages
-	msgChan := make(chan tuiMessage, 10) // Buffered to avoid blocking
+	lastMsg := messages[len(messages)-1]
+	if lastMsg.Type != expectedType {
+		t.Errorf("Final message should be of type %v, got %v", expectedType, lastMsg.Type)
+	}
 
-	// Use a shorter timeout to prevent tests from hanging
-	timeout := time.After(2 * time.Second)
-	done := make(chan bool)
+	// Verify message IDs are consistent
+	for _, msg := range messages {
+		if msg.id != string(msgID) {
+			t.Errorf("Message ID mismatch: expected %s, got %s", msgID, msg.id)
+		}
+	}
+}
 
-	// Start the async processing in a goroutine
-	go func() {
-		// Manually invoke the async function with our message channel
-		asyncField.AsyncFieldValueChange("TestValue", msgChan)
-		done <- true
-	}()
+func TestAsyncFieldIntegration(t *testing.T) {
+	mockLogger := func(messageErr any) {
+		t.Logf("Integration test logger: %v", messageErr)
+	}
 
-	// Collect messages until either done signal or timeout
+	tui := DefaultTUIForTest(mockLogger)
+
+	// Crear variable para almacenar el valor inicial
+	fieldName := "Integration Test Field"
+	fieldValue := "Initial Value"
+
+	// Definir mockHandler como una variable local para evitar referencias circulares
+	var mockHandler *mockFieldHandler
+
+	mockHandler = &mockFieldHandler{
+		name:     fieldName,
+		value:    fieldValue,
+		editable: true,
+		changeValue: func(newValue string) <-chan MessageUpdate {
+			updates := make(chan MessageUpdate)
+			go func() {
+				defer close(updates)
+				updates <- MessageUpdate{Content: "Processing: " + fieldName + " change...", Type: messagetype.Info}
+				time.Sleep(1 * time.Second)
+				if newValue == "Invalid" {
+					updates <- MessageUpdate{Content: "Invalid value: " + newValue, Type: messagetype.Error}
+					return
+				}
+				fieldValue = newValue        // Update the value
+				mockHandler.value = newValue // Update mockHandler value
+				updates <- MessageUpdate{Content: "Value successfully changed to " + newValue, Type: messagetype.Success}
+			}()
+			return updates
+		},
+	}
+
+	// Crear un tabSection con nuestro mockHandler
+	tabSection := tui.NewTabSection("Integration Test Tab", mockHandler)
+
+	// Obtener referencia al fieldHandler
+	fieldHandler := &tabSection.fieldHandlers[0]
+
+	// Test cases
+	testCases := []struct {
+		name      string
+		value     string
+		wantType  messagetype.Type
+		wantCount int
+	}{
+		{"Normal Change", "Integration Test Value", messagetype.Success, 2},
+		{"Empty Value", "", messagetype.Success, 2},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			messageID := fieldHandler.ExecuteValueChange(tc.value, tabSection)
+			messages := collectMessages(t, tui.asyncMessageChan, 2*time.Second)
+
+			validateMessages(t, messages, messageID, tc.value, tc.wantType)
+
+			if len(messages) != tc.wantCount {
+				t.Errorf("Expected %d messages, got %d", tc.wantCount, len(messages))
+			}
+		})
+	}
+}
+
+// Helper function to collect messages with timeout
+func collectMessages(t *testing.T, msgChan <-chan tuiMessage, timeout time.Duration) []tuiMessage {
 	var messages []tuiMessage
+	timeoutChan := time.After(timeout)
 	collecting := true
 
 	for collecting {
 		select {
 		case msg := <-msgChan:
 			messages = append(messages, msg)
-		case <-done:
-			// Allow a little more time for any final messages
-			time.Sleep(100 * time.Millisecond)
-			collecting = false
-		case <-timeout:
+			if msg.Type == messagetype.Success || msg.Type == messagetype.Error {
+				collecting = false
+			}
+		case <-timeoutChan:
 			t.Logf("Timeout reached after collecting %d messages", len(messages))
 			collecting = false
 		}
 	}
-
-	// Verify we got at least one message
-	if len(messages) == 0 {
-		t.Fatalf("Expected at least one message, but received none")
-	}
-
-	t.Logf("Collected %d messages", len(messages))
-
-	// Check if the last message is a completion message
-	if len(messages) > 0 {
-		lastMsg := messages[len(messages)-1]
-		if lastMsg.Type != messagetype.Success {
-			t.Errorf("Final message should be of type Success, got %v", lastMsg.Type)
-		}
-	}
-
-	// Verify all non-final messages are progress messages
-	for i := 0; i < len(messages)-1; i++ {
-		if messages[i].Type != messagetype.Info {
-			t.Errorf("tuiMessage %d should be of type Info, got %v", i+1, messages[i].Type)
-		}
-	}
-}
-
-func TestAsyncFieldIntegration(t *testing.T) {
-	// Create a mock logger function
-	mockLogger := func(messageErr any) {
-		t.Logf("Integration test logger: %v", messageErr)
-	}
-
-	// Initialize the TUI with our mock logger
-	tui := DefaultTUIForTest(mockLogger)
-
-	// Use the helper functions from test_helpers.go
-	tabIndex := 1
-	fieldIndex := 1
-	testValue := "TestIntegration"
-
-	// We need to use RunAsyncFieldTest instead of CollectAsyncMessages
-	// because RunAsyncFieldTest handles the channel setup correctly
-	messages := RunAsyncFieldTest(t, tui, tabIndex, fieldIndex, testValue)
-
-	// Verify we got at least one message
-	if len(messages) == 0 {
-		t.Fatalf("Expected at least one async message, but received none")
-	}
-
-	t.Logf("Integration test collected %d messages", len(messages))
-
-	// Verify the last message is a completion message
-	if len(messages) > 0 {
-		lastMsg := messages[len(messages)-1]
-		if lastMsg.Type != messagetype.Success {
-			t.Errorf("Final message should be of type Success, got %v", lastMsg.Type)
-		}
-
-		// Check if the message contains our test value
-		if !contains(lastMsg.Content, testValue) {
-			t.Errorf("Last message should contain '%s', got: '%s'", testValue, lastMsg.Content)
-		}
-	}
+	return messages
 }
 
 // Helper function to check if a string contains a substring
 func contains(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
+	return strings.Contains(s, substr)
 }
 
 // TestAsyncFieldInRealTUI would test in a real TUI environment

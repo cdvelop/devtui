@@ -1,11 +1,8 @@
 package devtui
 
 import (
-	"fmt"
-
 	"slices"
 
-	"github.com/cdvelop/messagetype"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -22,23 +19,19 @@ func (h *DevTUI) HandleKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 // handleEditingConfigKeyboard handles keyboard input while in config editing mode
 func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 	currentTab := &h.tabSections[h.activeTab]
-	currentField := &h.tabSections[h.activeTab].FieldHandlers[currentTab.indexActiveEditField]
+	currentField := &h.tabSections[h.activeTab].fieldHandlers[currentTab.indexActiveEditField]
 
-	if currentField.Editable { // Si el campo es editable, permitir la edición
+	if currentField.Editable() { // Si el campo es editable, permitir la edición
 		// Calcular el ancho máximo disponible para el texto
 		// Esto sigue la misma lógica que en footerInput.go
-		_, availableTextWidth := h.calculateInputWidths(currentField.Name)
+		_, availableTextWidth := h.calculateInputWidths(currentField.Name())
 
 		switch msg.Type {
 		case tea.KeyEnter: // Guardar cambios o ejecutar acción
-			if currentField.tempEditValue != "" && currentField.tempEditValue != currentField.Value {
-				currentField.Value = currentField.tempEditValue // Aplicar los cambios solo si hubo modificaciones
-				msg, err := currentField.ChangeValue(currentField.Value)
-				if err != nil {
-					// Si hay un error, mostrarlo en la pestaña actual
-					currentTab.addNewContent(messagetype.Error, fmt.Sprintf("%v %v", currentField.Name, err))
-				}
-				h.editingConfigOpen(false, currentField, msg)
+			if currentField.tempEditValue != "" && currentField.tempEditValue != currentField.Value() {
+				// Execute the value change asynchronously
+				currentField.ExecuteValueChange(currentField.tempEditValue, currentTab)
+				h.editingConfigOpen(false, currentField, "")
 			} else {
 				// Si no hubo cambios, solo salimos del modo edición sin mostrar mensajes
 				h.editingConfigOpen(false, currentField, "")
@@ -60,7 +53,7 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 			}
 
 		case tea.KeyRight: // Mover el cursor a la derecha dentro del texto
-			value := currentField.Value
+			value := currentField.Value()
 			if currentField.tempEditValue != "" {
 				value = currentField.tempEditValue
 			}
@@ -72,7 +65,7 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 			if currentField.cursor > 0 {
 				// Si aún no hay valor temporal, copiar el valor original
 				if currentField.tempEditValue == "" {
-					currentField.tempEditValue = currentField.Value
+					currentField.tempEditValue = currentField.Value()
 				}
 
 				// Convert to runes to handle multi-byte characters correctly
@@ -89,7 +82,7 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 			if len(msg.Runes) > 0 {
 				// Si aún no hay valor temporal, copiar el valor original
 				if currentField.tempEditValue == "" {
-					currentField.tempEditValue = currentField.Value
+					currentField.tempEditValue = currentField.Value()
 				}
 
 				runes := []rune(currentField.tempEditValue)
@@ -113,15 +106,8 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 	} else { // Si el campo no es editable, solo ejecutar la acción
 		switch msg.Type {
 		case tea.KeyEnter:
-			msgType := messagetype.Success
-			// content eg: "Browser Opened"
-			content, err := currentField.ChangeValue(currentField.Value)
-			if err != nil {
-				msgType = messagetype.Error
-				content = fmt.Sprintf("%s %s %s", currentField.Name, content, err.Error())
-			}
-			currentField.Value = content
-			currentTab.addNewContent(msgType, content)
+			// Execute the value change asynchronously for non-editable fields too
+			currentField.ExecuteValueChange(currentField.Value(), currentTab)
 			h.editModeActivated = false
 			h.updateViewport() // Asegurar que se actualice la vista para mostrar el mensaje
 			return false, nil
@@ -139,7 +125,7 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 // handleNormalModeKeyboard handles keyboard input in normal mode (not editing config)
 func (h *DevTUI) handleNormalModeKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 	currentTab := &h.tabSections[h.activeTab]
-	totalFields := len(currentTab.FieldHandlers)
+	totalFields := len(currentTab.fieldHandlers)
 
 	switch msg.Type {
 	case tea.KeyUp, tea.KeyDown:
@@ -172,23 +158,18 @@ func (h *DevTUI) handleNormalModeKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 		h.updateViewport()
 
 	case tea.KeyCtrlL:
-		// h.tabSections[h.activeTab].tuiMessages = []tabContent{}
+		// Clear messages
+		// h.tabSections[h.activeTab].tuiMessages = []tuiMessage{}
 
 	case tea.KeyEnter: //Enter para entrar en modo edición, ejecuta la acción directamente si el campo no es editable
 		if totalFields > 0 {
-			field := &currentTab.FieldHandlers[currentTab.indexActiveEditField]
-			if !field.Editable {
-				msgType := messagetype.Success
-				content, err := field.ChangeValue(field.Value)
-				if err != nil {
-					msgType = messagetype.Error
-					content = fmt.Sprintf("%s %s %s", field.Name, content, err.Error())
-				}
-				field.Value = content
-				currentTab.addNewContent(msgType, content)
+			field := &currentTab.fieldHandlers[currentTab.indexActiveEditField]
+			if !field.Editable() {
+				// For non-editable fields, execute action asynchronously
+				field.ExecuteValueChange(field.Value(), currentTab)
 			} else {
 				// Para campos editables, activar modo de edición explícitamente
-				field.tempEditValue = field.Value
+				field.tempEditValue = field.Value()
 				field.cursor = 0 // Asegurarnos de que el cursor comience al principio
 				h.editModeActivated = true
 				h.editingConfigOpen(true, field, "")
@@ -210,12 +191,12 @@ func (h *DevTUI) checkAutoEditMode() {
 	currentTab := &h.tabSections[h.activeTab]
 
 	// Entrar automáticamente en modo edición si hay un solo campo editable
-	if len(currentTab.FieldHandlers) == 1 && currentTab.FieldHandlers[0].Editable {
+	if len(currentTab.fieldHandlers) == 1 && currentTab.fieldHandlers[0].Editable() {
 		h.editModeActivated = true
 		currentTab.indexActiveEditField = 0
 		// Inicializar tempEditValue y cursor
-		field := &currentTab.FieldHandlers[0]
-		field.tempEditValue = field.Value
+		field := &currentTab.fieldHandlers[0]
+		field.tempEditValue = field.Value()
 		field.cursor = 0
 	} else {
 		// Si hay múltiples campos, no entrar en modo edición automáticamente

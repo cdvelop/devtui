@@ -49,7 +49,7 @@ func (h *DevTUI) renderFooterInput() string {
 	horizontalPadding := 1 // Este valor viene del Padding(0, 1) en headerTitleStyle
 
 	// Truncar la etiqueta si es necesario y añadir ":" al final
-	labelText := tinystring.Convert(field.Label).Truncate(labelWidth-1, 0).String() + ":"
+	labelText := tinystring.Convert(field.Name).Truncate(labelWidth-1, 0).String() + ":"
 
 	// Aplicar el estilo base para garantizar un ancho fijo
 	fixedWidthLabel := h.labelStyle.Render(labelText)
@@ -61,7 +61,7 @@ func (h *DevTUI) renderFooterInput() string {
 	info := h.renderScrollInfo()
 
 	// OR if you need truncation:
-	labelText = tinystring.Convert(field.Label).Truncate(labelWidth-1, 0).String()
+	labelText = tinystring.Convert(field.Name).Truncate(labelWidth-1, 0).String()
 	valueWidth, _ := h.calculateInputWidths(labelText)
 
 	var showCursor bool

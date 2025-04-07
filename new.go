@@ -59,8 +59,7 @@ func NewTUI(c *TuiConfig) *DevTUI {
 				Title: defaultTabName,
 				FieldHandlers: []FieldHandler{
 					{
-						Name:     "editableField",
-						Label:    "Editable Field",
+						Name:     "Editable Field",
 						Value:    "initial editable value",
 						Editable: true,
 						FieldValueChange: func(newValue string) (string, error) {
@@ -69,8 +68,7 @@ func NewTUI(c *TuiConfig) *DevTUI {
 						},
 					},
 					{
-						Name:     "nonEditableField",
-						Label:    "Non-Editable Field",
+						Name:     "Non-Editable Field",
 						Value:    "non-editable value",
 						Editable: false,
 						FieldValueChange: func(newValue string) (string, error) {

@@ -51,7 +51,7 @@ func (t *DevTUI) formatMessage(msg tabContent) string {
 		msg.Content = t.warnStyle.Render(msg.Content)
 	case messagetype.Info:
 		msg.Content = t.infoStyle.Render(msg.Content)
-	case messagetype.OK:
+	case messagetype.Success:
 		msg.Content = t.okStyle.Render(msg.Content)
 		// default:
 		// 	msg.Content= msg.Content

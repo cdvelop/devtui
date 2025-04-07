@@ -35,8 +35,7 @@ func TestCustomTabs(t *testing.T) {
 		Title: "CUSTOM1",
 		FieldHandlers: []FieldHandler{
 			{
-				Name:     "testField",
-				Label:    "Test Field",
+				Name:     "Test Field",
 				Value:    "test value",
 				Editable: true,
 				FieldValueChange: func(newValue string) (string, error) {

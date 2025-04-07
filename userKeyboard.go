@@ -27,7 +27,7 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 	if currentField.Editable { // Si el campo es editable, permitir la edición
 		// Calcular el ancho máximo disponible para el texto
 		// Esto sigue la misma lógica que en footerInput.go
-		_, availableTextWidth := h.calculateInputWidths(currentField.Label)
+		_, availableTextWidth := h.calculateInputWidths(currentField.Name)
 
 		switch msg.Type {
 		case tea.KeyEnter: // Guardar cambios o ejecutar acción
@@ -36,7 +36,7 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 				msg, err := currentField.FieldValueChange(currentField.Value)
 				if err != nil {
 					// Si hay un error, mostrarlo en la pestaña actual
-					currentTab.addNewContent(messagetype.Error, fmt.Sprintf("%v %v", currentField.Label, err))
+					currentTab.addNewContent(messagetype.Error, fmt.Sprintf("%v %v", currentField.Name, err))
 				}
 				h.editingConfigOpen(false, currentField, msg)
 			} else {
@@ -113,12 +113,12 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 	} else { // Si el campo no es editable, solo ejecutar la acción
 		switch msg.Type {
 		case tea.KeyEnter:
-			msgType := messagetype.OK
+			msgType := messagetype.Success
 			// content eg: "Browser Opened"
 			content, err := currentField.FieldValueChange(currentField.Value)
 			if err != nil {
 				msgType = messagetype.Error
-				content = fmt.Sprintf("%s %s %s", currentField.Label, content, err.Error())
+				content = fmt.Sprintf("%s %s %s", currentField.Name, content, err.Error())
 			}
 			currentField.Value = content
 			currentTab.addNewContent(msgType, content)
@@ -178,11 +178,11 @@ func (h *DevTUI) handleNormalModeKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 		if totalFields > 0 {
 			field := &currentTab.FieldHandlers[currentTab.indexActiveEditField]
 			if !field.Editable {
-				msgType := messagetype.OK
+				msgType := messagetype.Success
 				content, err := field.FieldValueChange(field.Value)
 				if err != nil {
 					msgType = messagetype.Error
-					content = fmt.Sprintf("%s %s %s", field.Label, content, err.Error())
+					content = fmt.Sprintf("%s %s %s", field.Name, content, err.Error())
 				}
 				field.Value = content
 				currentTab.addNewContent(msgType, content)

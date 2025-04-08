@@ -47,6 +47,10 @@ func (ts *TabSection) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
+func (t *TabSection) addNewContent(msgType messagetype.Type, content string) {
+	t.tabContents = append(t.tabContents, t.tui.newContent(content, msgType, t))
+}
+
 // Title returns the tab section title
 func (ts *TabSection) Title() string {
 	return ts.title

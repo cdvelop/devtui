@@ -11,6 +11,12 @@ type ColorStyle struct {
 	Lowlight   string // eg: #666666
 }
 
+const (
+	infoColor = "#00FF00" // Verde brillante
+	warnColor = "#FFFF00" // Amarillo brillante
+	errColor  = "#FF0000" // Rojo brillante
+)
+
 type tuiStyle struct {
 	*ColorStyle
 
@@ -101,19 +107,19 @@ func newTuiStyle(cs *ColorStyle) *tuiStyle {
 	// Inicializar los estilos que antes eran globales
 	t.okStyle = lipgloss.NewStyle().
 		Bold(true).
-		Foreground(lipgloss.Color("#00FF00")) // Verde brillante
+		Foreground(lipgloss.Color(infoColor)) // Verde brillante
 
 	t.errStyle = lipgloss.NewStyle().
 		Bold(true).
-		Foreground(lipgloss.Color("#FF0000")) // Rojo brillante
+		Foreground(lipgloss.Color(errColor)) // Rojo brillante
 
 	t.warnStyle = lipgloss.NewStyle().
 		Bold(true).
-		Foreground(lipgloss.Color("#FFFF00")) // Amarillo brillante
+		Foreground(lipgloss.Color(warnColor)) // Amarillo brillante
 
 	t.infoStyle = lipgloss.NewStyle().
 		Bold(true).
-		Foreground(lipgloss.Color(t.Background)) //
+		Foreground(lipgloss.Color(infoColor)) // verde brillante
 
 	t.normStyle = lipgloss.NoColor{}
 

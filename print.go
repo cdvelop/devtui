@@ -22,8 +22,13 @@ func joinMessages(messages ...any) (Label string) {
 }
 
 // sendMessage envía un mensaje al tui por el canal de mensajes
-func (t *DevTUI) sendMessage(content string, mt messagetype.Type, tabSection *TabSection) {
-	t.tabContentsChan <- t.newContent(content, mt, tabSection)
+func (d *DevTUI) sendMessage(content string, mt messagetype.Type, tabSection *TabSection) {
+
+	tabSection.addNewContent(mt, content)
+
+	newContent := d.newContent(content, mt, tabSection)
+
+	d.tabContentsChan <- newContent
 }
 
 func (h *DevTUI) newContent(content string, mt messagetype.Type, tabSection *TabSection) tabContent {

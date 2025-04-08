@@ -15,23 +15,22 @@ func DefaultTUIForTest(LogToFile func(messageErr any)) *DevTUI {
 			Title: "Tab 1",
 			index: 0,
 			FieldHandlers: []Field{
-				{
-					Name:     "Field 1  (Editable)",
-					Value:    "initial test value",
-					Editable: true,
-					cursor:   0,
-					FieldValueChange: func(value string) (string, error) {
+				*NewField(
+					"Field 1  (Editable)",
+					"initial test value",
+					true,
+					func(value string) (string, error) {
 						return "Saved value: " + value, nil
 					},
-				},
-				{
-					Name:     "Field 2 (Non-Editable)",
-					Value:    "special action",
-					Editable: false,
-					FieldValueChange: func(value string) (string, error) {
+				),
+				*NewField(
+					"Field 2 (Non-Editable)",
+					"special action",
+					false,
+					func(value string) (string, error) {
 						return "Action executed", nil
 					},
-				},
+				),
 			},
 			indexActiveEditField: 0,
 		},
@@ -39,24 +38,22 @@ func DefaultTUIForTest(LogToFile func(messageErr any)) *DevTUI {
 			Title: "Tab 2",
 			index: 1,
 			FieldHandlers: []Field{
-				{
-					Name:     "Field 1",
-					Value:    "tab 2 value 1",
-					Editable: true,
-					cursor:   0,
-					FieldValueChange: func(value string) (string, error) {
+				*NewField(
+					"Field 1",
+					"tab 2 value 1",
+					true,
+					func(value string) (string, error) {
 						return "Tab 2 saved: " + value, nil
 					},
-				},
-				{
-					Name:     "Field 2",
-					Value:    "error value",
-					Editable: true,
-					cursor:   0,
-					FieldValueChange: func(value string) (string, error) {
+				),
+				*NewField(
+					"Field 2",
+					"error value",
+					true,
+					func(value string) (string, error) {
 						return "", errors.New("Error message test field 2 " + value)
 					},
-				},
+				),
 			},
 			indexActiveEditField: 0,
 		},
@@ -90,7 +87,7 @@ func prepareForTesting() *DevTUI {
 	os.Setenv("TEST_MODE", "true")
 
 	// Set initial value for the field
-	h.tabSections[0].FieldHandlers[0].Value = "initial value"
+	h.tabSections[0].FieldHandlers[0].SetValue("initial value")
 
 	return h
 }

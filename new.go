@@ -58,24 +58,22 @@ func NewTUI(c *TuiConfig) *DevTUI {
 			{
 				Title: defaultTabName,
 				FieldHandlers: []Field{
-					{
-						Name:     "Editable Field",
-						Value:    "initial editable value",
-						Editable: true,
-						FieldValueChange: func(newValue string) (string, error) {
-							// Agregar la lógica de cambio de valor deseada
+					*NewField(
+						"Editable Field",
+						"initial editable value",
+						true,
+						func(newValue string) (string, error) {
 							return fmt.Sprintf("Value changed to %s", newValue), nil
 						},
-					},
-					{
-						Name:     "Non-Editable Field",
-						Value:    "non-editable value",
-						Editable: false,
-						FieldValueChange: func(newValue string) (string, error) {
-							// Agregar la acción deseada para el campo no editable
+					),
+					*NewField(
+						"Non-Editable Field",
+						"non-editable value",
+						false,
+						func(newValue string) (string, error) {
 							return "Action executed", nil
 						},
-					},
+					),
 				},
 				SectionFooter: "build footer example",
 				tabContents:   []tabContent{},

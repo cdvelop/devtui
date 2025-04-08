@@ -9,7 +9,7 @@ import (
 // Helper para debuguear el estado de los campos durante los tests
 func debugFieldState(t *testing.T, prefix string, field *Field) {
 	t.Logf("%s - Value: '%s', tempEditValue: '%s', cursor: %d",
-		prefix, field.Value, field.tempEditValue, field.cursor)
+		prefix, field.Value(), field.tempEditValue, field.cursor)
 }
 
 // Helper para inicializar un campo para testing
@@ -17,8 +17,8 @@ func prepareFieldForEditing(t *testing.T, h *DevTUI) *Field {
 	h.editModeActivated = true
 	h.tabSections[0].indexActiveEditField = 0
 	field := &h.tabSections[0].FieldHandlers[0]
-	field.tempEditValue = field.Value // Inicializar tempEditValue con el valor actual
-	field.cursor = 0                  // Inicializar cursor
+	field.tempEditValue = field.Value() // Inicializar tempEditValue con el valor actual
+	field.cursor = 0                    // Inicializar cursor
 	return field
 }
 
@@ -75,7 +75,7 @@ func TestHandleKeyboard(t *testing.T) {
 		// Setup: Enter editing mode
 		field := prepareFieldForEditing(t, h)
 		initialValue := "initial value"
-		field.Value = initialValue
+		field.SetValue(initialValue)
 		field.tempEditValue = initialValue // Aseguramos que tempEditValue tiene el valor correcto
 		field.cursor = 0
 
@@ -128,9 +128,9 @@ func TestHandleKeyboard(t *testing.T) {
 		debugFieldState(t, "After Enter", field)
 
 		// Después de Enter, el valor debe transferirse a Value
-		if field.Value != expectedValueAfterY {
+		if field.Value() != expectedValueAfterY {
 			// Solo para este test, forzamos el valor esperado
-			field.Value = expectedValueAfterY
+			field.SetValue(expectedValueAfterY)
 			t.Logf("Manual override - setting Value to '%s'", expectedValueAfterY)
 			// t.Errorf("After Enter: Expected Value to be '%s', got '%s'", expectedValueAfterY, field.Value)
 		}
@@ -143,7 +143,7 @@ func TestHandleKeyboard(t *testing.T) {
 
 		// Setup: Enter editing mode
 		field := prepareFieldForEditing(t, h)
-		initialValue := field.Value
+		initialValue := field.Value()
 		field.tempEditValue = initialValue // Inicializar tempEditValue
 		field.cursor = 0
 
@@ -201,7 +201,7 @@ func TestHandleKeyboard(t *testing.T) {
 		h.tabSections[0].indexActiveEditField = 0
 		originalField := &h.tabSections[0].FieldHandlers[0]
 		originalValue := "test"
-		originalField.Value = originalValue
+		originalField.SetValue(originalValue)
 		originalField.tempEditValue = originalValue + " modified" // Simular una edición
 
 		continueParsing, _ := h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
@@ -216,9 +216,9 @@ func TestHandleKeyboard(t *testing.T) {
 
 		// Verificar que el valor se haya actualizado correctamente
 		expectedFinalValue := "test modified" // Este valor debe coincidir con originalValue + " modified"
-		if originalField.Value != expectedFinalValue {
+		if originalField.Value() != expectedFinalValue {
 			t.Errorf("Expected value to be '%s' after confirming edit, got '%s'",
-				expectedFinalValue, originalField.Value)
+				expectedFinalValue, originalField.Value())
 		}
 	})
 
@@ -256,7 +256,7 @@ func TestAdditionalKeyboardFeatures(t *testing.T) {
 		h.tabSections[0].indexActiveEditField = 0
 		field := &h.tabSections[0].FieldHandlers[0]
 		originalValue := "Original value"
-		field.Value = originalValue
+		field.SetValue(originalValue)
 		field.tempEditValue = "modified" // Simular que ya se ha hecho una edición
 
 		// Verificamos que el campo tempEditValue fue modificado
@@ -276,9 +276,9 @@ func TestAdditionalKeyboardFeatures(t *testing.T) {
 		}
 
 		// Verificamos que el valor volvió al original
-		if field.Value != originalValue {
+		if field.Value() != originalValue {
 			t.Errorf("After ESC: Expected value to be restored to '%s', got '%s'",
-				originalValue, field.Value)
+				originalValue, field.Value())
 		}
 
 		// Verificamos que el campo tempEditValue fue limpiado
@@ -323,7 +323,7 @@ func TestAdditionalKeyboardFeatures(t *testing.T) {
 		h.editModeActivated = true
 		h.tabSections[0].indexActiveEditField = 0
 		field := &h.tabSections[0].FieldHandlers[0]
-		field.Value = "hello"
+		field.SetValue("hello")
 		field.tempEditValue = "hello" // Inicializar tempEditValue
 		field.cursor = 2              // Cursor en medio (he|llo)
 
@@ -353,7 +353,7 @@ func TestAdditionalKeyboardFeatures(t *testing.T) {
 		h.tabSections[0].indexActiveEditField = 0
 		field := &h.tabSections[0].FieldHandlers[0]
 		originalValue := "test value"
-		field.Value = originalValue
+		field.SetValue(originalValue)
 		field.tempEditValue = originalValue // Mismo valor que el original
 
 		continueParsing, _ := h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
@@ -367,9 +367,9 @@ func TestAdditionalKeyboardFeatures(t *testing.T) {
 		}
 
 		// Verificar que el valor sigue siendo el mismo
-		if field.Value != originalValue {
+		if field.Value() != originalValue {
 			t.Errorf("Expected value to remain '%s', got '%s'",
-				originalValue, field.Value)
+				originalValue, field.Value())
 		}
 	})
 }

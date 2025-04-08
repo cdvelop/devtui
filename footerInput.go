@@ -49,7 +49,7 @@ func (h *DevTUI) renderFooterInput() string {
 	horizontalPadding := 1 // Este valor viene del Padding(0, 1) en headerTitleStyle
 
 	// Truncar la etiqueta si es necesario y añadir ":" al final
-	labelText := tinystring.Convert(field.Name).Truncate(labelWidth-1, 0).String() + ":"
+	labelText := tinystring.Convert(field.name).Truncate(labelWidth-1, 0).String() + ":"
 
 	// Aplicar el estilo base para garantizar un ancho fijo
 	fixedWidthLabel := h.labelStyle.Render(labelText)
@@ -61,35 +61,46 @@ func (h *DevTUI) renderFooterInput() string {
 	info := h.renderScrollInfo()
 
 	// OR if you need truncation:
-	labelText = tinystring.Convert(field.Name).Truncate(labelWidth-1, 0).String()
+	labelText = tinystring.Convert(field.name).Truncate(labelWidth-1, 0).String()
 	valueWidth, _ := h.calculateInputWidths(labelText)
 
 	var showCursor bool
 	// Preparar el valor del campo
-	valueText := field.Value
-	// solo si estamos en modo edición y el campo es editable
-	if h.editModeActivated && field.Editable {
-		showCursor = true
+	valueText := field.value
+	// Usar tempEditValue si existe (modo edición)
+	if field.tempEditValue != "" {
 		valueText = field.tempEditValue
+	}
+	// Mostrar cursor solo si estamos en modo edición y el campo es editable
+	if h.editModeActivated && field.editable {
+		showCursor = true
 	}
 
 	// Definir el estilo para el valor del campo
 	inputValueStyle := lipgloss.NewStyle().
 		Width(valueWidth).
-		Padding(0, horizontalPadding). // Añadir padding consistente
-		Background(lipgloss.Color(h.Lowlight)).
-		Foreground(lipgloss.Color(h.Background))
+		Padding(0, horizontalPadding) // Añadir padding consistente
 
-	// si el campo no es editable cambiar el color del fondo y del texto
-	if !field.Editable {
-		inputValueStyle = inputValueStyle.Background(lipgloss.Color(h.ForeGround)).
+	// Aplicar estilos según el estado
+	if h.editModeActivated && field.editable {
+		// Estilo para edición activa
+		inputValueStyle = inputValueStyle.
+			Background(lipgloss.Color(h.Lowlight)).
+			Foreground(lipgloss.Color(h.ForeGround))
+	} else if !field.editable {
+		// Estilo para campos no editables
+		inputValueStyle = inputValueStyle.
+			Background(lipgloss.Color(h.ForeGround)).
+			Foreground(lipgloss.Color(h.Background))
+	} else {
+		// Estilo para campos editables pero no en modo edición
+		inputValueStyle = inputValueStyle.
+			Background(lipgloss.Color(h.Lowlight)).
 			Foreground(lipgloss.Color(h.Background))
 	}
 
 	// Añadir cursor si corresponde
 	if showCursor {
-		// Si está en modo edición, cambiar el color del texto a ForeGround
-		inputValueStyle = inputValueStyle.Foreground(lipgloss.Color(h.ForeGround))
 		// Asegurar que el cursor está dentro de los límites
 		runes := []rune(field.tempEditValue)
 		if field.cursor < 0 {

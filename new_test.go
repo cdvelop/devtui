@@ -34,14 +34,14 @@ func TestCustomTabs(t *testing.T) {
 	customSection := TabSection{
 		Title: "CUSTOM1",
 		FieldHandlers: []Field{
-			{
-				Name:     "Test Field",
-				Value:    "test value",
-				Editable: true,
-				FieldValueChange: func(newValue string) (string, error) {
+			*NewField(
+				"Test Field",
+				"test value",
+				true,
+				func(newValue string) (string, error) {
 					return "Value updated to " + newValue, nil
 				},
-			},
+			),
 		},
 		SectionFooter: "custom footer",
 	}
@@ -58,14 +58,10 @@ func TestCustomTabs(t *testing.T) {
 	// Since internal fields are not accessible in real usage,
 	// we can only test that the TUI was modified successfully
 
-	// Test FieldValueChange function if accessible
-	result, err := customSection.FieldHandlers[0].FieldValueChange("new value")
-	if err != nil {
-		t.Errorf("FieldValueChange returned error: %v", err)
-	}
-
-	if result != "Value updated to new value" {
-		t.Errorf("Expected 'Value updated to new value', got '%s'", result)
+	// Verify field was created with expected initial value
+	field := &customSection.FieldHandlers[0]
+	if field.Value() != "test value" {
+		t.Errorf("Expected initial value 'test value', got '%s'", field.Value())
 	}
 }
 

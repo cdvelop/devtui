@@ -24,19 +24,19 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 	currentTab := &h.tabSections[h.activeTab]
 	currentField := &h.tabSections[h.activeTab].FieldHandlers[currentTab.indexActiveEditField]
 
-	if currentField.Editable { // Si el campo es editable, permitir la edición
+	if currentField.Editable() { // Si el campo es editable, permitir la edición
 		// Calcular el ancho máximo disponible para el texto
 		// Esto sigue la misma lógica que en footerInput.go
-		_, availableTextWidth := h.calculateInputWidths(currentField.Name)
+		_, availableTextWidth := h.calculateInputWidths(currentField.Name())
 
 		switch msg.Type {
 		case tea.KeyEnter: // Guardar cambios o ejecutar acción
-			if currentField.tempEditValue != "" && currentField.tempEditValue != currentField.Value {
-				currentField.Value = currentField.tempEditValue // Aplicar los cambios solo si hubo modificaciones
-				msg, err := currentField.FieldValueChange(currentField.Value)
+			if currentField.tempEditValue != "" && currentField.tempEditValue != currentField.Value() {
+				currentField.SetValue(currentField.tempEditValue) // Aplicar los cambios solo si hubo modificaciones
+				msg, err := currentField.changeFunc(currentField.Value())
 				if err != nil {
 					// Si hay un error, mostrarlo en la pestaña actual
-					currentTab.addNewContent(messagetype.Error, fmt.Sprintf("%v %v", currentField.Name, err))
+					currentTab.addNewContent(messagetype.Error, fmt.Sprintf("%v %v", currentField.Name(), err))
 				}
 				h.editingConfigOpen(false, currentField, msg)
 			} else {
@@ -60,11 +60,11 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 			}
 
 		case tea.KeyRight: // Mover el cursor a la derecha dentro del texto
-			value := currentField.Value
+			value := currentField.Value()
 			if currentField.tempEditValue != "" {
 				value = currentField.tempEditValue
 			}
-			if currentField.cursor < len(value) {
+			if currentField.cursor < len([]rune(value)) {
 				currentField.cursor++
 			}
 
@@ -72,7 +72,7 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 			if currentField.cursor > 0 {
 				// Si aún no hay valor temporal, copiar el valor original
 				if currentField.tempEditValue == "" {
-					currentField.tempEditValue = currentField.Value
+					currentField.tempEditValue = currentField.Value()
 				}
 
 				// Convert to runes to handle multi-byte characters correctly
@@ -89,7 +89,7 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 			if len(msg.Runes) > 0 {
 				// Si aún no hay valor temporal, copiar el valor original
 				if currentField.tempEditValue == "" {
-					currentField.tempEditValue = currentField.Value
+					currentField.tempEditValue = currentField.Value()
 				}
 
 				runes := []rune(currentField.tempEditValue)
@@ -115,12 +115,12 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 		case tea.KeyEnter:
 			msgType := messagetype.Success
 			// content eg: "Browser Opened"
-			content, err := currentField.FieldValueChange(currentField.Value)
+			content, err := currentField.changeFunc(currentField.Value())
 			if err != nil {
 				msgType = messagetype.Error
-				content = fmt.Sprintf("%s %s %s", currentField.Name, content, err.Error())
+				content = fmt.Sprintf("%s %s %s", currentField.Name(), content, err.Error())
 			}
-			currentField.Value = content
+			currentField.SetValue(content)
 			currentTab.addNewContent(msgType, content)
 			h.editModeActivated = false
 			h.updateViewport() // Asegurar que se actualice la vista para mostrar el mensaje
@@ -150,11 +150,15 @@ func (h *DevTUI) handleNormalModeKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 	case tea.KeyLeft: // Navegar al campo anterior (ciclo continuo)
 		if totalFields > 0 {
 			currentTab.indexActiveEditField = (currentTab.indexActiveEditField - 1 + totalFields) % totalFields
+			h.updateViewport()
+			return false, nil // Detener procesamiento adicional
 		}
 
 	case tea.KeyRight: // Navegar al campo siguiente (ciclo continuo)
 		if totalFields > 0 {
 			currentTab.indexActiveEditField = (currentTab.indexActiveEditField + 1) % totalFields
+			h.updateViewport()
+			return false, nil // Detener procesamiento adicional
 		}
 
 	case tea.KeyTab: // cambiar tabSection
@@ -177,18 +181,18 @@ func (h *DevTUI) handleNormalModeKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 	case tea.KeyEnter: //Enter para entrar en modo edición, ejecuta la acción directamente si el campo no es editable
 		if totalFields > 0 {
 			field := &currentTab.FieldHandlers[currentTab.indexActiveEditField]
-			if !field.Editable {
+			if !field.Editable() {
 				msgType := messagetype.Success
-				content, err := field.FieldValueChange(field.Value)
+				content, err := field.changeFunc(field.Value())
 				if err != nil {
 					msgType = messagetype.Error
-					content = fmt.Sprintf("%s %s %s", field.Name, content, err.Error())
+					content = fmt.Sprintf("%s %s %s", field.Name(), content, err.Error())
 				}
-				field.Value = content
+				field.SetValue(content)
 				currentTab.addNewContent(msgType, content)
 			} else {
 				// Para campos editables, activar modo de edición explícitamente
-				field.tempEditValue = field.Value
+				field.tempEditValue = field.Value()
 				field.cursor = 0 // Asegurarnos de que el cursor comience al principio
 				h.editModeActivated = true
 				h.editingConfigOpen(true, field, "")
@@ -210,12 +214,12 @@ func (h *DevTUI) checkAutoEditMode() {
 	currentTab := &h.tabSections[h.activeTab]
 
 	// Entrar automáticamente en modo edición si hay un solo campo editable
-	if len(currentTab.FieldHandlers) == 1 && currentTab.FieldHandlers[0].Editable {
+	if len(currentTab.FieldHandlers) == 1 && currentTab.FieldHandlers[0].Editable() {
 		h.editModeActivated = true
 		currentTab.indexActiveEditField = 0
 		// Inicializar tempEditValue y cursor
 		field := &currentTab.FieldHandlers[0]
-		field.tempEditValue = field.Value
+		field.tempEditValue = field.Value()
 		field.cursor = 0
 	} else {
 		// Si hay múltiples campos, no entrar en modo edición automáticamente

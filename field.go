@@ -1,5 +1,7 @@
 package devtui
 
+// use NewField to create a new field in the tab section
+// Field represents a field in the TUI with a name, value, and editable state.
 type Field struct {
 	name       string                                                // eg: "Server Port"
 	value      string                                                // initial Value eg: "8080"
@@ -11,6 +13,25 @@ type Field struct {
 	cursor        int // cursor position in text value
 }
 
+// NewField creates and returns a new Field instance.
+//
+// Parameters:
+// - name: The name of the field.
+// - value: The initial value of the field.
+// - editable: A boolean indicating whether the field is editable.
+// - changeFunc: A callback function that is invoked when the field's value changes.
+//   It receives the new value as a parameter and returns the updated value and an error, if any.
+//
+// Returns:
+// - A pointer to the newly created Field instance.
+//
+// Example usage:
+//   field := NewField("username", "defaultUser", true, func(newValue string) (string, error) {
+//       if len(newValue) == 0 {
+//           return "", errors.New("value cannot be empty")
+//       }
+//       return newValue, nil
+//   })
 func NewField(name, value string, editable bool, changeFunc func(newValue string) (string, error)) *Field {
 	return &Field{
 		name:       name,

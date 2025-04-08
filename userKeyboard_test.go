@@ -16,7 +16,7 @@ func debugFieldState(t *testing.T, prefix string, field *Field) {
 func prepareFieldForEditing(t *testing.T, h *DevTUI) *Field {
 	h.editModeActivated = true
 	h.tabSections[0].indexActiveEditField = 0
-	field := &h.tabSections[0].FieldHandlers[0]
+	field := &h.tabSections[0].FieldHandlers()[0]
 	field.tempEditValue = field.Value() // Inicializar tempEditValue con el valor actual
 	field.cursor = 0                    // Inicializar cursor
 	return field
@@ -199,7 +199,7 @@ func TestHandleKeyboard(t *testing.T) {
 		// Setup: Enter editing mode
 		h.editModeActivated = true
 		h.tabSections[0].indexActiveEditField = 0
-		originalField := &h.tabSections[0].FieldHandlers[0]
+		originalField := &h.tabSections[0].FieldHandlers()[0]
 		originalValue := "test"
 		originalField.SetValue(originalValue)
 		originalField.tempEditValue = originalValue + " modified" // Simular una edición
@@ -254,7 +254,7 @@ func TestAdditionalKeyboardFeatures(t *testing.T) {
 		// Setup: Enter editing mode
 		h.editModeActivated = true
 		h.tabSections[0].indexActiveEditField = 0
-		field := &h.tabSections[0].FieldHandlers[0]
+		field := &h.tabSections[0].FieldHandlers()[0]
 		originalValue := "Original value"
 		field.SetValue(originalValue)
 		field.tempEditValue = "modified" // Simular que ya se ha hecho una edición
@@ -322,7 +322,7 @@ func TestAdditionalKeyboardFeatures(t *testing.T) {
 		// Configuración inicial - modo edición
 		h.editModeActivated = true
 		h.tabSections[0].indexActiveEditField = 0
-		field := &h.tabSections[0].FieldHandlers[0]
+		field := &h.tabSections[0].FieldHandlers()[0]
 		field.SetValue("hello")
 		field.tempEditValue = "hello" // Inicializar tempEditValue
 		field.cursor = 2              // Cursor en medio (he|llo)
@@ -351,7 +351,7 @@ func TestAdditionalKeyboardFeatures(t *testing.T) {
 		// Setup: Enter editing mode
 		h.editModeActivated = true
 		h.tabSections[0].indexActiveEditField = 0
-		field := &h.tabSections[0].FieldHandlers[0]
+		field := &h.tabSections[0].FieldHandlers()[0]
 		originalValue := "test value"
 		field.SetValue(originalValue)
 		field.tempEditValue = originalValue // Mismo valor que el original

@@ -42,23 +42,22 @@ func main() {
 	// Create new TUI instance
 	tui := devtui.NewTUI(config)
 
-	// Add custom tabs if needed (optional)
-	tui.AddTabSections(devtui.TabSection{
-		Title: "Main",
-		FieldHandlers: []devtui.Field{
-			*devtui.NewField(
-				"Username",
-				"",
-				true,
-				func(newValue string) (string, error) {
-					if len(newValue) < 5 {
-						return "", fmt.Errorf("username must be at least 5 characters")
-					}
-					return newValue, nil
-				},
-			),
-		},
-	})
+	// Create and add custom tabs (recommended way)
+	mainTab := tui.NewTabSection("Main", "")
+	mainTab.AddFields(
+		*devtui.NewField(
+			"Username",
+			"",
+			true,
+			func(newValue string) (string, error) {
+				if len(newValue) < 5 {
+					return "", fmt.Errorf("username must be at least 5 characters")
+				}
+				return newValue, nil
+			},
+		),
+	)
+	tui.AddTabSections(mainTab)
 
 	// Start the TUI
 	if err := tui.Start(); err != nil {
@@ -69,7 +68,7 @@ func main() {
 
 ## Keyboard Shortcuts
 
-| Key          | Action                                  |
+| Key          | Action                                 |
 |--------------|----------------------------------------|
 | Tab          | Switch to next tab                     |
 | Shift+Tab    | Switch to previous tab                 |
@@ -77,6 +76,48 @@ func main() {
 | Enter        | Edit field or execute action           |
 | Esc          | Cancel editing                         |
 | Ctrl+C       | Quit application                       |
+
+## NewTabSection Method
+
+```go
+// NewTabSection creates a new TabSection with the given title and footer
+// Example:
+
+	tab := tui.NewTabSection("BUILD", "Press 't' to compile")
+	// Preferred way to add fields (variadic parameters)
+	tab.AddFields(
+		*NewField(
+			"Username",
+			"",
+			true,
+			func(newValue string) (string, error) {
+				if len(newValue) < 5 {
+					return "", fmt.Errorf("username must be at least 5 characters")
+				}
+				return newValue, nil
+			},
+		),
+		*NewField(
+			"Password",
+			"",
+			true,
+			func(newValue string) (string, error) {
+				if len(newValue) < 8 {
+					return "", fmt.Errorf("password must be at least 8 characters")
+				}
+				return newValue, nil
+			},
+		),
+	)
+
+
+//	 Get/Set title and footer
+	currentTitle := tab.Title()
+	tab.SetTitle("New Title")
+
+	currentFooter := tab.Footer() 
+	tab.SetFooter("New Footer")
+```
 
 ## Field Types
 

@@ -10,54 +10,54 @@ import (
 func DefaultTUIForTest(LogToFile func(messageErr any)) *DevTUI {
 
 	// Create basic tabSections for testing/demo
-	tabSections := []TabSection{
-		{
-			Title: "Tab 1",
-			index: 0,
-			FieldHandlers: []Field{
-				*NewField(
-					"Field 1  (Editable)",
-					"initial test value",
-					true,
-					func(value string) (string, error) {
-						return "Saved value: " + value, nil
-					},
-				),
-				*NewField(
-					"Field 2 (Non-Editable)",
-					"special action",
-					false,
-					func(value string) (string, error) {
-						return "Action executed", nil
-					},
-				),
+	// Create temporary minimal DevTUI instance just for NewTabSection
+	tmpTUI := &DevTUI{TuiConfig: &TuiConfig{}}
+
+	tab1 := tmpTUI.NewTabSection("Tab 1", "")
+	tab1.index = 0
+	tab1.SetFieldHandlers([]Field{
+		*NewField(
+			"Field 1  (Editable)",
+			"initial test value",
+			true,
+			func(value string) (string, error) {
+				return "Saved value: " + value, nil
 			},
-			indexActiveEditField: 0,
-		},
-		{
-			Title: "Tab 2",
-			index: 1,
-			FieldHandlers: []Field{
-				*NewField(
-					"Field 1",
-					"tab 2 value 1",
-					true,
-					func(value string) (string, error) {
-						return "Tab 2 saved: " + value, nil
-					},
-				),
-				*NewField(
-					"Field 2",
-					"error value",
-					true,
-					func(value string) (string, error) {
-						return "", errors.New("Error message test field 2 " + value)
-					},
-				),
+		),
+		*NewField(
+			"Field 2 (Non-Editable)",
+			"special action",
+			false,
+			func(value string) (string, error) {
+				return "Action executed", nil
 			},
-			indexActiveEditField: 0,
-		},
-	}
+		),
+	})
+	tab1.indexActiveEditField = 0
+
+	tab2 := tmpTUI.NewTabSection("Tab 2", "")
+	tab2.index = 1
+	tab2.SetFieldHandlers([]Field{
+		*NewField(
+			"Field 1",
+			"tab 2 value 1",
+			true,
+			func(value string) (string, error) {
+				return "Tab 2 saved: " + value, nil
+			},
+		),
+		*NewField(
+			"Field 2",
+			"error value",
+			true,
+			func(value string) (string, error) {
+				return "", errors.New("Error message test field 2 " + value)
+			},
+		),
+	})
+	tab2.indexActiveEditField = 0
+
+	tabSections := []TabSection{tab1, tab2}
 
 	// Initialize the UI
 	h := NewTUI(&TuiConfig{
@@ -87,7 +87,7 @@ func prepareForTesting() *DevTUI {
 	os.Setenv("TEST_MODE", "true")
 
 	// Set initial value for the field
-	h.tabSections[0].FieldHandlers[0].SetValue("initial value")
+	h.tabSections[0].FieldHandlers()[0].SetValue("initial value")
 
 	return h
 }

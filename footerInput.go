@@ -14,7 +14,7 @@ import (
 
 func (h *DevTUI) footerView() string {
 	// Si hay campos disponibles, mostrar el input (independiente de si estamos en modo edición)
-	if len(h.tabSections[h.activeTab].FieldHandlers) > 0 {
+	if len(h.tabSections[h.activeTab].FieldHandlers()) > 0 {
 		return h.renderFooterInput()
 	}
 
@@ -36,11 +36,12 @@ func (h *DevTUI) renderFooterInput() string {
 	tabSection := &h.tabSections[h.activeTab]
 
 	// Verificar que el índice activo esté en rango
-	if tabSection.indexActiveEditField >= len(tabSection.FieldHandlers) {
+	fieldHandlers := tabSection.FieldHandlers()
+	if tabSection.indexActiveEditField >= len(fieldHandlers) {
 		tabSection.indexActiveEditField = 0 // Reiniciar a 0 si está fuera de rango
 	}
 
-	field := &tabSection.FieldHandlers[tabSection.indexActiveEditField]
+	field := &fieldHandlers[tabSection.indexActiveEditField]
 
 	// Usar el ancho estándar de etiquetas definido en el estilo
 	labelWidth := h.labelWidth

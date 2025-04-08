@@ -31,19 +31,16 @@ func TestNewTUI(t *testing.T) {
 
 func TestCustomTabs(t *testing.T) {
 	// Create a custom configuration with custom tabs
-	customSection := TabSection{
-		Title: "CUSTOM1",
-		FieldHandlers: []Field{
-			*NewField(
-				"Test Field",
-				"test value",
-				true,
-				func(newValue string) (string, error) {
-					return "Value updated to " + newValue, nil
-				},
-			),
-		},
-		SectionFooter: "custom footer",
+	customSection := NewTUI(&TuiConfig{}).NewTabSection("CUSTOM1", "custom footer")
+	customFields := []Field{
+		*NewField(
+			"Test Field",
+			"test value",
+			true,
+			func(newValue string) (string, error) {
+				return "Value updated to " + newValue, nil
+			},
+		),
 	}
 
 	config := &TuiConfig{
@@ -59,7 +56,8 @@ func TestCustomTabs(t *testing.T) {
 	// we can only test that the TUI was modified successfully
 
 	// Verify field was created with expected initial value
-	field := &customSection.FieldHandlers[0]
+	customSection.SetFieldHandlers(customFields)
+	field := &customFields[0]
 	if field.Value() != "test value" {
 		t.Errorf("Expected initial value 'test value', got '%s'", field.Value())
 	}
@@ -67,8 +65,8 @@ func TestCustomTabs(t *testing.T) {
 
 func TestMultipleTabSections(t *testing.T) {
 	// Test adding multiple tab sections
-	section1 := TabSection{Title: "Tab1"}
-	section2 := TabSection{Title: "Tab2"}
+	section1 := NewTUI(&TuiConfig{}).NewTabSection("Tab1", "")
+	section2 := NewTUI(&TuiConfig{}).NewTabSection("Tab2", "")
 
 	config := &TuiConfig{
 		TabIndexStart: 0,

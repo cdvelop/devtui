@@ -55,9 +55,11 @@ func NewTUI(c *TuiConfig) *DevTUI {
 		TuiConfig: c,
 		focused:   true, // assume the app is focused
 		tabSections: []TabSection{ // default tab section
-			{
-				Title: defaultTabName,
-				FieldHandlers: []Field{
+			func() TabSection {
+				// Create temporary minimal DevTUI instance just for NewTabSection
+				tmpTUI := &DevTUI{TuiConfig: c}
+				tab := tmpTUI.NewTabSection(defaultTabName, "build footer example")
+				tab.SetFieldHandlers([]Field{
 					*NewField(
 						"Editable Field",
 						"initial editable value",
@@ -74,10 +76,10 @@ func NewTUI(c *TuiConfig) *DevTUI {
 							return "Action executed", nil
 						},
 					),
-				},
-				SectionFooter: "build footer example",
-				tabContents:   []tabContent{},
-			},
+				})
+				tab.tabContents = []tabContent{}
+				return tab
+			}(),
 		},
 		activeTab:       c.TabIndexStart,
 		tabContentsChan: make(chan tabContent, 100),

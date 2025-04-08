@@ -31,7 +31,7 @@ func (h *DevTUI) headerView() string {
 	tab := h.tabSections[h.activeTab]
 
 	// Truncar el título si es necesario
-	headerText := h.AppName + "/" + tab.Title
+	headerText := h.AppName + "/" + tab.Title()
 	truncatedHeader := tinystring.Convert(headerText).Truncate(h.labelWidth, 0).String()
 
 	// Aplicar el estilo base para garantizar un ancho fijo

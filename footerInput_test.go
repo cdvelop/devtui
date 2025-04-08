@@ -15,10 +15,10 @@ func TestFooterView(t *testing.T) {
 	// Caso 1: Tab sin fields debe mostrar el scrollbar estándar
 	t.Run("Footer with no fields shows scrollbar", func(t *testing.T) {
 		// Guardar estado actual para restaurar después de la prueba
-		originalFields := h.tabSections[h.activeTab].FieldHandlers
+		originalFields := h.tabSections[h.activeTab].FieldHandlers()
 
 		// Configurar pestaña sin fields
-		h.tabSections[h.activeTab].FieldHandlers = []Field{}
+		h.tabSections[h.activeTab].SetFieldHandlers([]Field{})
 
 		// Renderizar footer
 		result := h.footerView()
@@ -29,14 +29,14 @@ func TestFooterView(t *testing.T) {
 		}
 
 		// Restaurar estado
-		h.tabSections[h.activeTab].FieldHandlers = originalFields
+		h.tabSections[h.activeTab].SetFieldHandlers(originalFields)
 	})
 
 	// Caso 2: Tab con fields debe mostrar el campo actual como input (ahora siempre, no solo en modo edición)
 	t.Run("Footer with fields shows field as input even when not editing", func(t *testing.T) {
 
 		// Modificar field existente para la prueba
-		field := &h.tabSections[h.activeTab].FieldHandlers[0]
+		field := &h.tabSections[h.activeTab].FieldHandlers()[0]
 		field.SetName("TestLabel")
 		field.SetValue("TestValue Rendered")
 
@@ -62,7 +62,7 @@ func TestRenderFooterInput(t *testing.T) {
 	// Caso 1: Campo editable en modo edición debe mostrar cursor
 	t.Run("Editable field in edit mode shows cursor", func(t *testing.T) {
 		h.editModeActivated = true
-		field := &h.tabSections[h.activeTab].FieldHandlers[0]
+		field := &h.tabSections[h.activeTab].FieldHandlers()[0]
 		field.cursor = 2 // Cursor en posición "Va|lue"
 		field.tempEditValue = "test value"
 
@@ -79,19 +79,19 @@ func TestRenderFooterInput(t *testing.T) {
 	// Caso 2: Campo no editable no debe mostrar cursor
 	t.Run("Non-editable field doesn't show cursor", func(t *testing.T) {
 		// Configurar campo no editable
-		if len(h.tabSections[h.activeTab].FieldHandlers) == 0 {
+		if len(h.tabSections[h.activeTab].FieldHandlers()) == 0 {
 			// Crear un campo si no hay ninguno
-			h.tabSections[h.activeTab].FieldHandlers = append(h.tabSections[h.activeTab].FieldHandlers, *NewField(
+			h.tabSections[h.activeTab].SetFieldHandlers(append(h.tabSections[h.activeTab].FieldHandlers(), *NewField(
 				"Test",
 				"Value",
 				false,
 				nil,
-			))
+			)))
 		}
 
 		h.editModeActivated = true
 		h.tabSections[h.activeTab].indexActiveEditField = 0
-		field := &h.tabSections[h.activeTab].FieldHandlers[0]
+		field := &h.tabSections[h.activeTab].FieldHandlers()[0]
 		field.SetName("Test")
 		field.SetValue("Value")
 		field.SetEditable(false)
@@ -109,9 +109,9 @@ func TestRenderFooterInput(t *testing.T) {
 	t.Run("Index out of range is handled correctly", func(t *testing.T) {
 		expectedValue := "Value index OK"
 		// Configurar un índice activo fuera de rango
-		h.tabSections[h.activeTab].FieldHandlers = []Field{
+		h.tabSections[h.activeTab].SetFieldHandlers([]Field{
 			*NewField("Test", expectedValue, false, nil),
-		}
+		})
 		h.tabSections[h.activeTab].indexActiveEditField = 5 // Índice fuera de rango
 
 		// Renderizar - no debería producir pánico
@@ -125,9 +125,9 @@ func TestRenderFooterInput(t *testing.T) {
 
 	// Nuevo test - Caso 5: Verificar el estilo correcto cuando está seleccionado pero no en modo edición
 	t.Run("Field has correct style when selected but not in edit mode", func(t *testing.T) {
-		h.tabSections[h.activeTab].FieldHandlers = []Field{
+		h.tabSections[h.activeTab].SetFieldHandlers([]Field{
 			*NewField("Test", "Value", true, nil),
-		}
+		})
 		h.tabSections[h.activeTab].indexActiveEditField = 0
 		h.editModeActivated = false // No en modo edición
 
@@ -158,9 +158,9 @@ func TestAutoEditMode(t *testing.T) {
 
 	t.Run("Auto edit mode activates with single editable field", func(t *testing.T) {
 		// Configurar un solo campo editable
-		h.tabSections[h.activeTab].FieldHandlers = []Field{
+		h.tabSections[h.activeTab].SetFieldHandlers([]Field{
 			*NewField("Test", "Value", true, nil),
-		}
+		})
 		h.editModeActivated = false // Iniciar no en modo edición
 
 		// Llamar al método que verifica si debe activar modo edición automático
@@ -174,10 +174,10 @@ func TestAutoEditMode(t *testing.T) {
 
 	t.Run("Auto edit mode does not activate with multiple fields", func(t *testing.T) {
 		// Configurar múltiples campos
-		h.tabSections[h.activeTab].FieldHandlers = []Field{
+		h.tabSections[h.activeTab].SetFieldHandlers([]Field{
 			*NewField("Test1", "Value1", true, nil),
 			*NewField("Test2", "Value2", true, nil),
-		}
+		})
 		h.editModeActivated = false // Iniciar no en modo edición
 
 		// Llamar al método que verifica si debe activar modo edición automático
@@ -191,9 +191,9 @@ func TestAutoEditMode(t *testing.T) {
 
 	t.Run("Auto edit mode does not activate with non-editable field", func(t *testing.T) {
 		// Configurar un solo campo NO editable
-		h.tabSections[h.activeTab].FieldHandlers = []Field{
+		h.tabSections[h.activeTab].SetFieldHandlers([]Field{
 			*NewField("Test", "Value", false, nil),
-		}
+		})
 		h.editModeActivated = false // Iniciar no en modo edición
 
 		// Llamar al método que verifica si debe activar modo edición automático
@@ -211,11 +211,11 @@ func TestInputNavigation(t *testing.T) {
 	h := prepareForTesting()
 
 	// Configurar múltiples campos para prueba de navegación
-	h.tabSections[h.activeTab].FieldHandlers = []Field{
+	h.tabSections[h.activeTab].SetFieldHandlers([]Field{
 		*NewField("Field1", "Value1", true, nil),
 		*NewField("Field2", "Value2", true, nil),
 		*NewField("Field3", "Value3", true, nil),
-	}
+	})
 	h.tabSections[h.activeTab].indexActiveEditField = 0
 	h.editModeActivated = false
 
@@ -272,9 +272,9 @@ func TestInputNavigation(t *testing.T) {
 		h := prepareForTesting()
 
 		// Configurar un campo editable
-		h.tabSections[h.activeTab].FieldHandlers = []Field{
+		h.tabSections[h.activeTab].SetFieldHandlers([]Field{
 			*NewField("Test", "Value", true, nil),
-		}
+		})
 
 		// Asegurar que no estamos en modo edición
 		h.editModeActivated = false
@@ -294,9 +294,9 @@ func TestInputNavigation(t *testing.T) {
 		h := prepareForTesting()
 
 		// Configurar un campo editable
-		h.tabSections[h.activeTab].FieldHandlers = []Field{
+		h.tabSections[h.activeTab].SetFieldHandlers([]Field{
 			*NewField("Test", "Value", true, nil),
-		}
+		})
 
 		// Asegurar que estamos en modo edición
 		h.editModeActivated = true
@@ -315,7 +315,7 @@ func TestInputNavigation(t *testing.T) {
 		// Configurar para edición
 		h.editModeActivated = true
 		h.tabSections[h.activeTab].indexActiveEditField = 0
-		field := &h.tabSections[h.activeTab].FieldHandlers[0]
+		field := &h.tabSections[h.activeTab].FieldHandlers()[0]
 		field.cursor = 3
 		field.SetValue("Value1")
 

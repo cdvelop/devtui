@@ -22,7 +22,8 @@ func (h *DevTUI) HandleKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 // handleEditingConfigKeyboard handles keyboard input while in config editing mode
 func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 	currentTab := &h.tabSections[h.activeTab]
-	currentField := &h.tabSections[h.activeTab].FieldHandlers[currentTab.indexActiveEditField]
+	fieldHandlers := currentTab.FieldHandlers()
+	currentField := &fieldHandlers[currentTab.indexActiveEditField]
 
 	if currentField.Editable() { // Si el campo es editable, permitir la edición
 		// Calcular el ancho máximo disponible para el texto
@@ -139,7 +140,8 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 // handleNormalModeKeyboard handles keyboard input in normal mode (not editing config)
 func (h *DevTUI) handleNormalModeKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 	currentTab := &h.tabSections[h.activeTab]
-	totalFields := len(currentTab.FieldHandlers)
+	fieldHandlers := currentTab.FieldHandlers()
+	totalFields := len(fieldHandlers)
 
 	switch msg.Type {
 	case tea.KeyUp, tea.KeyDown:
@@ -180,7 +182,8 @@ func (h *DevTUI) handleNormalModeKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 
 	case tea.KeyEnter: //Enter para entrar en modo edición, ejecuta la acción directamente si el campo no es editable
 		if totalFields > 0 {
-			field := &currentTab.FieldHandlers[currentTab.indexActiveEditField]
+			fieldHandlers := currentTab.FieldHandlers()
+			field := &fieldHandlers[currentTab.indexActiveEditField]
 			if !field.Editable() {
 				msgType := messagetype.Success
 				content, err := field.changeFunc(field.Value())
@@ -214,11 +217,12 @@ func (h *DevTUI) checkAutoEditMode() {
 	currentTab := &h.tabSections[h.activeTab]
 
 	// Entrar automáticamente en modo edición si hay un solo campo editable
-	if len(currentTab.FieldHandlers) == 1 && currentTab.FieldHandlers[0].Editable() {
+	fieldHandlers := currentTab.FieldHandlers()
+	if len(fieldHandlers) == 1 && fieldHandlers[0].Editable() {
 		h.editModeActivated = true
 		currentTab.indexActiveEditField = 0
 		// Inicializar tempEditValue y cursor
-		field := &currentTab.FieldHandlers[0]
+		field := &fieldHandlers[0]
 		field.tempEditValue = field.Value()
 		field.cursor = 0
 	} else {

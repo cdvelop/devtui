@@ -9,7 +9,7 @@ import (
 // Print sends a normal Label or error to the tui in current tab
 func (h *DevTUI) Print(messages ...any) {
 	msgType := messagetype.DetectMessageType(messages...)
-	h.sendMessage(joinMessages(messages...), msgType, &h.tabSections[h.activeTab])
+	h.sendMessage(joinMessages(messages...), msgType, h.tabSections[h.activeTab])
 }
 
 func joinMessages(messages ...any) (Label string) {

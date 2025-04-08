@@ -87,8 +87,8 @@ func (ts *TabSection) AddFields(fields ...Field) {
 // Example:
 //
 //	tab := tui.NewTabSection("BUILD", "Press enter to compile")
-func (t *DevTUI) NewTabSection(title, footer string) TabSection {
-	return TabSection{
+func (t *DevTUI) NewTabSection(title, footer string) *TabSection {
+	return &TabSection{
 		title:         title,
 		sectionFooter: footer,
 		tui:           t,
@@ -98,7 +98,7 @@ func (t *DevTUI) NewTabSection(title, footer string) TabSection {
 // AddTabSections adds one or more TabSections to the DevTUI
 // If a tab with title "DEFAULT" exists, it will be replaced by the first tab section
 // Deprecated: Use NewTabSection and append to tabSections directly
-func (t *DevTUI) AddTabSections(sections ...TabSection) *DevTUI {
+func (t *DevTUI) AddTabSections(sections ...*TabSection) *DevTUI {
 	if len(sections) == 0 {
 		return t
 	}
@@ -115,8 +115,8 @@ func (t *DevTUI) AddTabSections(sections ...TabSection) *DevTUI {
 	// Replace DEFAULT tab if found
 	if defaultTabIndex >= 0 && len(sections) > 0 {
 		// Initialize first section for replacement
-		newSection := t.initTabSection(sections[0], defaultTabIndex)
-		t.tabSections[defaultTabIndex] = newSection
+		t.initTabSection(sections[0], defaultTabIndex)
+		t.tabSections[defaultTabIndex] = sections[0]
 
 		// Add remaining sections
 		if len(sections) > 1 {
@@ -131,28 +131,26 @@ func (t *DevTUI) AddTabSections(sections ...TabSection) *DevTUI {
 }
 
 // Helper method to initialize a single TabSection
-func (t *DevTUI) initTabSection(section TabSection, index int) TabSection {
-	newSection := section
-	newSection.index = index
-	newSection.tui = t
+func (t *DevTUI) initTabSection(section *TabSection, index int) {
+	section.index = index
+	section.tui = t
 
 	// Initialize field handlers
-	handlers := newSection.FieldHandlers()
+	handlers := section.FieldHandlers()
 	for j := range handlers {
 		handlers[j].index = j
 		handlers[j].cursor = 0
 	}
-	newSection.SetFieldHandlers(handlers)
-
-	return newSection
+	section.SetFieldHandlers(handlers)
 }
 
 // Helper method to add multiple tab sections
-func (t *DevTUI) addNewTabSections(sections ...TabSection) {
+func (t *DevTUI) addNewTabSections(sections ...*TabSection) {
 	startIdx := len(t.tabSections)
 	for i, section := range sections {
-		newSection := t.initTabSection(section, startIdx+i)
-		t.tabSections = append(t.tabSections, newSection)
+		section.index = startIdx + i
+		section.tui = t
+		t.tabSections = append(t.tabSections, section)
 	}
 }
 

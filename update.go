@@ -1,7 +1,6 @@
 package devtui
 
 import (
-	"strings"
 	"time"
 
 	"github.com/cdvelop/messagetype"
@@ -96,23 +95,6 @@ func (h *DevTUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return h, tea.Batch(cmds...)
 }
 
-// Write implementa io.Writer para capturar la salida de otros procesos
-func (ts *TabSection) Write(p []byte) (n int, err error) {
-	msg := strings.TrimSpace(string(p))
-	if msg != "" {
-		// Detectar automáticamente el tipo de mensaje
-		msgType := messagetype.DetectMessageType(msg)
-
-		ts.tui.sendMessage(msg, msgType, ts)
-		// Si es un error, escribirlo en el archivo de log
-		if msgType == messagetype.Error {
-			ts.tui.LogToFile(msg)
-		}
-
-	}
-	return len(p), nil
-}
-
 func (h *DevTUI) updateViewport() {
 	h.viewport.SetContent(h.ContentView())
 	h.viewport.GotoBottom()
@@ -131,7 +113,7 @@ func (h *DevTUI) editingConfigOpen(open bool, currentField *Field, msg string) {
 	}
 
 	if msg != "" {
-		tabSection := &h.tabSections[h.activeTab]
+		tabSection := h.tabSections[h.activeTab]
 		tabSection.addNewContent(messagetype.Warning, msg)
 	}
 

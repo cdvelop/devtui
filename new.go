@@ -28,9 +28,9 @@ type DevTUI struct {
 
 	focused bool // is the app focused
 
-	tabSections       []TabSection // represent sections in the tui
-	activeTab         int          // current tab index
-	editModeActivated bool         // global flag to edit config
+	tabSections       []*TabSection // represent sections in the tui
+	activeTab         int           // current tab index
+	editModeActivated bool          // global flag to edit config
 
 	currentTime     string
 	tabContentsChan chan tabContent
@@ -54,8 +54,8 @@ func NewTUI(c *TuiConfig) *DevTUI {
 	tui := &DevTUI{
 		TuiConfig: c,
 		focused:   true, // assume the app is focused
-		tabSections: []TabSection{ // default tab section
-			func() TabSection {
+		tabSections: []*TabSection{ // default tab section
+			func() *TabSection {
 				// Create temporary minimal DevTUI instance just for NewTabSection
 				tmpTUI := &DevTUI{TuiConfig: c}
 				tab := tmpTUI.NewTabSection(defaultTabName, "build footer example")

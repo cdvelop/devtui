@@ -21,7 +21,7 @@ func (h *DevTUI) HandleKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 
 // handleEditingConfigKeyboard handles keyboard input while in config editing mode
 func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
-	currentTab := &h.tabSections[h.activeTab]
+	currentTab := h.tabSections[h.activeTab]
 	fieldHandlers := currentTab.FieldHandlers()
 	currentField := &fieldHandlers[currentTab.indexActiveEditField]
 
@@ -139,7 +139,7 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 
 // handleNormalModeKeyboard handles keyboard input in normal mode (not editing config)
 func (h *DevTUI) handleNormalModeKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
-	currentTab := &h.tabSections[h.activeTab]
+	currentTab := h.tabSections[h.activeTab]
 	fieldHandlers := currentTab.FieldHandlers()
 	totalFields := len(fieldHandlers)
 
@@ -214,7 +214,7 @@ func (h *DevTUI) handleNormalModeKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 // checkAutoEditMode verifica si debe entrar automáticamente en modo edición
 // cuando hay un solo campo y este es editable
 func (h *DevTUI) checkAutoEditMode() {
-	currentTab := &h.tabSections[h.activeTab]
+	currentTab := h.tabSections[h.activeTab]
 
 	// Entrar automáticamente en modo edición si hay un solo campo editable
 	fieldHandlers := currentTab.FieldHandlers()

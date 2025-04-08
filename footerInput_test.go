@@ -42,7 +42,7 @@ func TestFooterView(t *testing.T) {
 
 		// Desactivar modo edición para verificar que aún así se muestra el campo
 		h.editModeActivated = false
-		tabSection := &h.tabSections[h.activeTab]
+		tabSection := h.tabSections[h.activeTab]
 		tabSection.indexActiveEditField = 0
 
 		// Renderizar footer

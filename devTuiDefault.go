@@ -57,7 +57,7 @@ func DefaultTUIForTest(LogToFile func(messageErr any)) *DevTUI {
 	})
 	tab2.indexActiveEditField = 0
 
-	tabSections := []TabSection{tab1, tab2}
+	tabSections := []*TabSection{tab1, tab2}
 
 	// Initialize the UI
 	h := NewTUI(&TuiConfig{

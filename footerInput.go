@@ -33,7 +33,7 @@ func (h *DevTUI) renderScrollInfo() string {
 // Si el campo es editable y estamos en modo edición, muestra un cursor en la posición actual
 func (h *DevTUI) renderFooterInput() string {
 	// Obtener el campo activo
-	tabSection := &h.tabSections[h.activeTab]
+	tabSection := h.tabSections[h.activeTab]
 
 	// Verificar que el índice activo esté en rango
 	fieldHandlers := tabSection.FieldHandlers()

@@ -33,7 +33,7 @@ func TestCustomTabs(t *testing.T) {
 	// Create a custom configuration with custom tabs
 	customSection := TabSection{
 		Title: "CUSTOM1",
-		FieldHandlers: []FieldHandler{
+		FieldHandlers: []Field{
 			{
 				Name:     "Test Field",
 				Value:    "test value",

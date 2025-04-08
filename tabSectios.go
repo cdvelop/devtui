@@ -7,16 +7,6 @@ import (
 const defaultTabName = "DEFAULT"
 
 // Interface for handling tab field sectionFields
-type FieldHandler struct {
-	Name             string                                                // eg: "Server Port"
-	Value            string                                                //initial Value eg: "8080"
-	Editable         bool                                                  // if no editable eject the action FieldValueChange directly
-	FieldValueChange func(newValue string) (execMessage string, err error) //eg: "8080" -> "9090" execMessage: "Port changed from 8080 to 9090"
-	//internal use
-	tempEditValue string // use for edit
-	index         int
-	cursor        int // cursor position in text value
-}
 
 // tabContent imprime contenido en la tui con id único
 type tabContent struct {
@@ -28,10 +18,10 @@ type tabContent struct {
 
 // represent the tab section in the tui
 type TabSection struct {
-	index         int            // index of the tab
-	Title         string         // eg: "BUILD", "TEST"
-	FieldHandlers []FieldHandler // Field actions configured for the section
-	SectionFooter string         // eg: "Press 't' to compile", "Press 'r' to run tests"
+	index         int     // index of the tab
+	Title         string  // eg: "BUILD", "TEST"
+	FieldHandlers []Field // Field actions configured for the section
+	SectionFooter string  // eg: "Press 't' to compile", "Press 'r' to run tests"
 	// internal use
 	tabContents          []tabContent // message contents
 	indexActiveEditField int          // Índice del campo de configuración seleccionado

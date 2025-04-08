@@ -57,7 +57,7 @@ func NewTUI(c *TuiConfig) *DevTUI {
 		tabSections: []TabSection{ // default tab section
 			{
 				Title: defaultTabName,
-				FieldHandlers: []FieldHandler{
+				FieldHandlers: []Field{
 					{
 						Name:     "Editable Field",
 						Value:    "initial editable value",

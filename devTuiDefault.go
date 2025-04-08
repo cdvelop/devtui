@@ -14,7 +14,7 @@ func DefaultTUIForTest(LogToFile func(messageErr any)) *DevTUI {
 		{
 			Title: "Tab 1",
 			index: 0,
-			FieldHandlers: []FieldHandler{
+			FieldHandlers: []Field{
 				{
 					Name:     "Field 1  (Editable)",
 					Value:    "initial test value",
@@ -38,7 +38,7 @@ func DefaultTUIForTest(LogToFile func(messageErr any)) *DevTUI {
 		{
 			Title: "Tab 2",
 			index: 1,
-			FieldHandlers: []FieldHandler{
+			FieldHandlers: []Field{
 				{
 					Name:     "Field 1",
 					Value:    "tab 2 value 1",

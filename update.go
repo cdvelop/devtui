@@ -10,11 +10,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-func (cf *FieldHandler) SetCursorAtEnd() {
-	// Calculate cursor position based on rune count, not byte count
-	cf.cursor = len([]rune(cf.Value))
-}
-
 // listenToMessages crea un comando para escuchar mensajes del canal
 func (h *DevTUI) listenToMessages() tea.Cmd {
 	return func() tea.Msg {
@@ -123,7 +118,7 @@ func (h *DevTUI) updateViewport() {
 	h.viewport.GotoBottom()
 }
 
-func (h *DevTUI) editingConfigOpen(open bool, currentField *FieldHandler, msg string) {
+func (h *DevTUI) editingConfigOpen(open bool, currentField *Field, msg string) {
 
 	if open {
 		h.editModeActivated = true

@@ -7,13 +7,13 @@ import (
 )
 
 // Helper para debuguear el estado de los campos durante los tests
-func debugFieldState(t *testing.T, prefix string, field *FieldHandler) {
+func debugFieldState(t *testing.T, prefix string, field *Field) {
 	t.Logf("%s - Value: '%s', tempEditValue: '%s', cursor: %d",
 		prefix, field.Value, field.tempEditValue, field.cursor)
 }
 
 // Helper para inicializar un campo para testing
-func prepareFieldForEditing(t *testing.T, h *DevTUI) *FieldHandler {
+func prepareFieldForEditing(t *testing.T, h *DevTUI) *Field {
 	h.editModeActivated = true
 	h.tabSections[0].indexActiveEditField = 0
 	field := &h.tabSections[0].FieldHandlers[0]

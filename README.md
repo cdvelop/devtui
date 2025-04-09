@@ -147,6 +147,9 @@ func main() {
 )
 ```
 
+## errors
+- [ ] al borrar todo un campo editable, al comenzar a escribir se copia el valor anterior al lado del cursor 
+
 ## Dependencies
 
 - [Charmbracelet/bubbletea](https://github.com/charmbracelet/bubbletea)

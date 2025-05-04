@@ -5,7 +5,7 @@ go 1.23.0
 toolchain go1.23.7
 
 require (
-	github.com/cdvelop/tinystring v0.0.25
+	github.com/cdvelop/tinystring v0.0.26
 	github.com/charmbracelet/lipgloss v1.1.0
 )
 
@@ -24,11 +24,11 @@ require (
 
 require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
-	github.com/cdvelop/messagetype v0.0.17
+	github.com/cdvelop/messagetype v0.0.18
 	github.com/cdvelop/unixid v0.0.67
 	github.com/charmbracelet/bubbles v0.21.0
-	github.com/charmbracelet/bubbletea v1.3.4
-	github.com/charmbracelet/x/ansi v0.8.0 // indirect
+	github.com/charmbracelet/bubbletea v1.3.5
+	github.com/charmbracelet/x/ansi v0.9.2 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect

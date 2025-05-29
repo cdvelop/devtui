@@ -64,15 +64,16 @@ func NewTUI(c *TuiConfig) *DevTUI {
 						"Editable Field",
 						"initial editable value",
 						true,
-						func(newValue string) (string, error) {
-							return fmt.Sprintf("Value changed to %s", newValue), nil
+						func(newValue any) (string, error) {
+							strValue := newValue.(string)
+							return fmt.Sprintf("Value changed to %s", strValue), nil
 						},
 					),
 					*NewField(
 						"Non-Editable Field",
 						"non-editable value",
 						false,
-						func(newValue string) (string, error) {
+						func(newValue any) (string, error) {
 							return "Action executed", nil
 						},
 					),

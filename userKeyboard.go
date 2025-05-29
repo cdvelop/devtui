@@ -34,12 +34,16 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 		case tea.KeyEnter: // Guardar cambios o ejecutar acción
 			if currentField.tempEditValue != "" && currentField.tempEditValue != currentField.Value() {
 				currentField.SetValue(currentField.tempEditValue) // Aplicar los cambios solo si hubo modificaciones
-				msg, err := currentField.changeFunc(currentField.Value())
-				if err != nil {
-					// Si hay un error, mostrarlo en la pestaña actual
-					currentTab.addNewContent(messagetype.Error, fmt.Sprintf("%v %v", currentField.Name(), err))
+				if currentField.changeFunc != nil {
+					msg, err := currentField.changeFunc(currentField.Value())
+					if err != nil {
+						// Si hay un error, mostrarlo en la pestaña actual
+						currentTab.addNewContent(messagetype.Error, fmt.Sprintf("%v %v", currentField.Name(), err))
+					}
+					h.editingConfigOpen(false, currentField, msg)
+				} else {
+					h.editingConfigOpen(false, currentField, "")
 				}
-				h.editingConfigOpen(false, currentField, msg)
 			} else {
 				// Si no hubo cambios, solo salimos del modo edición sin mostrar mensajes
 				h.editingConfigOpen(false, currentField, "")
@@ -116,13 +120,15 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 		case tea.KeyEnter:
 			msgType := messagetype.Success
 			// content eg: "Browser Opened"
-			content, err := currentField.changeFunc(currentField.Value())
-			if err != nil {
-				msgType = messagetype.Error
-				content = fmt.Sprintf("%s %s %s", currentField.Name(), content, err.Error())
+			if currentField.changeFunc != nil {
+				content, err := currentField.changeFunc(currentField.Value())
+				if err != nil {
+					msgType = messagetype.Error
+					content = fmt.Sprintf("%s %s %s", currentField.Name(), content, err.Error())
+				}
+				currentField.SetValue(content)
+				currentTab.addNewContent(msgType, content)
 			}
-			currentField.SetValue(content)
-			currentTab.addNewContent(msgType, content)
 			h.editModeActivated = false
 			h.updateViewport() // Asegurar que se actualice la vista para mostrar el mensaje
 			return false, nil
@@ -186,13 +192,15 @@ func (h *DevTUI) handleNormalModeKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 			field := &fieldHandlers[currentTab.indexActiveEditField]
 			if !field.Editable() {
 				msgType := messagetype.Success
-				content, err := field.changeFunc(field.Value())
-				if err != nil {
-					msgType = messagetype.Error
-					content = fmt.Sprintf("%s %s %s", field.Name(), content, err.Error())
+				if field.changeFunc != nil {
+					content, err := field.changeFunc(field.Value())
+					if err != nil {
+						msgType = messagetype.Error
+						content = fmt.Sprintf("%s %s %s", field.Name(), content, err.Error())
+					}
+					field.SetValue(content)
+					currentTab.addNewContent(msgType, content)
 				}
-				field.SetValue(content)
-				currentTab.addNewContent(msgType, content)
 			} else {
 				// Para campos editables, activar modo de edición explícitamente
 				field.tempEditValue = field.Value()

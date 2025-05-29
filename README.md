@@ -49,11 +49,12 @@ func main() {
 			"Username",
 			"",
 			true,
-			func(newValue string) (string, error) {
-				if len(newValue) < 5 {
+			func(newValue any) (string, error) {
+				strValue := newValue.(string)
+				if len(strValue) < 5 {
 					return "", fmt.Errorf("username must be at least 5 characters")
 				}
-				return newValue, nil
+				return "Username updated to " + strValue, nil
 			},
 		),
 	)
@@ -90,22 +91,24 @@ func main() {
 			"Username",
 			"",
 			true,
-			func(newValue string) (string, error) {
-				if len(newValue) < 5 {
+			func(newValue any) (string, error) {
+				strValue := newValue.(string)
+				if len(strValue) < 5 {
 					return "", fmt.Errorf("username must be at least 5 characters")
 				}
-				return newValue, nil
+				return "Username updated to " + strValue, nil
 			},
 		),
 		*NewField(
 			"Password",
 			"",
 			true,
-			func(newValue string) (string, error) {
-				if len(newValue) < 8 {
+			func(newValue any) (string, error) {
+				strValue := newValue.(string)
+				if len(strValue) < 8 {
 					return "", fmt.Errorf("password must be at least 8 characters")
 				}
-				return newValue, nil
+				return "Password updated", nil
 			},
 		),
 	)
@@ -121,15 +124,67 @@ func main() {
 
 ## Field Types
 
-### Editable Fields
+### Editable Fields with Different Data Types
+
+#### String Field
 ```go
 *NewField(
-	"Field Name", 
-	"initial value", 
+	"Username", 
+	"defaultUser", 
 	true, 
-	func(value string) (string, error) {
-		// Validate or process the new value
-		return value, nil
+	func(value any) (string, error) {
+		strValue := value.(string)
+		if len(strValue) < 3 {
+			return "", fmt.Errorf("username must be at least 3 characters")
+		}
+		return "Username updated to " + strValue, nil
+	},
+)
+```
+
+#### Numeric Field (Port)
+```go
+*NewField(
+	"Server Port", 
+	"8080", 
+	true, 
+	func(value any) (string, error) {
+		switch v := value.(type) {
+		case string:
+			if port, err := strconv.Atoi(v); err == nil && port > 0 && port < 65536 {
+				return fmt.Sprintf("Port changed to %d", port), nil
+			}
+			return "", fmt.Errorf("invalid port number: %s", v)
+		case int:
+			if v > 0 && v < 65536 {
+				return fmt.Sprintf("Port changed to %d", v), nil
+			}
+			return "", fmt.Errorf("port out of range: %d", v)
+		default:
+			return "", fmt.Errorf("unsupported type for port: %T", v)
+		}
+	},
+)
+```
+
+#### Boolean Field
+```go
+*NewField(
+	"Debug Mode", 
+	"false", 
+	true, 
+	func(value any) (string, error) {
+		switch v := value.(type) {
+		case bool:
+			return fmt.Sprintf("Debug mode set to %t", v), nil
+		case string:
+			if b, err := strconv.ParseBool(v); err == nil {
+				return fmt.Sprintf("Debug mode set to %t", b), nil
+			}
+			return "", fmt.Errorf("invalid boolean value: %s", v)
+		default:
+			return "", fmt.Errorf("unsupported type for boolean: %T", v)
+		}
 	},
 )
 ```
@@ -140,9 +195,9 @@ func main() {
 	"Action Button", 
 	"Click me", 
 	false, 
-	func(value string) (string, error) {
-		// Execute action
-		return "Action executed", nil
+	func(value any) (string, error) {
+		// Execute action - value parameter is ignored for non-editable fields
+		return "Action executed successfully", nil
 	},
 )
 ```

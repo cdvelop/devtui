@@ -29,16 +29,16 @@ func TestNewTUI(t *testing.T) {
 	// The default tab should be titled "DEFAULT" according to new.go
 }
 
-func TestCustomTabs(t *testing.T) {
-	// Create a custom configuration with custom tabs
+func TestCustomTabs(t *testing.T) { // Create a custom configuration with custom tabs
 	customSection := NewTUI(&TuiConfig{}).NewTabSection("CUSTOM1", "custom footer")
 	customFields := []Field{
 		*NewField(
 			"Test Field",
 			"test value",
 			true,
-			func(newValue string) (string, error) {
-				return "Value updated to " + newValue, nil
+			func(newValue any) (string, error) {
+				strValue := newValue.(string)
+				return "Value updated to " + strValue, nil
 			},
 		),
 	}

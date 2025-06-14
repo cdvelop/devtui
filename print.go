@@ -44,7 +44,7 @@ func (h *DevTUI) newContent(content string, mt messagetype.Type, tabSection *Tab
 // formatMessage formatea un mensaje según su tipo
 func (t *DevTUI) formatMessage(msg tabContent) string {
 
-	timeStr := t.timeStyle.Render(t.id.UnixSecondsToTime(msg.Id))
+	timeStr := t.timeStyle.Render(t.id.UnixNanoToTime(msg.Id))
 
 	// timeStr := t.timeStyle.Render(msg.Time.Format("15:04:05"))
 	// content := fmt.Sprintf("[%s] %s", timeStr, msg.Content)

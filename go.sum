@@ -1,11 +1,11 @@
 github.com/aymanbagabas/go-osc52/v2 v2.0.1 h1:HwpRHbFMcZLEVr42D4p7XBqjyuxQH5SMiErDT4WkJ2k=
 github.com/aymanbagabas/go-osc52/v2 v2.0.1/go.mod h1:uYgXzlJ7ZpABp8OJ+exZzJJhRNQ2ASbcXHWsFqH8hp8=
-github.com/cdvelop/messagetype v0.0.29 h1:DkHCcXjyloEOae4dOLtlHqGGiy+HsGeFOh/5BfHFVnc=
-github.com/cdvelop/messagetype v0.0.29/go.mod h1:rgRBzHzh2QxMYCOnk1c8pMeseZCdeOEtriNBbE+PN04=
-github.com/cdvelop/tinystring v0.1.1 h1:X3pUaXnAl20c8k3Zxt2npwbT0MG+KTjJT237Thxvjv4=
-github.com/cdvelop/tinystring v0.1.1/go.mod h1:85ltrACJtjf1Zu/o8kqwHGKAiN0oBwb+TR2tkXdURJo=
-github.com/cdvelop/unixid v0.0.77 h1:iQM5gZy/QJ0EkkTApdvMe6NpBtJX3m02hDaUmUXbjVE=
-github.com/cdvelop/unixid v0.0.77/go.mod h1:+dOA4VMGV0LpuLjPwrVBnXmKR3dsC4Os4H8yivIR1aQ=
+github.com/cdvelop/messagetype v0.0.30 h1:ha8a9Je5o6a2xuCoZzUp4xqrWdmuJsAutMYORTF+3bY=
+github.com/cdvelop/messagetype v0.0.30/go.mod h1:UoFCCgEMdQdMLwX+KPFCQSX3FPAeefqgqYOpdOkHkzE=
+github.com/cdvelop/tinystring v0.1.2 h1:t3sBkpMi8adPxa/AGnvdglVgFsmhMkNNP4Shw46rlEc=
+github.com/cdvelop/tinystring v0.1.2/go.mod h1:85ltrACJtjf1Zu/o8kqwHGKAiN0oBwb+TR2tkXdURJo=
+github.com/cdvelop/unixid v0.0.78 h1:s5YugvW4cGgxr8opFF80qYLqobDzX3FkO28gyWfGjz8=
+github.com/cdvelop/unixid v0.0.78/go.mod h1:4568cdz9xfo4VNKHclv2ErjsYWWkhpO6OEhClZXzNzo=
 github.com/charmbracelet/bubbles v0.21.0 h1:9TdC97SdRVg/1aaXNVWfFH3nnLAwOXr8Fn6u6mfQdFs=
 github.com/charmbracelet/bubbles v0.21.0/go.mod h1:HF+v6QUR4HkEpz62dx7ym2xc71/KBHg+zKwJtMw+qtg=
 github.com/charmbracelet/bubbletea v1.3.5 h1:JAMNLTbqMOhSwoELIr0qyP4VidFq72/6E9j7HHmRKQc=

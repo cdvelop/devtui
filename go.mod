@@ -5,7 +5,7 @@ go 1.23.0
 toolchain go1.23.7
 
 require (
-	github.com/cdvelop/tinystring v0.1.29
+	github.com/cdvelop/tinystring v0.1.30
 	github.com/charmbracelet/lipgloss v1.1.0
 )
 

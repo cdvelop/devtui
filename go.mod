@@ -8,7 +8,7 @@ require (
 )
 
 require (
-	github.com/cdvelop/tinyreflect v0.0.17 // indirect
+	github.com/cdvelop/tinyreflect v0.0.18 // indirect
 	github.com/cdvelop/tinytime v0.0.2 // indirect
 	github.com/charmbracelet/colorprofile v0.3.1 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.13 // indirect

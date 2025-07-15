@@ -1,8 +1,6 @@
 module github.com/cdvelop/devtui
 
-go 1.23.0
-
-toolchain go1.23.7
+go 1.24.4
 
 require (
 	github.com/cdvelop/tinystring v0.1.32
@@ -10,6 +8,7 @@ require (
 )
 
 require (
+	github.com/cdvelop/tinytime v0.0.2 // indirect
 	github.com/charmbracelet/colorprofile v0.3.1 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.13 // indirect
 	github.com/charmbracelet/x/term v0.2.1 // indirect
@@ -25,7 +24,7 @@ require (
 require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/cdvelop/messagetype v0.0.39
-	github.com/cdvelop/unixid v0.0.92
+	github.com/cdvelop/unixid v0.0.93
 	github.com/charmbracelet/bubbles v0.21.0
 	github.com/charmbracelet/bubbletea v1.3.6
 	github.com/charmbracelet/x/ansi v0.9.3 // indirect

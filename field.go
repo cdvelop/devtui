@@ -14,6 +14,16 @@ type field struct {
 	cursor        int // cursor position in text value
 }
 
+// SetTempEditValueForTest permite modificar tempEditValue en tests
+func (f *field) SetTempEditValueForTest(val string) {
+	f.tempEditValue = val
+}
+
+// SetCursorForTest permite modificar el cursor en tests
+func (f *field) SetCursorForTest(cursor int) {
+	f.cursor = cursor
+}
+
 // NewField creates a new field, adds it to the tabSection, and returns the tabSection for chaining.
 // Example usage:
 //   tab.NewField("username", "defaultUser", true, func(newValue any) (string, error) { ... })

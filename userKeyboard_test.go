@@ -250,8 +250,7 @@ func TestHandleKeyboard(t *testing.T) {
 
 // setTempEditValueForTest is a test helper to set tempEditValue for a field (for testing only)
 func setTempEditValueForTest(f *field, value string) {
-	v := reflect.ValueOf(f).Elem()
-	v.FieldByName("tempEditValue").SetString(value)
+	f.SetTempEditValueForTest(value)
 }
 
 // TestAdditionalKeyboardFeatures prueba características adicionales del teclado
@@ -378,8 +377,7 @@ func getTempEditValueForTest(f *field) string {
 
 // setCursorForTest is a test helper to set cursor for a field (for testing only)
 func setCursorForTest(f *field, cursor int) {
-	v := reflect.ValueOf(f).Elem()
-	v.FieldByName("cursor").SetInt(int64(cursor))
+	f.SetCursorForTest(cursor)
 }
 
 // getCursorForTest is a test helper to get cursor for a field (for testing only)

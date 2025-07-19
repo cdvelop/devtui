@@ -89,6 +89,28 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 				}
 			}
 
+		case tea.KeySpace: // Manejar la tecla espacio como un carácter especial
+			// Si aún no hay valor temporal, NO copiar el valor original automáticamente
+			if currentField.tempEditValue == "" {
+				currentField.tempEditValue = ""
+			}
+
+			runes := []rune(currentField.tempEditValue)
+			if currentField.cursor > len(runes) {
+				currentField.cursor = len(runes)
+			}
+
+			// Verificar si agregar un espacio excedería el ancho disponible
+			if len(runes)+1 < availableTextWidth {
+				// Insert the space at cursor position
+				newRunes := make([]rune, 0, len(runes)+1)
+				newRunes = append(newRunes, runes[:currentField.cursor]...)
+				newRunes = append(newRunes, ' ') // Agregar el espacio
+				newRunes = append(newRunes, runes[currentField.cursor:]...)
+				currentField.tempEditValue = string(newRunes)
+				currentField.cursor++
+			}
+
 		case tea.KeyRunes:
 			// Handle normal character input - convert everything to runes for proper handling
 			if len(msg.Runes) > 0 {

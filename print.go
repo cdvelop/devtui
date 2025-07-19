@@ -32,9 +32,17 @@ func (d *DevTUI) sendMessage(content string, mt messagetype.Type, tabSection *ta
 }
 
 func (h *DevTUI) newContent(content string, mt messagetype.Type, tabSection *tabSection) tabContent {
+	var id string
+	if h.id != nil {
+		id = h.id.GetNewID()
+	} else {
+		// Fallback ID if unixid is not available
+		id = "temp-id"
+		h.LogToFile("Warning: unixid not initialized, using fallback ID")
+	}
 
 	return tabContent{
-		Id:         h.id.GetNewID(),
+		Id:         id,
 		Content:    content,
 		Type:       mt,
 		tabSection: tabSection,

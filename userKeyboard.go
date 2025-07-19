@@ -75,7 +75,7 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 
 		case tea.KeyBackspace: // Borrar carácter a la izquierda
 			if currentField.cursor > 0 {
-				// Si aún no hay valor temporal, copiar el valor original
+				// Si aún no hay valor temporal, copiar el valor original solo la primera vez
 				if currentField.tempEditValue == "" {
 					currentField.tempEditValue = currentField.Value()
 				}
@@ -92,9 +92,10 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 		case tea.KeyRunes:
 			// Handle normal character input - convert everything to runes for proper handling
 			if len(msg.Runes) > 0 {
-				// Si aún no hay valor temporal, copiar el valor original
+				// Si aún no hay valor temporal, NO copiar el valor original automáticamente
+				// Solo inicializar como string vacío si está vacío
 				if currentField.tempEditValue == "" {
-					currentField.tempEditValue = currentField.Value()
+					currentField.tempEditValue = ""
 				}
 
 				runes := []rune(currentField.tempEditValue)
@@ -213,7 +214,8 @@ func (h *DevTUI) handleNormalModeKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 
 	case tea.KeyCtrlC:
 		close(h.ExitChan) // Cerrar el canal para señalizar a todas las goroutines
-		return false, tea.Quit
+		// Usar tea.Sequence para asegurar que ExitAltScreen se ejecute antes de Quit
+		return false, tea.Sequence(tea.ExitAltScreen, tea.Quit)
 	}
 
 	return true, nil

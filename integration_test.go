@@ -1,0 +1,124 @@
+package devtui
+
+import (
+	"sync"
+	"testing"
+	"time"
+)
+
+// TestRealWorldScenario simula el escenario exacto que causaba el error original
+func TestRealWorldScenario(t *testing.T) {
+	// Exactamente la misma configuración que en main.go
+	tui := NewTUI(&TuiConfig{
+		AppName:       "Ejemplo DevTUI",
+		TabIndexStart: 0,
+		ExitChan:      make(chan bool),
+		Color: &ColorStyle{
+			Foreground: "#F4F4F4",
+			Background: "#000000",
+			Highlight:  "#FF6600",
+			Lowlight:   "#666666",
+		},
+		LogToFile: func(messages ...any) {
+			t.Logf("Log: %v", messages)
+		},
+	})
+
+	// Configurar la sección y los campos exactamente como en main.go
+	tui.NewTabSection("Datos personales", "Información básica").
+		NewField("Nombre", "", true, nil).
+		NewField("Edad", "", true, nil).
+		NewField("Email", "", true, nil)
+
+	// Asegurarnos de que no hay panic durante la inicialización
+	defer func() {
+		if r := recover(); r != nil {
+			t.Errorf("No se esperaba ningún panic, pero se obtuvo: %v", r)
+		}
+	}()
+
+	// Usar un WaitGroup como en el ejemplo original
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	// Simular la inicialización de la TUI en una goroutine separada
+	go func() {
+		defer wg.Done()
+
+		// En lugar de inicializar la TUI completa (que bloquearía el test),
+		// simplemente simulamos las operaciones que causaban el problema
+
+		// Simular que se presiona Enter en un campo
+		section := tui.tabSections[0] // Primera sección
+
+		// Esto era lo que causaba el panic original
+		section.addNewContent(0, "Test content from real scenario")
+
+		t.Log("Operación completada sin panic")
+	}()
+
+	// Esperar un momento para que la goroutine termine
+	done := make(chan bool)
+	go func() {
+		wg.Wait()
+		done <- true
+	}()
+
+	select {
+	case <-done:
+		t.Log("Test completado exitosamente")
+	case <-time.After(2 * time.Second):
+		t.Error("El test tardó demasiado en completarse")
+	}
+}
+
+// TestUnixIDFallback verifica que el sistema de fallback funcione correctamente
+func TestUnixIDFallback(t *testing.T) {
+	logMessages := []string{}
+
+	tui := NewTUI(&TuiConfig{
+		AppName:       "Test TUI",
+		TabIndexStart: 0,
+		ExitChan:      make(chan bool),
+		Color: &ColorStyle{
+			Foreground: "#F4F4F4",
+			Background: "#000000",
+			Highlight:  "#FF6600",
+			Lowlight:   "#666666",
+		},
+		LogToFile: func(messages ...any) {
+			for _, msg := range messages {
+				logMessages = append(logMessages, msg.(string))
+			}
+		},
+	})
+
+	// Forzar que el ID sea nil
+	tui.id = nil
+
+	section := tui.NewTabSection("Test", "Test")
+	section.addNewContent(0, "Test content")
+
+	// Verificar que se usó el ID de fallback
+	if len(section.tabContents) == 0 {
+		t.Error("No se agregó contenido")
+		return
+	}
+
+	if section.tabContents[0].Id != "temp-id" {
+		t.Errorf("Se esperaba 'temp-id', pero se obtuvo '%s'", section.tabContents[0].Id)
+	}
+
+	// Verificar que se registró el mensaje de advertencia
+	foundWarning := false
+	for _, msg := range logMessages {
+		if msg == "Warning: unixid not initialized, using fallback ID" {
+			foundWarning = true
+			break
+		}
+	}
+
+	if !foundWarning {
+		t.Error("No se encontró el mensaje de advertencia esperado")
+	}
+}

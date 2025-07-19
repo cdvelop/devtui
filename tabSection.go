@@ -15,15 +15,15 @@ type tabContent struct {
 	Id         string
 	Content    string
 	Type       messagetype.Type
-	tabSection *TabSection
+	tabSection *tabSection
 }
 
-// TabSection represents a tab section in the TUI with configurable fields and content
-type TabSection struct {
-	index         int     // index of the tab
-	title         string  // eg: "BUILD", "TEST"
-	fieldHandlers []Field // Field actions configured for the section
-	sectionFooter string  // eg: "Press 't' to compile", "Press 'r' to run tests"
+// tabSection represents a tab section in the TUI with configurable fields and content
+type tabSection struct {
+	index         int      // index of the tab
+	title         string   // eg: "BUILD", "TEST"
+	fieldHandlers []*field // Field actions configured for the section
+	sectionFooter string   // eg: "Press 't' to compile", "Press 'r' to run tests"
 	// internal use
 	tabContents          []tabContent // message contents
 	indexActiveEditField int          // Índice del campo de configuración seleccionado
@@ -31,7 +31,7 @@ type TabSection struct {
 }
 
 // Write implementa io.Writer para capturar la salida de otros procesos
-func (ts *TabSection) Write(p []byte) (n int, err error) {
+func (ts *tabSection) Write(p []byte) (n int, err error) {
 	msg := strings.TrimSpace(string(p))
 	if msg != "" {
 		// Detectar automáticamente el tipo de mensaje
@@ -47,62 +47,61 @@ func (ts *TabSection) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-func (t *TabSection) addNewContent(msgType messagetype.Type, content string) {
+func (t *tabSection) addNewContent(msgType messagetype.Type, content string) {
 	t.tabContents = append(t.tabContents, t.tui.newContent(content, msgType, t))
 }
 
 // Title returns the tab section title
-func (ts *TabSection) Title() string {
+func (ts *tabSection) Title() string {
 	return ts.title
 }
 
 // SetTitle sets the tab section title
-func (ts *TabSection) SetTitle(title string) {
+func (ts *tabSection) SetTitle(title string) {
 	ts.title = title
 }
 
 // Footer returns the tab section footer text
-func (ts *TabSection) Footer() string {
+func (ts *tabSection) Footer() string {
 	return ts.sectionFooter
 }
 
 // SetFooter sets the tab section footer text
-func (ts *TabSection) SetFooter(footer string) {
+func (ts *tabSection) SetFooter(footer string) {
 	ts.sectionFooter = footer
 }
 
 // FieldHandlers returns the field handlers slice
-func (ts *TabSection) FieldHandlers() []Field {
+func (ts *tabSection) FieldHandlers() []*field {
 	return ts.fieldHandlers
 }
 
-// SetFieldHandlers sets the field handlers slice (mainly for testing)
-func (ts *TabSection) SetFieldHandlers(handlers []Field) {
-	ts.fieldHandlers = handlers
-}
-
-// AddFields adds one or more Field handlers to the section
-// This is the preferred method for adding fields in normal usage
-func (ts *TabSection) AddFields(fields ...Field) {
-	ts.fieldHandlers = append(ts.fieldHandlers, fields...)
-}
-
-// NewTabSection creates and initializes a new TabSection with the given title and footer
+// NewTabSection creates and initializes a new tabSection with the given title and footer
 // Example:
 //
 //	tab := tui.NewTabSection("BUILD", "Press enter to compile")
-func (t *DevTUI) NewTabSection(title, footer string) *TabSection {
-	return &TabSection{
+func (t *DevTUI) NewTabSection(title, footer string) *tabSection {
+	return &tabSection{
 		title:         title,
 		sectionFooter: footer,
 		tui:           t,
 	}
 }
 
-// AddTabSections adds one or more TabSections to the DevTUI
+// SetIndex sets the index of the tab section
+func (ts *tabSection) SetIndex(idx int) {
+	ts.index = idx
+}
+
+// SetActiveEditField sets the active edit field index
+func (ts *tabSection) SetActiveEditField(idx int) {
+	ts.indexActiveEditField = idx
+}
+
+// AddTabSections adds one or more tabSections to the DevTUI
 // If a tab with title "DEFAULT" exists, it will be replaced by the first tab section
 // Deprecated: Use NewTabSection and append to tabSections directly
-func (t *DevTUI) AddTabSections(sections ...*TabSection) *DevTUI {
+func (t *DevTUI) AddTabSections(sections ...*tabSection) *DevTUI {
 	if len(sections) == 0 {
 		return t
 	}
@@ -134,8 +133,8 @@ func (t *DevTUI) AddTabSections(sections ...*TabSection) *DevTUI {
 	return t
 }
 
-// Helper method to initialize a single TabSection
-func (t *DevTUI) initTabSection(section *TabSection, index int) {
+// Helper method to initialize a single tabSection
+func (t *DevTUI) initTabSection(section *tabSection, index int) {
 	section.index = index
 	section.tui = t
 
@@ -145,11 +144,11 @@ func (t *DevTUI) initTabSection(section *TabSection, index int) {
 		handlers[j].index = j
 		handlers[j].cursor = 0
 	}
-	section.SetFieldHandlers(handlers)
+	section.setFieldHandlers(handlers)
 }
 
 // Helper method to add multiple tab sections
-func (t *DevTUI) addNewTabSections(sections ...*TabSection) {
+func (t *DevTUI) addNewTabSections(sections ...*tabSection) {
 	startIdx := len(t.tabSections)
 	for i, section := range sections {
 		section.index = startIdx + i

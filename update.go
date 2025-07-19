@@ -100,7 +100,7 @@ func (h *DevTUI) updateViewport() {
 	h.viewport.GotoBottom()
 }
 
-func (h *DevTUI) editingConfigOpen(open bool, currentField *Field, msg string) {
+func (h *DevTUI) editingConfigOpen(open bool, currentField *field, msg string) {
 
 	if open {
 		h.editModeActivated = true

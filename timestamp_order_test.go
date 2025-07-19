@@ -27,8 +27,8 @@ func TestTimestampOrder(t *testing.T) {
 		id := uid.GetNewID()
 
 		// Simular como devtui formatea el mensaje
-		// PROBLEMA: UnixSecondsToTime espera segundos pero recibe nanosegundos
-		timeStr := uid.UnixSecondsToTime(id)
+		// PROBLEMA: UnixNanoToTime espera segundos pero recibe nanosegundos
+		timeStr := uid.UnixNanoToTime(id)
 
 		message := fmt.Sprintf("Mensaje %d", i+1)
 
@@ -69,11 +69,11 @@ func TestCorrectTimestampConversion(t *testing.T) {
 	secondsTimestamp := now.Unix()
 
 	// Probar conversión correcta (segundos a tiempo)
-	correctTime := uid.UnixSecondsToTime(secondsTimestamp)
+	correctTime := uid.UnixNanoToTime(secondsTimestamp)
 	expectedTime := now.Format("15:04:05")
 
 	// Probar conversión incorrecta (nanosegundos a tiempo)
-	incorrectTime := uid.UnixSecondsToTime(nanoTimestamp)
+	incorrectTime := uid.UnixNanoToTime(nanoTimestamp)
 
 	fmt.Printf("Timestamp en nanosegundos: %d\n", nanoTimestamp)
 	fmt.Printf("Timestamp en segundos: %d\n", secondsTimestamp)
@@ -108,8 +108,8 @@ func TestDevTUITimestampIssue(t *testing.T) {
 
 	// Simular el método formatMessage de devtui
 	formatMessage := func(msg mockTabContent) string {
-		// ESTE ES EL PROBLEMA: msg.Id es en nanosegundos como string, pero UnixSecondsToTime espera segundos
-		timeStr := uid.UnixSecondsToTime(msg.Id)
+		// ESTE ES EL PROBLEMA: msg.Id es en nanosegundos como string, pero UnixNanoToTime espera segundos
+		timeStr := uid.UnixNanoToTime(msg.Id)
 		return fmt.Sprintf("%s %s", timeStr, msg.Content)
 	}
 

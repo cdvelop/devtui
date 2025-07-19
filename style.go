@@ -5,7 +5,7 @@ import (
 )
 
 type ColorStyle struct {
-	ForeGround string // eg: #F4F4F4
+	Foreground string // eg: #F4F4F4
 	Background string // eg: #000000
 	Highlight  string // eg: #FF6600
 	Lowlight   string // eg: #666666
@@ -47,7 +47,7 @@ func newTuiStyle(cs *ColorStyle) *tuiStyle {
 	// check if color is nil
 	if cs == nil {
 		cs = &ColorStyle{
-			ForeGround: "#F4F4F4",
+			Foreground: "#F4F4F4",
 			Background: "#000000",
 			Highlight:  "#FF6600",
 			Lowlight:   "#666666",
@@ -80,7 +80,7 @@ func newTuiStyle(cs *ColorStyle) *tuiStyle {
 		Padding(0, 1).
 		BorderForeground(lipgloss.Color(t.Highlight)).
 		Background(lipgloss.Color(t.Highlight)).
-		Foreground(lipgloss.Color(t.ForeGround))
+		Foreground(lipgloss.Color(t.Foreground))
 
 	t.footerInfoStyle = t.headerTitleStyle
 
@@ -91,14 +91,14 @@ func newTuiStyle(cs *ColorStyle) *tuiStyle {
 	t.fieldSelectedStyle = t.fieldSelectedStyle.
 		Bold(true).
 		Background(lipgloss.Color(t.Highlight)).
-		Foreground(lipgloss.Color(t.ForeGround))
+		Foreground(lipgloss.Color(t.Foreground))
 
 	t.fieldEditingStyle = t.fieldSelectedStyle.
 		Foreground(lipgloss.Color(t.Background))
 
 	// Estilo para los mensajes
 	t.textContentStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color(t.ForeGround)).
+		Foreground(lipgloss.Color(t.Foreground)).
 		PaddingLeft(0)
 
 	t.lineHeadFootStyle = lipgloss.NewStyle().

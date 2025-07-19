@@ -41,7 +41,7 @@ func (h *DevTUI) renderFooterInput() string {
 		tabSection.indexActiveEditField = 0 // Reiniciar a 0 si está fuera de rango
 	}
 
-	field := &fieldHandlers[tabSection.indexActiveEditField]
+	field := fieldHandlers[tabSection.indexActiveEditField]
 
 	// Usar el ancho estándar de etiquetas definido en el estilo
 	labelWidth := h.labelWidth
@@ -87,11 +87,11 @@ func (h *DevTUI) renderFooterInput() string {
 		// Estilo para edición activa
 		inputValueStyle = inputValueStyle.
 			Background(lipgloss.Color(h.Lowlight)).
-			Foreground(lipgloss.Color(h.ForeGround))
+			Foreground(lipgloss.Color(h.Foreground))
 	} else if !field.editable {
 		// Estilo para campos no editables
 		inputValueStyle = inputValueStyle.
-			Background(lipgloss.Color(h.ForeGround)).
+			Background(lipgloss.Color(h.Foreground)).
 			Foreground(lipgloss.Color(h.Background))
 	} else {
 		// Estilo para campos editables pero no en modo edición

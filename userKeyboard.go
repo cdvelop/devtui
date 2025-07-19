@@ -23,7 +23,7 @@ func (h *DevTUI) HandleKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 	currentTab := h.tabSections[h.activeTab]
 	fieldHandlers := currentTab.FieldHandlers()
-	currentField := &fieldHandlers[currentTab.indexActiveEditField]
+	currentField := fieldHandlers[currentTab.indexActiveEditField]
 
 	if currentField.Editable() { // Si el campo es editable, permitir la edición
 		// Calcular el ancho máximo disponible para el texto
@@ -189,7 +189,7 @@ func (h *DevTUI) handleNormalModeKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 	case tea.KeyEnter: //Enter para entrar en modo edición, ejecuta la acción directamente si el campo no es editable
 		if totalFields > 0 {
 			fieldHandlers := currentTab.FieldHandlers()
-			field := &fieldHandlers[currentTab.indexActiveEditField]
+			field := fieldHandlers[currentTab.indexActiveEditField]
 			if !field.Editable() {
 				msgType := messagetype.Success
 				if field.changeFunc != nil {
@@ -230,7 +230,7 @@ func (h *DevTUI) checkAutoEditMode() {
 		h.editModeActivated = true
 		currentTab.indexActiveEditField = 0
 		// Inicializar tempEditValue y cursor
-		field := &fieldHandlers[0]
+		field := fieldHandlers[0]
 		field.tempEditValue = field.Value()
 		field.cursor = 0
 	} else {

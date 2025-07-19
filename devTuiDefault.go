@@ -7,46 +7,43 @@ import (
 
 // NewDefaultTUI creates a DevTUI instance with basic default configuration
 // useful for unit tests and for quick initialization in real applications
-func DefaultTUIForTest(LogToFile func(messageErr any)) *DevTUI {
-
+func DefaultTUIForTest(LogToFile func(messages ...any)) *DevTUI {
 	// Create basic tabSections for testing/demo
-	// Create temporary minimal DevTUI instance just for NewTabSection
 	tmpTUI := &DevTUI{TuiConfig: &TuiConfig{}}
 	tab1 := tmpTUI.NewTabSection("Tab 1", "")
-	tab1.index = 0
-	tab1.SetFieldHandlers([]Field{
-		*NewField(
-			"Field 1  (Editable)",
-			"initial test value",
-			true,
-			func(value any) (string, error) {
-				strValue := value.(string)
-				return "Saved value: " + strValue, nil
-			},
-		),
-		*NewField(
+
+	tab1.NewField(
+		"Field 1  (Editable)",
+		"initial test value",
+		true,
+		func(value any) (string, error) {
+			strValue := value.(string)
+			return "Saved value: " + strValue, nil
+		},
+	).
+		NewField(
 			"Field 2 (Non-Editable)",
 			"special action",
 			false,
 			func(value any) (string, error) {
 				return "Action executed", nil
 			},
-		),
-	})
-	tab1.indexActiveEditField = 0
+		)
+	tab1.SetIndex(0)
+	tab1.SetActiveEditField(0)
+
 	tab2 := tmpTUI.NewTabSection("Tab 2", "")
-	tab2.index = 1
-	tab2.SetFieldHandlers([]Field{
-		*NewField(
-			"Field 1",
-			"tab 2 value 1",
-			true,
-			func(value any) (string, error) {
-				strValue := value.(string)
-				return "Tab 2 saved: " + strValue, nil
-			},
-		),
-		*NewField(
+
+	tab2.NewField(
+		"Field 1",
+		"tab 2 value 1",
+		true,
+		func(value any) (string, error) {
+			strValue := value.(string)
+			return "Tab 2 saved: " + strValue, nil
+		},
+	).
+		NewField(
 			"Field 2",
 			"error value",
 			true,
@@ -54,11 +51,11 @@ func DefaultTUIForTest(LogToFile func(messageErr any)) *DevTUI {
 				strValue := value.(string)
 				return "", errors.New("Error message test field 2 " + strValue)
 			},
-		),
-	})
-	tab2.indexActiveEditField = 0
+		)
+	tab2.SetIndex(1)
+	tab2.SetActiveEditField(0)
 
-	tabSections := []*TabSection{tab1, tab2}
+	tabSections := []*tabSection{tab1, tab2}
 
 	// Initialize the UI
 	h := NewTUI(&TuiConfig{
@@ -74,7 +71,7 @@ func DefaultTUIForTest(LogToFile func(messageErr any)) *DevTUI {
 // prepareForTesting configures a DevTUI instance for use in unit tests
 func prepareForTesting() *DevTUI {
 	// Create a logger that doesn't do anything during tests
-	testLogger := func(messageErr any) {
+	testLogger := func(messages ...any) {
 		// In test mode, we don't need to log
 		if os.Getenv("TEST_MODE") != "true" {
 			// This is a no-op logger for tests

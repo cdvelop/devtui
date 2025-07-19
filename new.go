@@ -28,7 +28,7 @@ type DevTUI struct {
 
 	focused bool // is the app focused
 
-	tabSections       []*TabSection // represent sections in the tui
+	tabSections       []*tabSection // represent sections in the tui
 	activeTab         int           // current tab index
 	editModeActivated bool          // global flag to edit config
 
@@ -39,48 +39,75 @@ type DevTUI struct {
 
 type TuiConfig struct {
 	AppName       string    // app name eg: "MyApp"
-	TabIndexStart int       // is the index of the tab section to start
-	ExitChan      chan bool //  global chan to close app
-	Color         *ColorStyle
+	TabIndexStart int       // is the index of the tab section to start default 0
+	ExitChan      chan bool //  global chan to close app eg: make(chan bool)
+	/* *ColorStyle style for the TUI
+	 eg:
+	type ColorStyle struct {
+	 Foreground string // eg: #F4F4F4
+	 Background string // eg: #000000
+	 Highlight  string // eg: #FF6600
+	 Lowlight   string // eg: #666666
+	}*/
+	Color *ColorStyle
 
-	LogToFile func(messageErr any) // function to write log error
+	LogToFile func(messages ...any) // function to write log error
 }
 
+// NewTUI creates a new DevTUI instance.
+//
+// Usage Example:
+//
+//	config := &TuiConfig{
+//	    AppName: "MyApp",
+//	    TabIndexStart: 0,
+//	    ExitChan: make(chan bool),
+//	    Color: nil, // or your *ColorStyle
+//	    LogToFile: func(err any) { fmt.Println(err) },
+//	}
+//	tui := NewTUI(config)
+//
+//	// To start the TUI:
+//	if err := tui.tea.Start(); err != nil {
+//	    config.LogToFile(err)
+//	}
+//
+//	// To close the TUI from another goroutine:
+//	config.ExitChan <- true
+//
+// You can customize fields, tabs, and handlers after creation.
+// See the documentation for more advanced usage.
 func NewTUI(c *TuiConfig) *DevTUI {
 	if c.AppName == "" {
 		c.AppName = "DevTUI"
 	}
 
+	// Example: create a default tab section using the new API
+	tmpTUI := &DevTUI{TuiConfig: c}
+	defaultTab := tmpTUI.NewTabSection(defaultTabName, "build footer example")
+	defaultTab.NewField(
+		"Editable Field",
+		"initial editable value",
+		true,
+		func(newValue any) (string, error) {
+			strValue := newValue.(string)
+			return fmt.Sprintf("Value changed to %s", strValue), nil
+		},
+	).
+		NewField(
+			"Non-Editable Field",
+			"non-editable value",
+			false,
+			func(newValue any) (string, error) {
+				return "Action executed", nil
+			},
+		)
+
 	tui := &DevTUI{
 		TuiConfig: c,
 		focused:   true, // assume the app is focused
-		tabSections: []*TabSection{ // default tab section
-			func() *TabSection {
-				// Create temporary minimal DevTUI instance just for NewTabSection
-				tmpTUI := &DevTUI{TuiConfig: c}
-				tab := tmpTUI.NewTabSection(defaultTabName, "build footer example")
-				tab.SetFieldHandlers([]Field{
-					*NewField(
-						"Editable Field",
-						"initial editable value",
-						true,
-						func(newValue any) (string, error) {
-							strValue := newValue.(string)
-							return fmt.Sprintf("Value changed to %s", strValue), nil
-						},
-					),
-					*NewField(
-						"Non-Editable Field",
-						"non-editable value",
-						false,
-						func(newValue any) (string, error) {
-							return "Action executed", nil
-						},
-					),
-				})
-				tab.tabContents = []tabContent{}
-				return tab
-			}(),
+		tabSections: []*tabSection{
+			defaultTab,
 		},
 		activeTab:       c.TabIndexStart,
 		tabContentsChan: make(chan tabContent, 100),

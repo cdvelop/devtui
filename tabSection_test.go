@@ -14,7 +14,7 @@ func TestTabSectionWriter(t *testing.T) {
 		TabIndexStart: 0,
 		ExitChan:      make(chan bool),
 		Color:         &ColorStyle{}, // Usando un ColorStyle vacío
-		LogToFile: func(messageErr any) {
+		LogToFile: func(messages ...any) {
 			// Mock function for logging
 		},
 	}
@@ -54,7 +54,7 @@ func TestTabContentsIncrementWhenSendingMessages(t *testing.T) {
 		TabIndexStart: 0,
 		ExitChan:      make(chan bool),
 		Color:         &ColorStyle{}, // Usando un ColorStyle vacío
-		LogToFile: func(messageErr any) {
+		LogToFile: func(messages ...any) {
 			// Mock function for logging
 		},
 	}

@@ -25,11 +25,21 @@ func main() {
 		log.Fatal("Error creating unixid:", err)
 	}
 
-	// Simular DevTUI
-	tui, err := devtui.New("TEST-TIMESTAMPS")
-	if err != nil {
-		log.Fatal("Error creating devtui:", err)
-	}
+	// Inicializar la TUI usando la nueva API encapsulada
+	tui := devtui.NewTUI(&devtui.TuiConfig{
+		AppName:       "TestTUI",
+		TabIndexStart: 0,
+		ExitChan:      make(chan bool),
+		Color: &devtui.ColorStyle{
+			Foreground: "#F4F4F4",
+			Background: "#000000",
+			Highlight:  "#FF6600",
+			Lowlight:   "#666666",
+		},
+	})
+
+	// Configurar una sección y campos si la nueva API lo requiere (ejemplo)
+	tui.NewTabSection("Mensajes", "Mensajes generados por el test")
 
 	// Generar mensajes secuenciales
 	for i := 1; i <= totalMessages; i++ {
@@ -40,7 +50,7 @@ func main() {
 
 		// También mostrar en consola para comparar
 		id := uid.GetNewID()
-		timeFormatted := uid.UnixSecondsToTime(id) // ← Aquí está el problema
+		timeFormatted := uid.UnixNanoToTime(id) // ← Aquí está el problema
 		fmt.Printf("[CONSOLA] %s %s (ID: %s)\n", timeFormatted, message, id)
 
 		// Esperar intervalo configurable

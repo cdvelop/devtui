@@ -221,7 +221,8 @@ func TestHandleKeyboard(t *testing.T) {
 		}
 
 		// Verificar que el valor se haya actualizado correctamente
-		expectedFinalValue := "test modified" // Este valor debe coincidir con originalValue + " modified"
+		// El changeFunc en DefaultTUIForTest retorna "Saved value: " + input
+		expectedFinalValue := "Saved value: test modified" // Este es el resultado de changeFunc("test modified")
 		if field.Value() != expectedFinalValue {
 			t.Errorf("Expected value to be '%s' after confirming edit, got '%s'",
 				expectedFinalValue, field.Value())

@@ -32,16 +32,22 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 
 		switch msg.Type {
 		case tea.KeyEnter: // Guardar cambios o ejecutar acción
-			if currentField.tempEditValue != "" && currentField.tempEditValue != currentField.Value() {
-				currentField.SetValue(currentField.tempEditValue) // Aplicar los cambios solo si hubo modificaciones
+			// Verificar si hubo cambios (incluyendo borrar el contenido)
+			if currentField.tempEditValue != currentField.Value() {
 				if currentField.changeFunc != nil {
-					msg, err := currentField.changeFunc(currentField.Value())
+					// Llamar changeFunc con el nuevo valor ANTES de establecerlo
+					msg, err := currentField.changeFunc(currentField.tempEditValue)
 					if err != nil {
 						// Si hay un error, mostrarlo en la pestaña actual
 						currentTab.addNewContent(messagetype.Error, fmt.Sprintf("%v %v", currentField.Name(), err))
+					} else {
+						// Solo aplicar el resultado de changeFunc si no hay error
+						currentField.SetValue(msg)
 					}
 					h.editingConfigOpen(false, currentField, msg)
 				} else {
+					// Si no hay changeFunc, simplemente aplicar el valor directamente
+					currentField.SetValue(currentField.tempEditValue)
 					h.editingConfigOpen(false, currentField, "")
 				}
 			} else {

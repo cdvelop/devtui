@@ -22,30 +22,42 @@ func joinMessages(messages ...any) (Label string) {
 }
 
 // sendMessage envía un mensaje al tui por el canal de mensajes
-func (d *DevTUI) sendMessage(content string, mt messagetype.Type, tabSection *tabSection) {
+func (d *DevTUI) sendMessage(content string, mt messagetype.Type, tabSection *tabSection, operationID ...string) {
 
 	tabSection.addNewContent(mt, content)
 
-	newContent := d.newContent(content, mt, tabSection)
+	newContent := d.newContent(content, mt, tabSection, operationID...)
 
 	d.tabContentsChan <- newContent
 }
 
-func (h *DevTUI) newContent(content string, mt messagetype.Type, tabSection *tabSection) tabContent {
+func (h *DevTUI) newContent(content string, mt messagetype.Type, tabSection *tabSection, operationID ...string) tabContent {
 	var id string
-	if h.id != nil {
-		id = h.id.GetNewID()
+	var opID *string
+	
+	if len(operationID) > 0 && operationID[0] != "" {
+		// Use provided operation ID for async operations
+		id = operationID[0]
+		opID = &operationID[0]
 	} else {
-		// Fallback ID if unixid is not available
-		id = "temp-id"
-		h.LogToFile("Warning: unixid not initialized, using fallback ID")
+		// Generate new ID for regular operations (current behavior)
+		if h.id != nil {
+			id = h.id.GetNewID()
+		} else {
+			id = "temp-id"
+			h.LogToFile("Warning: unixid not initialized, using fallback ID")
+		}
+		opID = nil // Not an async operation
 	}
 
 	return tabContent{
-		Id:         id,
-		Content:    content,
-		Type:       mt,
-		tabSection: tabSection,
+		Id:          id,
+		Content:     content,
+		Type:        mt,
+		tabSection:  tabSection,
+		operationID: opID,
+		isProgress:  false,  // Will be set by specific async methods
+		isComplete:  false,  // Will be set by specific async methods
 	}
 }
 

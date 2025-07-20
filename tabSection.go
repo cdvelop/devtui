@@ -16,6 +16,11 @@ type tabContent struct {
 	Content    string
 	Type       messagetype.Type
 	tabSection *tabSection
+	
+	// NEW: Async fields (always present, nil when not async)
+	operationID *string  // nil for sync messages, value for async operations
+	isProgress  bool     // true if this is a progress update
+	isComplete  bool     // true if async operation completed
 }
 
 // tabSection represents a tab section in the TUI with configurable fields and content

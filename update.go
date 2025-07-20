@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/cdvelop/messagetype"
+	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -43,6 +44,24 @@ func (h *DevTUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if keyCmd != nil {
 			cmds = append(cmds, keyCmd)
+		}
+
+	case spinner.TickMsg:
+		// Update spinners for all running async operations
+		var spinnerCmds []tea.Cmd
+		for _, tab := range h.tabSections {
+			for _, field := range tab.fieldHandlers {
+				if field.asyncState != nil && field.asyncState.isRunning {
+					var spinnerCmd tea.Cmd
+					field.spinner, spinnerCmd = field.spinner.Update(msg)
+					if spinnerCmd != nil {
+						spinnerCmds = append(spinnerCmds, spinnerCmd)
+					}
+				}
+			}
+		}
+		if len(spinnerCmds) > 0 {
+			cmds = append(cmds, spinnerCmds...)
 		}
 
 	case channelMsg: // Handle messages from the channel

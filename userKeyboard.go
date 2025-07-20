@@ -32,7 +32,7 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 			// Verificar si hubo cambios (incluyendo borrar el contenido)
 			if currentField.tempEditValue != currentField.Value() {
 				if currentField.handler != nil {
-					// Trigger async change operation  
+					// Trigger async change operation
 					currentField.handleEnter()
 					h.editingConfigOpen(false, currentField, "")
 				} else {

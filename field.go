@@ -5,19 +5,19 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/cdvelop/messagetype"
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/cdvelop/messagetype"
 )
 
 // FieldHandler interface defines the contract for field handlers
 // This replaces the individual parameters approach with a unified interface
 type FieldHandler interface {
-	Label() string                            // Field label (e.g., "Server Port")
-	Value() string                            // Current field value (e.g., "8080")
-	Editable() bool                           // Whether field is editable or action button
-	Change(newValue any) (string, error)      // SAME signature as current changeFunc
-	Timeout() time.Duration                   // Return 0 for no timeout, or specific duration
+	Label() string                       // Field label (e.g., "Server Port")
+	Value() string                       // Current field value (e.g., "8080")
+	Editable() bool                      // Whether field is editable or action button
+	Change(newValue any) (string, error) // SAME signature as current changeFunc
+	Timeout() time.Duration              // Return 0 for no timeout, or specific duration
 }
 
 // Internal async state management (not exported)
@@ -33,17 +33,17 @@ type internalAsyncState struct {
 // field represents a field in the TUI with async capabilities
 type field struct {
 	// NEW: Handler-based approach (replaces name, value, editable, changeFunc)
-	handler    FieldHandler        // Handles all field behavior
-	parentTab  *tabSection         // Direct reference to parent for message routing
-	
+	handler   FieldHandler // Handles all field behavior
+	parentTab *tabSection  // Direct reference to parent for message routing
+
 	// NEW: Internal async state
 	asyncState *internalAsyncState
 	spinner    spinner.Model
-	
+
 	// UNCHANGED: Existing internal fields
 	tempEditValue string // use for edit
 	index         int
-	cursor        int    // cursor position in text value
+	cursor        int // cursor position in text value
 }
 
 // SetTempEditValueForTest permite modificar tempEditValue en tests
@@ -58,7 +58,8 @@ func (f *field) SetCursorForTest(cursor int) {
 
 // NewField creates a new field with handler-based approach, adds it to the tabSection, and returns the tabSection for chaining.
 // Example usage:
-//   tab.NewField(&MyHandler{})
+//
+//	tab.NewField(&MyHandler{})
 func (ts *tabSection) NewField(handler FieldHandler) *tabSection {
 	f := &field{
 		handler:    handler,
@@ -69,7 +70,7 @@ func (ts *tabSection) NewField(handler FieldHandler) *tabSection {
 	// Configure spinner
 	f.spinner.Spinner = spinner.Dot
 	f.spinner.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("69"))
-	
+
 	ts.addFields(f)
 	return ts
 }
@@ -105,7 +106,7 @@ func (f *field) Value() string {
 }
 
 func (f *field) SetValue(value string) {
-	// This method is deprecated with handler-based approach  
+	// This method is deprecated with handler-based approach
 	// Handler manages its own value state
 }
 
@@ -133,7 +134,7 @@ func (f *field) getCurrentValue() any {
 	if f.handler == nil {
 		return ""
 	}
-	
+
 	if f.handler.Editable() {
 		// For editable fields, return the edited text (tempEditValue or current value)
 		// This matches current field behavior with tempEditValue
@@ -149,22 +150,22 @@ func (f *field) getCurrentValue() any {
 
 // sendProgressMessage sends a progress message through parent tab
 func (f *field) sendProgressMessage(content string) {
-	if f.parentTab != nil && f.parentTab.tui != nil {
-		f.parentTab.tui.sendMessage(content, messagetype.Info, f.parentTab)
+	if f.parentTab != nil && f.parentTab.tui != nil && f.asyncState != nil {
+		f.parentTab.tui.sendMessage(content, messagetype.Info, f.parentTab, f.asyncState.operationID)
 	}
 }
 
 // sendErrorMessage sends an error message through parent tab
 func (f *field) sendErrorMessage(content string) {
-	if f.parentTab != nil && f.parentTab.tui != nil {
-		f.parentTab.tui.sendMessage(content, messagetype.Error, f.parentTab)
+	if f.parentTab != nil && f.parentTab.tui != nil && f.asyncState != nil {
+		f.parentTab.tui.sendMessage(content, messagetype.Error, f.parentTab, f.asyncState.operationID)
 	}
 }
 
 // sendSuccessMessage sends a success message through parent tab
 func (f *field) sendSuccessMessage(content string) {
-	if f.parentTab != nil && f.parentTab.tui != nil {
-		f.parentTab.tui.sendMessage(content, messagetype.Success, f.parentTab)
+	if f.parentTab != nil && f.parentTab.tui != nil && f.asyncState != nil {
+		f.parentTab.tui.sendMessage(content, messagetype.Success, f.parentTab, f.asyncState.operationID)
 	}
 }
 
@@ -178,45 +179,45 @@ func (f *field) executeAsyncChange() {
 	timeout := f.handler.Timeout()
 	var ctx context.Context
 	var cancel context.CancelFunc
-	
+
 	if timeout > 0 {
 		ctx, cancel = context.WithTimeout(context.Background(), timeout)
 	} else {
 		ctx, cancel = context.WithCancel(context.Background())
 	}
-	
+
 	f.asyncState.cancel = cancel
 	f.asyncState.isRunning = true
-	
+
 	// Generate ONE operation ID for the entire async operation
 	if f.parentTab != nil && f.parentTab.tui != nil && f.parentTab.tui.id != nil {
 		f.asyncState.operationID = f.parentTab.tui.id.GetNewID()
 	}
 	f.asyncState.startTime = time.Now()
-	
+
 	// Get current value based on field type
 	currentValue := f.getCurrentValue()
-	
+
 	// Execute user's Change method with context monitoring
-	resultChan := make(chan struct{
+	resultChan := make(chan struct {
 		result string
 		err    error
 	}, 1)
-	
+
 	go func() {
 		result, err := f.handler.Change(currentValue)
-		resultChan <- struct{
+		resultChan <- struct {
 			result string
 			err    error
 		}{result, err}
 	}()
-	
+
 	// Wait for completion or timeout
 	select {
 	case res := <-resultChan:
 		// Operation completed normally
 		f.asyncState.isRunning = false
-		
+
 		if res.err != nil {
 			// Handler decides error message content
 			f.sendErrorMessage(res.err.Error())
@@ -224,18 +225,18 @@ func (f *field) executeAsyncChange() {
 			// Handler decides success message content
 			f.sendSuccessMessage(res.result)
 		}
-		
+
 	case <-ctx.Done():
 		// Operation timed out
 		f.asyncState.isRunning = false
-		
+
 		if ctx.Err() == context.DeadlineExceeded {
 			f.sendErrorMessage(fmt.Sprintf("Operation timed out after %v", timeout))
 		} else {
 			f.sendErrorMessage("Operation was cancelled")
 		}
 	}
-	
+
 	cancel() // Clean up context
 	// Spinner will automatically stop when isRunning = false
 }
@@ -245,7 +246,7 @@ func (f *field) handleEnter() {
 	if f.handler == nil {
 		return
 	}
-	
+
 	// DevTUI handles async internally - user doesn't see this complexity
 	go f.executeAsyncChange()
 }

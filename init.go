@@ -17,9 +17,9 @@ type DefaultEditableHandler struct {
 	currentValue string
 }
 
-func (h *DefaultEditableHandler) Label() string { return "Editable Field" }
-func (h *DefaultEditableHandler) Value() string { return h.currentValue }
-func (h *DefaultEditableHandler) Editable() bool { return true }
+func (h *DefaultEditableHandler) Label() string          { return "Editable Field" }
+func (h *DefaultEditableHandler) Value() string          { return h.currentValue }
+func (h *DefaultEditableHandler) Editable() bool         { return true }
 func (h *DefaultEditableHandler) Timeout() time.Duration { return 0 }
 
 func (h *DefaultEditableHandler) Change(newValue any) (string, error) {
@@ -31,9 +31,9 @@ func (h *DefaultEditableHandler) Change(newValue any) (string, error) {
 // DefaultActionHandler - Default action field for init
 type DefaultActionHandler struct{}
 
-func (h *DefaultActionHandler) Label() string { return "Non-Editable Field" }
-func (h *DefaultActionHandler) Value() string { return "non-editable value" }
-func (h *DefaultActionHandler) Editable() bool { return false }
+func (h *DefaultActionHandler) Label() string          { return "Non-Editable Field" }
+func (h *DefaultActionHandler) Value() string          { return "non-editable value" }
+func (h *DefaultActionHandler) Editable() bool         { return false }
 func (h *DefaultActionHandler) Timeout() time.Duration { return 0 }
 
 func (h *DefaultActionHandler) Change(newValue any) (string, error) {
@@ -137,11 +137,11 @@ func NewTUI(c *TuiConfig) *DevTUI {
 
 	// Create a default tab section using the initialized TUI
 	defaultTab := tui.NewTabSection(defaultTabName, "build footer example")
-	
+
 	// Create default handlers
 	editableHandler := &DefaultEditableHandler{currentValue: "initial editable value"}
 	actionHandler := &DefaultActionHandler{}
-	
+
 	defaultTab.NewField(editableHandler).
 		NewField(actionHandler)
 

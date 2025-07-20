@@ -13,9 +13,9 @@ type TestField1Handler struct {
 	currentValue string
 }
 
-func (h *TestField1Handler) Label() string { return "Field 1  (Editable)" }
-func (h *TestField1Handler) Value() string { return h.currentValue }
-func (h *TestField1Handler) Editable() bool { return true }
+func (h *TestField1Handler) Label() string          { return "Field 1  (Editable)" }
+func (h *TestField1Handler) Value() string          { return h.currentValue }
+func (h *TestField1Handler) Editable() bool         { return true }
 func (h *TestField1Handler) Timeout() time.Duration { return 0 }
 
 func (h *TestField1Handler) Change(newValue any) (string, error) {
@@ -27,9 +27,9 @@ func (h *TestField1Handler) Change(newValue any) (string, error) {
 // TestField2Handler - Default action field
 type TestField2Handler struct{}
 
-func (h *TestField2Handler) Label() string { return "Field 2 (Non-Editable)" }
-func (h *TestField2Handler) Value() string { return "special action" }
-func (h *TestField2Handler) Editable() bool { return false }
+func (h *TestField2Handler) Label() string          { return "Field 2 (Non-Editable)" }
+func (h *TestField2Handler) Value() string          { return "special action" }
+func (h *TestField2Handler) Editable() bool         { return false }
 func (h *TestField2Handler) Timeout() time.Duration { return 0 }
 
 func (h *TestField2Handler) Change(newValue any) (string, error) {
@@ -41,9 +41,9 @@ type TestTab2Field1Handler struct {
 	currentValue string
 }
 
-func (h *TestTab2Field1Handler) Label() string { return "Field 1" }
-func (h *TestTab2Field1Handler) Value() string { return h.currentValue }
-func (h *TestTab2Field1Handler) Editable() bool { return true }
+func (h *TestTab2Field1Handler) Label() string          { return "Field 1" }
+func (h *TestTab2Field1Handler) Value() string          { return h.currentValue }
+func (h *TestTab2Field1Handler) Editable() bool         { return true }
 func (h *TestTab2Field1Handler) Timeout() time.Duration { return 0 }
 
 func (h *TestTab2Field1Handler) Change(newValue any) (string, error) {
@@ -57,9 +57,9 @@ type TestTab2Field2Handler struct {
 	currentValue string
 }
 
-func (h *TestTab2Field2Handler) Label() string { return "Field 2" }
-func (h *TestTab2Field2Handler) Value() string { return h.currentValue }
-func (h *TestTab2Field2Handler) Editable() bool { return true }
+func (h *TestTab2Field2Handler) Label() string          { return "Field 2" }
+func (h *TestTab2Field2Handler) Value() string          { return h.currentValue }
+func (h *TestTab2Field2Handler) Editable() bool         { return true }
 func (h *TestTab2Field2Handler) Timeout() time.Duration { return 0 }
 
 func (h *TestTab2Field2Handler) Change(newValue any) (string, error) {
@@ -81,7 +81,7 @@ func DefaultTUIForTest(LogToFile func(messages ...any)) *DevTUI {
 
 	tab1.NewField(field1Handler).
 		NewField(field2Handler)
-		
+
 	tab1.SetIndex(0)
 	tab1.SetActiveEditField(0)
 

@@ -18,6 +18,13 @@ func (h *DevTUI) View() string {
 
 // ContentView renderiza los mensajes para una sección de contenido
 func (h *DevTUI) ContentView() string {
+	if len(h.tabSections) == 0 {
+		return "No tabs created yet"
+	}
+	if h.activeTab >= len(h.tabSections) {
+		h.activeTab = 0
+	}
+
 	tabContent := h.tabSections[h.activeTab].tabContents
 	var contentLines []string
 	for _, content := range tabContent {
@@ -28,6 +35,13 @@ func (h *DevTUI) ContentView() string {
 }
 
 func (h *DevTUI) headerView() string {
+	if len(h.tabSections) == 0 {
+		return h.headerTitleStyle.Render(h.AppName + "/No tabs")
+	}
+	if h.activeTab >= len(h.tabSections) {
+		h.activeTab = 0
+	}
+
 	tab := h.tabSections[h.activeTab]
 
 	// Truncar el título si es necesario

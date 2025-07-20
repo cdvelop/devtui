@@ -22,7 +22,7 @@ func TestUserScenarioExactReplication(t *testing.T) {
 		h.viewport.Height = 24
 
 		// Get the first field from the default configuration
-		field := h.tabSections[0].FieldHandlers()[0]
+		field := h.tabSections[GetFirstTestTabIndex()].FieldHandlers()[0]
 
 		// Step 1: Field shows "initial test value" (this is the initial state)
 		expectedInitialValue := "initial test value"
@@ -32,7 +32,8 @@ func TestUserScenarioExactReplication(t *testing.T) {
 
 		// Enter editing mode (this happens when user presses Enter on the field)
 		h.editModeActivated = true
-		h.tabSections[0].indexActiveEditField = 0
+		h.activeTab = GetFirstTestTabIndex() // Set the active tab to the test tab
+		h.tabSections[GetFirstTestTabIndex()].indexActiveEditField = 0
 
 		// When entering edit mode, tempEditValue is initialized with the current value
 		field.tempEditValue = field.Value()
@@ -114,11 +115,12 @@ func TestBackspaceAfterClear(t *testing.T) {
 		h.viewport.Width = 80
 		h.viewport.Height = 24
 
-		field := h.tabSections[0].FieldHandlers()[0]
+		field := h.tabSections[GetFirstTestTabIndex()].FieldHandlers()[0]
 
 		// Enter editing mode
 		h.editModeActivated = true
-		h.tabSections[0].indexActiveEditField = 0
+		h.activeTab = GetFirstTestTabIndex() // Set the active tab to the test tab
+		h.tabSections[GetFirstTestTabIndex()].indexActiveEditField = 0
 
 		// Initialize editing
 		field.tempEditValue = field.Value()

@@ -2,6 +2,7 @@ package devtui
 
 import (
 	"errors"
+	"os"
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -11,14 +12,14 @@ import (
 // over what happens when a field is cleared, not DevTUI
 func TestChangeFuncControlsEmptyFieldBehavior(t *testing.T) {
 	t.Run("changeFunc can reject empty values", func(t *testing.T) {
-		// Custom changeFunc that rejects empty values
-		customChangeFunc := func(value any) (string, error) {
+		// Custom handler that rejects empty values
+		customHandler := NewTestFieldHandler("Required Field", "initial value", true, func(value any) (string, error) {
 			strValue := value.(string)
 			if strValue == "" {
 				return "", errors.New("Field cannot be empty")
 			}
 			return "Accepted: " + strValue, nil
-		}
+		})
 
 		// Create TUI with custom field
 		h := DefaultTUIForTest(func(messages ...any) {})
@@ -26,15 +27,17 @@ func TestChangeFuncControlsEmptyFieldBehavior(t *testing.T) {
 		h.viewport.Height = 24
 
 		// Replace the default field with our custom one
-		tab := h.tabSections[0]
+		testTabIndex := GetFirstTestTabIndex()
+		tab := h.tabSections[testTabIndex]
 		tab.setFieldHandlers([]*field{})
-		tab.NewField("Required Field", "initial value", true, customChangeFunc)
+		tab.NewField(customHandler)
 
 		field := tab.FieldHandlers()[0]
 
-		// Enter editing mode
+		// Switch to test tab and enter editing mode
+		h.activeTab = testTabIndex
 		h.editModeActivated = true
-		h.tabSections[0].indexActiveEditField = 0
+		h.tabSections[testTabIndex].indexActiveEditField = 0
 
 		// Initialize editing
 		field.tempEditValue = field.Value()
@@ -60,14 +63,17 @@ func TestChangeFuncControlsEmptyFieldBehavior(t *testing.T) {
 	})
 
 	t.Run("changeFunc can accept and transform empty values", func(t *testing.T) {
-		// Custom changeFunc that accepts empty values and transforms them
-		customChangeFunc := func(value any) (string, error) {
+		// Ensure TEST_MODE is set for synchronous execution
+		os.Setenv("TEST_MODE", "true")
+
+		// Custom handler that accepts empty values and transforms them
+		customHandler := NewTestFieldHandler("Optional Field", "original value", true, func(value any) (string, error) {
 			strValue := value.(string)
 			if strValue == "" {
 				return "Default Value", nil
 			}
 			return "User Input: " + strValue, nil
-		}
+		})
 
 		// Create TUI with custom field
 		h := DefaultTUIForTest(func(messages ...any) {})
@@ -75,15 +81,17 @@ func TestChangeFuncControlsEmptyFieldBehavior(t *testing.T) {
 		h.viewport.Height = 24
 
 		// Replace the default field
-		tab := h.tabSections[0]
+		testTabIndex := GetFirstTestTabIndex()
+		tab := h.tabSections[testTabIndex]
 		tab.setFieldHandlers([]*field{})
-		tab.NewField("Optional Field", "original value", true, customChangeFunc)
+		tab.NewField(customHandler)
 
 		field := tab.FieldHandlers()[0]
 
-		// Enter editing mode
+		// Switch to test tab and enter editing mode
+		h.activeTab = testTabIndex
 		h.editModeActivated = true
-		h.tabSections[0].indexActiveEditField = 0
+		h.tabSections[testTabIndex].indexActiveEditField = 0
 
 		// Initialize editing
 		field.tempEditValue = field.Value()
@@ -104,11 +112,11 @@ func TestChangeFuncControlsEmptyFieldBehavior(t *testing.T) {
 	})
 
 	t.Run("changeFunc can preserve empty values", func(t *testing.T) {
-		// Custom changeFunc that allows and preserves empty values
-		customChangeFunc := func(value any) (string, error) {
+		// Custom handler that allows and preserves empty values
+		customHandler := NewTestFieldHandler("Clearable Field", "some value", true, func(value any) (string, error) {
 			strValue := value.(string)
 			return strValue, nil // Return exactly what was input, including empty string
-		}
+		})
 
 		// Create TUI with custom field
 		h := DefaultTUIForTest(func(messages ...any) {})
@@ -116,15 +124,17 @@ func TestChangeFuncControlsEmptyFieldBehavior(t *testing.T) {
 		h.viewport.Height = 24
 
 		// Replace the default field
-		tab := h.tabSections[0]
+		testTabIndex := GetFirstTestTabIndex()
+		tab := h.tabSections[testTabIndex]
 		tab.setFieldHandlers([]*field{})
-		tab.NewField("Clearable Field", "some value", true, customChangeFunc)
+		tab.NewField(customHandler)
 
 		field := tab.FieldHandlers()[0]
 
-		// Enter editing mode
+		// Switch to test tab and enter editing mode
+		h.activeTab = testTabIndex
 		h.editModeActivated = true
-		h.tabSections[0].indexActiveEditField = 0
+		h.tabSections[testTabIndex].indexActiveEditField = 0
 
 		// Initialize editing
 		field.tempEditValue = field.Value()

@@ -34,7 +34,7 @@ func (d *DevTUI) sendMessage(content string, mt messagetype.Type, tabSection *ta
 func (h *DevTUI) newContent(content string, mt messagetype.Type, tabSection *tabSection, operationID ...string) tabContent {
 	var id string
 	var opID *string
-	
+
 	if len(operationID) > 0 && operationID[0] != "" {
 		// Use provided operation ID for async operations
 		id = operationID[0]
@@ -56,15 +56,21 @@ func (h *DevTUI) newContent(content string, mt messagetype.Type, tabSection *tab
 		Type:        mt,
 		tabSection:  tabSection,
 		operationID: opID,
-		isProgress:  false,  // Will be set by specific async methods
-		isComplete:  false,  // Will be set by specific async methods
+		isProgress:  false, // Will be set by specific async methods
+		isComplete:  false, // Will be set by specific async methods
 	}
 }
 
 // formatMessage formatea un mensaje según su tipo
 func (t *DevTUI) formatMessage(msg tabContent) string {
 
-	timeStr := t.timeStyle.Render(t.id.UnixNanoToTime(msg.Id))
+	var timeStr string
+	if t.id != nil {
+		timeStr = t.timeStyle.Render(t.id.UnixNanoToTime(msg.Id))
+	} else {
+		// When unixid is not initialized, use a simple timestamp format
+		timeStr = t.timeStyle.Render("--:--:--")
+	}
 
 	// timeStr := t.timeStyle.Render(msg.Time.Format("15:04:05"))
 	// content := fmt.Sprintf("[%s] %s", timeStr, msg.Content)

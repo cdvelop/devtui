@@ -31,15 +31,14 @@ func TestNewTUI(t *testing.T) {
 
 func TestCustomTabs(t *testing.T) { // Create a custom configuration with custom tabs
 	customSection := NewTUI(&TuiConfig{}).NewTabSection("CUSTOM1", "custom footer")
-	customSection.NewField(
-		"Test Field",
-		"test value",
-		true,
-		func(newValue any) (string, error) {
-			strValue := newValue.(string)
-			return "Value updated to " + strValue, nil
-		},
-	)
+
+	// Create handler for testing
+	testHandler := NewTestFieldHandler("Test Field", "test value", true, func(newValue any) (string, error) {
+		strValue := newValue.(string)
+		return "Value updated to " + strValue, nil
+	})
+
+	customSection.NewField(testHandler)
 
 	config := &TuiConfig{
 		TabIndexStart: 0,
@@ -55,19 +54,25 @@ func TestCustomTabs(t *testing.T) { // Create a custom configuration with custom
 }
 
 func TestMultipleTabSections(t *testing.T) {
-	// Test adding multiple tab sections
-	section1 := NewTUI(&TuiConfig{}).NewTabSection("Tab1", "")
-	section2 := NewTUI(&TuiConfig{}).NewTabSection("Tab2", "")
-
+	// Test that NewTUI correctly adds multiple tab sections
 	config := &TuiConfig{
 		TabIndexStart: 0,
 		Color:         &ColorStyle{},
+		TestMode:      true, // Evitar mensaje automático de shortcuts
 	}
 
-	totalSections := NewTUI(config).AddTabSections(section1, section2).GetTotalTabSections()
+	tui := NewTUI(config)
 
-	if totalSections != 2 {
-		t.Errorf("Expected 2 tab sections, got %d", totalSections)
+	// Create two more sections using NewTabSection
+	tui.NewTabSection("Tab1", "Description 1")
+	tui.NewTabSection("Tab2", "Description 2")
+
+	totalSections := tui.GetTotalTabSections()
+
+	// Expected: 1 (SHORTCUTS) + 2 (Tab1, Tab2) = 3
+	expected := 3
+	if totalSections != expected {
+		t.Errorf("Expected %d tab sections, got %d", expected, totalSections)
 
 	}
 

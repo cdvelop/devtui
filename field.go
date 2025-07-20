@@ -3,6 +3,7 @@ package devtui
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/cdvelop/messagetype"
@@ -110,6 +111,11 @@ func (f *field) SetValue(value string) {
 	// Handler manages its own value state
 }
 
+// GetHandlerForTest returns the handler for testing purposes
+func (f *field) GetHandlerForTest() FieldHandler {
+	return f.handler
+}
+
 func (f *field) Editable() bool {
 	if f.handler != nil {
 		return f.handler.Editable()
@@ -138,7 +144,9 @@ func (f *field) getCurrentValue() any {
 	if f.handler.Editable() {
 		// For editable fields, return the edited text (tempEditValue or current value)
 		// This matches current field behavior with tempEditValue
-		if f.tempEditValue != "" {
+		// Check if we're in editing mode by looking at parent tab's edit state
+		if f.parentTab != nil && f.parentTab.tui != nil && f.parentTab.tui.editModeActivated {
+			// In edit mode, always use tempEditValue (even if empty string)
 			return f.tempEditValue
 		}
 		return f.handler.Value()
@@ -157,21 +165,35 @@ func (f *field) sendProgressMessage(content string) {
 
 // sendErrorMessage sends an error message through parent tab
 func (f *field) sendErrorMessage(content string) {
-	if f.parentTab != nil && f.parentTab.tui != nil && f.asyncState != nil {
-		f.parentTab.tui.sendMessage(content, messagetype.Error, f.parentTab, f.asyncState.operationID)
+	if f.parentTab != nil && f.parentTab.tui != nil {
+		var operationID string
+		if f.asyncState != nil {
+			operationID = f.asyncState.operationID
+		}
+		f.parentTab.tui.sendMessage(content, messagetype.Error, f.parentTab, operationID)
 	}
 }
 
 // sendSuccessMessage sends a success message through parent tab
 func (f *field) sendSuccessMessage(content string) {
-	if f.parentTab != nil && f.parentTab.tui != nil && f.asyncState != nil {
-		f.parentTab.tui.sendMessage(content, messagetype.Success, f.parentTab, f.asyncState.operationID)
+	if f.parentTab != nil && f.parentTab.tui != nil {
+		var operationID string
+		if f.asyncState != nil {
+			operationID = f.asyncState.operationID
+		}
+		f.parentTab.tui.sendMessage(content, messagetype.Success, f.parentTab, operationID)
 	}
 }
 
 // executeAsyncChange executes the handler's Change method asynchronously
 func (f *field) executeAsyncChange() {
 	if f.handler == nil || f.asyncState == nil {
+		return
+	}
+
+	// In test mode, execute synchronously for predictable test behavior
+	if os.Getenv("TEST_MODE") == "true" {
+		f.executeChangeSync()
 		return
 	}
 
@@ -241,9 +263,41 @@ func (f *field) executeAsyncChange() {
 	// Spinner will automatically stop when isRunning = false
 }
 
+// executeChangeSync executes the handler's Change method synchronously (for tests)
+func (f *field) executeChangeSync() {
+	if f.handler == nil {
+		return
+	}
+
+	// Generate operation ID for message routing (same as async version)
+	if f.asyncState != nil && f.parentTab != nil && f.parentTab.tui != nil && f.parentTab.tui.id != nil {
+		f.asyncState.operationID = f.parentTab.tui.id.GetNewID()
+	}
+
+	// Get current value based on field type
+	currentValue := f.getCurrentValue()
+
+	// Execute user's Change method synchronously
+	result, err := f.handler.Change(currentValue)
+
+	if err != nil {
+		// Handler decides error message content
+		f.sendErrorMessage(err.Error())
+	} else {
+		// Handler decides success message content
+		f.sendSuccessMessage(result)
+	}
+}
+
 // handleEnter triggers async operation when user presses Enter
 func (f *field) handleEnter() {
 	if f.handler == nil {
+		return
+	}
+
+	// In test mode, execute synchronously without goroutine
+	if os.Getenv("TEST_MODE") == "true" {
+		f.executeChangeSync()
 		return
 	}
 

@@ -19,20 +19,19 @@ func TestFieldEditingBugReplication(t *testing.T) {
 		h.viewport.Width = 80
 		h.viewport.Height = 24
 
-		// Get the first field from the default configuration
-		field := h.tabSections[0].FieldHandlers()[0]
-		initialValue := "initial test value"
+		// Use centralized function to get correct tab index
+		testTabIndex := GetFirstTestTabIndex()
+		field := h.tabSections[testTabIndex].FieldHandlers()[0]
+		// The field already has "initial test value" from DefaultTUIForTest
 
-		// Ensure the field has the initial value
-		field.SetValue(initialValue)
-
-		// Enter editing mode
+		// Switch to the test tab and enter editing mode
+		h.activeTab = testTabIndex
 		h.editModeActivated = true
-		h.tabSections[0].indexActiveEditField = 0
+		h.tabSections[testTabIndex].indexActiveEditField = 0
 
 		// Initialize tempEditValue with the current value (this happens when entering edit mode)
 		field.tempEditValue = field.Value()
-		field.cursor = len([]rune(initialValue)) // Cursor at the end
+		field.cursor = len([]rune(field.Value())) // Cursor at the end
 
 		t.Logf("Initial state - Value: '%s', tempEditValue: '%s', cursor: %d",
 			field.Value(), field.tempEditValue, field.cursor)
@@ -84,13 +83,17 @@ func TestFieldEditingCorrectBehavior(t *testing.T) {
 		h.viewport.Width = 80
 		h.viewport.Height = 24
 
-		field := h.tabSections[0].FieldHandlers()[0]
-		initialValue := "initial test value"
-		field.SetValue(initialValue)
+		// Use centralized function to get correct tab index
+		testTabIndex := GetFirstTestTabIndex()
+		field := h.tabSections[testTabIndex].FieldHandlers()[0]
 
-		// Enter editing mode
+		// The field already has "initial test value" from DefaultTUIForTest
+		// No need to set it again as SetValue is deprecated
+
+		// Switch to the test tab and enter editing mode
+		h.activeTab = testTabIndex
 		h.editModeActivated = true
-		h.tabSections[0].indexActiveEditField = 0
+		h.tabSections[testTabIndex].indexActiveEditField = 0
 
 		// Simulate user clearing the field completely
 		field.tempEditValue = ""

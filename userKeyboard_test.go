@@ -15,11 +15,14 @@ func debugFieldState(t *testing.T, prefix string, field *field) {
 
 // Helper para inicializar un campo para testing
 func prepareFieldForEditing(t *testing.T, h *DevTUI) *field {
+	testTabIndex := GetFirstTestTabIndex()
+	h.activeTab = testTabIndex
 	h.editModeActivated = true
-	h.tabSections[0].indexActiveEditField = 0
-	tab := h.tabSections[0]
+	h.tabSections[testTabIndex].indexActiveEditField = 0
+	tab := h.tabSections[testTabIndex]
 	tab.setFieldHandlers([]*field{})
-	tab.NewField("Test", "initial value", true, nil)
+	testHandler := NewTestFieldHandler("Test", "initial value", true, nil)
+	tab.NewField(testHandler)
 	field := tab.FieldHandlers()[0]
 	field.tempEditValue = field.Value() // Inicializar tempEditValue con el valor actual
 	field.cursor = 0                    // Inicializar cursor
@@ -200,10 +203,14 @@ func TestHandleKeyboard(t *testing.T) {
 		// Reset para esta prueba
 		h := prepareForTesting()
 
-		// Setup: Enter editing mode
+		// Use the correct tab (index 1, not 0 which is SHORTCUTS)
+		testTabIndex := 1
+
+		// Setup: Enter editing mode on the correct tab
+		h.activeTab = testTabIndex
 		h.editModeActivated = true
-		h.tabSections[0].indexActiveEditField = 0
-		field := h.tabSections[0].FieldHandlers()[0]
+		h.tabSections[testTabIndex].indexActiveEditField = 0
+		field := h.tabSections[testTabIndex].FieldHandlers()[0]
 		originalValue := "test"
 		field.SetValue(originalValue)
 
@@ -221,8 +228,8 @@ func TestHandleKeyboard(t *testing.T) {
 		}
 
 		// Verificar que el valor se haya actualizado correctamente
-		// El changeFunc en DefaultTUIForTest retorna "Saved value: " + input
-		expectedFinalValue := "Saved value: test modified" // Este es el resultado de changeFunc("test modified")
+		// El handler actualiza su currentValue al nuevo valor
+		expectedFinalValue := "test modified" // Este es el nuevo valor almacenado por el handler
 		if field.Value() != expectedFinalValue {
 			t.Errorf("Expected value to be '%s' after confirming edit, got '%s'",
 				expectedFinalValue, field.Value())
@@ -263,12 +270,21 @@ func TestAdditionalKeyboardFeatures(t *testing.T) {
 		// Reset para esta prueba
 		h := prepareForTesting()
 
-		// Setup: Enter editing mode
+		// Use the correct tab (index 1, not 0 which is SHORTCUTS)
+		testTabIndex := 1
+
+		// Setup: Enter editing mode on the correct tab
+		h.activeTab = testTabIndex
 		h.editModeActivated = true
-		h.tabSections[0].indexActiveEditField = 0
-		field := h.tabSections[0].FieldHandlers()[0]
+		h.tabSections[testTabIndex].indexActiveEditField = 0
+		field := h.tabSections[testTabIndex].FieldHandlers()[0]
 		originalValue := "Original value"
-		field.SetValue(originalValue)
+
+		// Access the handler directly to set the value (since SetValue is deprecated)
+		if handler, ok := field.GetHandlerForTest().(*TestField1Handler); ok {
+			handler.currentValue = originalValue
+		}
+
 		setTempEditValueForTest(field, "modified") // Simular que ya se ha hecho una edición
 
 		// Verificamos que el campo tempEditValue fue modificado
@@ -331,10 +347,14 @@ func TestAdditionalKeyboardFeatures(t *testing.T) {
 		// Reset para esta prueba
 		h := prepareForTesting()
 
-		// Configuración inicial - modo edición
+		// Use the correct tab (index 1, not 0 which is SHORTCUTS)
+		testTabIndex := 1
+
+		// Configuración inicial - modo edición en el tab correcto
+		h.activeTab = testTabIndex
 		h.editModeActivated = true
-		h.tabSections[0].indexActiveEditField = 0
-		field := h.tabSections[0].FieldHandlers()[0]
+		h.tabSections[testTabIndex].indexActiveEditField = 0
+		field := h.tabSections[testTabIndex].FieldHandlers()[0]
 		field.SetValue("hello")
 		setTempEditValueForTest(field, "hello") // Inicializar tempEditValue
 		setCursorForTest(field, 2)              // Cursor en medio (he|llo)

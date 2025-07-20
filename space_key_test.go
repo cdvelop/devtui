@@ -6,33 +6,48 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+// setupTestWithEditableField configures a test environment with an editable field
+func setupTestWithEditableField(t *testing.T) (*DevTUI, *field) {
+	h := DefaultTUIForTest(func(messages ...any) {
+		// Test logger - do nothing
+	})
+
+	// Initialize viewport with a reasonable size for testing FIRST
+	h.viewport.Width = 80
+	h.viewport.Height = 24
+
+	// Use the first non-SHORTCUTS tab (should be index 1)
+	testTabIndex := 1
+	if testTabIndex >= len(h.tabSections) {
+		t.Fatalf("Expected at least %d tab sections, got %d", testTabIndex+1, len(h.tabSections))
+	}
+
+	field := h.tabSections[testTabIndex].FieldHandlers()[0]
+
+	// Enter editing mode on the correct tab
+	h.activeTab = testTabIndex
+	h.editModeActivated = true
+	h.tabSections[testTabIndex].indexActiveEditField = 0
+
+	// Clear field and reset cursor
+	field.tempEditValue = ""
+	field.cursor = 0
+
+	return h, field
+}
+
 // TestSpaceKeyInEditMode tests that the space key works correctly in edit mode
 func TestSpaceKeyInEditMode(t *testing.T) {
 	t.Run("Space key should insert space in edit mode", func(t *testing.T) {
-		// Setup
-		h := DefaultTUIForTest(func(messages ...any) {
-			// Test logger - do nothing
-		})
+		h, field := setupTestWithEditableField(t)
 
-		// Initialize viewport with a reasonable size for testing
-		h.viewport.Width = 80
-		h.viewport.Height = 24
-
-		field := h.tabSections[0].FieldHandlers()[0]
-
-		// Enter editing mode
-		h.editModeActivated = true
-		h.tabSections[0].indexActiveEditField = 0
-
-		// Clear field
-		field.tempEditValue = ""
-		field.cursor = 0
-
-		// Type "hello"
+		// Type "hello" - one character at a time
 		h.HandleKeyboard(tea.KeyMsg{
 			Type:  tea.KeyRunes,
 			Runes: []rune{'h'},
 		})
+
+		t.Logf("After typing 'h' - tempEditValue: '%s', cursor: %d", field.tempEditValue, field.cursor)
 
 		h.HandleKeyboard(tea.KeyMsg{
 			Type:  tea.KeyRunes,
@@ -106,20 +121,7 @@ func TestSpaceKeyInEditMode(t *testing.T) {
 	})
 
 	t.Run("Space using Runes should work", func(t *testing.T) {
-		// Setup
-		h := DefaultTUIForTest(func(messages ...any) {})
-		h.viewport.Width = 80
-		h.viewport.Height = 24
-
-		field := h.tabSections[0].FieldHandlers()[0]
-
-		// Enter editing mode
-		h.editModeActivated = true
-		h.tabSections[0].indexActiveEditField = 0
-
-		// Clear field
-		field.tempEditValue = ""
-		field.cursor = 0
+		h, field := setupTestWithEditableField(t)
 
 		// Type "hello" using Runes
 		h.HandleKeyboard(tea.KeyMsg{
@@ -149,24 +151,7 @@ func TestSpaceKeyInEditMode(t *testing.T) {
 	})
 
 	t.Run("Complete text editing with spaces should work", func(t *testing.T) {
-		// Setup
-		h := DefaultTUIForTest(func(messages ...any) {})
-		h.viewport.Width = 80
-		h.viewport.Height = 24
-
-		field := h.tabSections[0].FieldHandlers()[0]
-
-		// Enter editing mode
-		h.editModeActivated = true
-		h.tabSections[0].indexActiveEditField = 0
-
-		// Start with initial value and edit it
-		field.tempEditValue = field.Value()       // Start with current value
-		field.cursor = len([]rune(field.Value())) // Cursor at end
-
-		// Clear the field first
-		field.tempEditValue = ""
-		field.cursor = 0
+		h, field := setupTestWithEditableField(t)
 
 		// Type a complete sentence with spaces
 		// "Hello world from Go"

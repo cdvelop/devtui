@@ -13,6 +13,14 @@ import (
 // Si no hay campos, muestra una barra de desplazamiento estándar
 
 func (h *DevTUI) footerView() string {
+	// Verificar que haya tabs disponibles
+	if len(h.tabSections) == 0 {
+		return h.footerInfoStyle.Render("No tabs available")
+	}
+	if h.activeTab >= len(h.tabSections) {
+		h.activeTab = 0
+	}
+
 	// Si hay campos disponibles, mostrar el input (independiente de si estamos en modo edición)
 	if len(h.tabSections[h.activeTab].FieldHandlers()) > 0 {
 		return h.renderFooterInput()
@@ -72,13 +80,13 @@ func (h *DevTUI) renderFooterInput() string {
 	if field.tempEditValue != "" {
 		valueText = field.tempEditValue
 	}
-	
+
 	// Añadir spinner si hay operación async ejecutándose
 	var spinnerText string
 	if field.asyncState != nil && field.asyncState.isRunning {
 		spinnerText = field.spinner.View() + " "
 	}
-	
+
 	// Mostrar cursor solo si estamos en modo edición y el campo es editable
 	if h.editModeActivated && field.Editable() {
 		showCursor = true
@@ -139,7 +147,7 @@ func (h *DevTUI) renderFooterInput() string {
 	return lipgloss.JoinHorizontal(
 		lipgloss.Left,
 		paddedLabel,
-		spacerStyle, // Espacio entre label y value  
+		spacerStyle, // Espacio entre label y value
 		spinnerText, // Spinner si hay operación async
 		styledValue,
 		spacerStyle, // Espacio entre value e info

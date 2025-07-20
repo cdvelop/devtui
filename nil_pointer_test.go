@@ -82,9 +82,17 @@ func TestKeyboardHandlingWithNilID(t *testing.T) {
 
 	// Crear una sección de pestañas con un campo no editable
 	section := tui.NewTabSection("Test Section", "Test Description")
-	section.NewField("Test Field", "test value", false, func(value any) (string, error) {
+	testHandler := NewTestFieldHandler("Test Field", "test value", false, func(value any) (string, error) {
 		return "modified: " + value.(string), nil
 	})
+	section.NewField(testHandler)
+
+	// Configurar el estado necesario para que HandleKeyboard funcione correctamente
+	// El tab de "Test Section" será el último tab agregado
+	testTabIndex := len(tui.tabSections) - 1
+	tui.activeTab = testTabIndex
+	tui.editModeActivated = true // Necesario para que entre al flujo de handleEditingConfigKeyboard
+	tui.tabSections[testTabIndex].indexActiveEditField = 0
 
 	// Simular presionar Enter en un campo no editable - esto YA NO debería causar panic
 	defer func() {

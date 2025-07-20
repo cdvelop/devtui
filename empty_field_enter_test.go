@@ -18,25 +18,27 @@ func TestEmptyFieldEnterBehavior(t *testing.T) {
 		h.viewport.Width = 80
 		h.viewport.Height = 24
 
-		field := h.tabSections[0].FieldHandlers()[0]
-		originalValue := "initial test value"
+		// Use centralized function to get correct tab index
+		testTabIndex := GetFirstTestTabIndex()
+		field := h.tabSections[testTabIndex].FieldHandlers()[0]
 
-		// Ensure field has the original value
-		field.SetValue(originalValue)
+		// The field already has "initial test value" from DefaultTUIForTest
+		// No need to set it again as SetValue is deprecated
 
-		// Enter editing mode
+		// Switch to the test tab and enter editing mode
+		h.activeTab = testTabIndex
 		h.editModeActivated = true
-		h.tabSections[0].indexActiveEditField = 0
+		h.tabSections[testTabIndex].indexActiveEditField = 0
 
 		// Initialize editing with current value
-		field.tempEditValue = field.Value()
-		field.cursor = len([]rune(field.Value()))
+		field.SetTempEditValueForTest(field.Value())
+		field.SetCursorForTest(len([]rune(field.Value())))
 
 		t.Logf("Initial state - Value: '%s', tempEditValue: '%s'", field.Value(), field.tempEditValue)
 
 		// User clears the entire field
-		field.tempEditValue = ""
-		field.cursor = 0
+		field.SetTempEditValueForTest("")
+		field.SetCursorForTest(0)
 
 		t.Logf("After clearing - Value: '%s', tempEditValue: '%s'", field.Value(), field.tempEditValue)
 
@@ -46,8 +48,8 @@ func TestEmptyFieldEnterBehavior(t *testing.T) {
 		t.Logf("After pressing Enter - Value: '%s', tempEditValue: '%s'", field.Value(), field.tempEditValue)
 
 		// The field should now have the value that the changeFunc returned for empty string
-		// According to the default changeFunc, it should return "Saved value: " (empty string)
-		expectedValue := "Saved value: "
+		// According to the TestField1Handler changeFunc, it should have empty string as value
+		expectedValue := ""
 		if field.Value() != expectedValue {
 			t.Errorf("Expected field value to be '%s', got '%s'", expectedValue, field.Value())
 		}
@@ -64,15 +66,15 @@ func TestEmptyFieldEnterBehavior(t *testing.T) {
 	})
 
 	t.Run("Field should NOT revert to original value when cleared and Enter is pressed", func(t *testing.T) {
-		// Custom changeFunc that allows empty values
+		// Custom handler that allows empty values
 		var receivedValue string
-		customChangeFunc := func(value any) (string, error) {
+		customHandler := NewTestFieldHandler("Test Field", "original value", true, func(value any) (string, error) {
 			receivedValue = value.(string)
 			if receivedValue == "" {
 				return "Field was cleared", nil
 			}
 			return "Field value: " + receivedValue, nil
-		}
+		})
 
 		// Create TUI with custom field
 		h := DefaultTUIForTest(func(messages ...any) {})
@@ -80,15 +82,17 @@ func TestEmptyFieldEnterBehavior(t *testing.T) {
 		h.viewport.Height = 24
 
 		// Replace the default field with our custom one
-		tab := h.tabSections[0]
+		testTabIndex := GetFirstTestTabIndex()
+		tab := h.tabSections[testTabIndex]
 		tab.setFieldHandlers([]*field{})
-		tab.NewField("Test Field", "original value", true, customChangeFunc)
+		tab.NewField(customHandler)
 
 		field := tab.FieldHandlers()[0]
 
-		// Enter editing mode
+		// Switch to test tab and enter editing mode
+		h.activeTab = testTabIndex
 		h.editModeActivated = true
-		h.tabSections[0].indexActiveEditField = 0
+		h.tabSections[testTabIndex].indexActiveEditField = 0
 
 		// Initialize editing
 		field.tempEditValue = field.Value()

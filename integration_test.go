@@ -25,10 +25,14 @@ func TestRealWorldScenario(t *testing.T) {
 	})
 
 	// Configurar la sección y los campos exactamente como en main.go
+	nombreHandler := NewTestFieldHandler("Nombre", "", true, nil)
+	edadHandler := NewTestFieldHandler("Edad", "", true, nil)
+	emailHandler := NewTestFieldHandler("Email", "", true, nil)
+
 	tui.NewTabSection("Datos personales", "Información básica").
-		NewField("Nombre", "", true, nil).
-		NewField("Edad", "", true, nil).
-		NewField("Email", "", true, nil)
+		NewField(nombreHandler).
+		NewField(edadHandler).
+		NewField(emailHandler)
 
 	// Asegurarnos de que no hay panic durante la inicialización
 	defer func() {

@@ -5,12 +5,64 @@ import (
 	"sync"
 	"time"
 
+	"github.com/cdvelop/messagetype"
 	"github.com/cdvelop/unixid"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 // Default handlers for init.go
+
+// ShortcutsHandler - Shows keyboard navigation instructions
+type ShortcutsHandler struct {
+	shortcuts string
+}
+
+func NewShortcutsHandler() *ShortcutsHandler {
+	shortcuts := `Keyboard Navigation Commands:
+
+Navigation Between Tabs:
+  • Tab         - Next tab
+  • Shift+Tab   - Previous tab
+
+Navigation Between Fields:
+  • Left Arrow  - Previous field (cycle)
+  • Right Arrow - Next field (cycle)
+
+Field Editing:
+  • Enter       - Edit field / Execute action
+  • Esc         - Cancel editing / Exit field
+
+Text Editing (when in edit mode):
+  • Left Arrow  - Move cursor left
+  • Right Arrow - Move cursor right
+  • Backspace   - Delete character left
+  • Space       - Insert space
+  • Characters  - Insert text at cursor
+
+Viewport Navigation:
+  • Up Arrow    - Scroll viewport up
+  • Down Arrow  - Scroll viewport down
+
+Application:
+  • Ctrl+C      - Exit application
+  • Ctrl+L      - Clear current tab content
+
+Field Types:
+  • Editable    - Press Enter to edit, Esc to cancel
+  • Action      - Press Enter to execute, shows spinner during async operations`
+
+	return &ShortcutsHandler{shortcuts: shortcuts}
+}
+
+func (h *ShortcutsHandler) Label() string          { return "Keyboard Shortcuts" }
+func (h *ShortcutsHandler) Value() string          { return "Press Enter to view" }
+func (h *ShortcutsHandler) Editable() bool         { return false }
+func (h *ShortcutsHandler) Timeout() time.Duration { return 0 }
+
+func (h *ShortcutsHandler) Change(newValue any) (string, error) {
+	return h.shortcuts, nil
+}
 
 // DefaultEditableHandler - Default editable field for init
 type DefaultEditableHandler struct {
@@ -82,6 +134,7 @@ type TuiConfig struct {
 	Color *ColorStyle
 
 	LogToFile func(messages ...any) // function to write log error
+	TestMode  bool                  // if true, don't send automatic shortcuts message
 }
 
 // NewTUI creates a new DevTUI instance and initializes it.
@@ -135,18 +188,15 @@ func NewTUI(c *TuiConfig) *DevTUI {
 		id:              id, // Set the ID here
 	}
 
-	// Create a default tab section using the initialized TUI
-	defaultTab := tui.NewTabSection(defaultTabName, "build footer example")
+	// Always add SHORTCUTS tab first
+	shortcutsTab := tui.NewTabSection("SHORTCUTS", "Keyboard navigation instructions")
+	shortcutsHandler := NewShortcutsHandler()
+	shortcutsTab.NewField(shortcutsHandler)
 
-	// Create default handlers
-	editableHandler := &DefaultEditableHandler{currentValue: "initial editable value"}
-	actionHandler := &DefaultActionHandler{}
-
-	defaultTab.NewField(editableHandler).
-		NewField(actionHandler)
-
-	// Add the default tab to the sections
-	tui.tabSections = []*tabSection{defaultTab}
+	// Automatically display shortcuts content when tab is created (unless in test mode)
+	if !c.TestMode {
+		tui.sendMessage(shortcutsHandler.shortcuts, messagetype.Info, shortcutsTab)
+	}
 
 	tui.tea = tea.NewProgram(tui,
 		tea.WithAltScreen(),       // use the full size of the terminal in its "alternate screen buffer"
@@ -156,7 +206,7 @@ func NewTUI(c *TuiConfig) *DevTUI {
 	return tui
 }
 
-// NewTUI initializes the terminal UI application.
+// Init initializes the terminal UI application.
 func (h *DevTUI) Init() tea.Cmd {
 	return tea.Batch(
 		tea.EnterAltScreen,
@@ -185,6 +235,12 @@ func (h *DevTUI) Start(args ...any) {
 			defer wg.Done()
 			break
 		}
+	}
+
+	// If user didn't specify a custom TabIndexStart and we have more than 1 tab,
+	// default to tab 1 (skip SHORTCUTS which is at index 0)
+	if h.TuiConfig.TabIndexStart == 0 && len(h.tabSections) > 1 {
+		h.activeTab = 1
 	}
 
 	if _, err := h.tea.Run(); err != nil {

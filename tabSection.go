@@ -16,11 +16,11 @@ type tabContent struct {
 	Content    string
 	Type       messagetype.Type
 	tabSection *tabSection
-	
+
 	// NEW: Async fields (always present, nil when not async)
-	operationID *string  // nil for sync messages, value for async operations
-	isProgress  bool     // true if this is a progress update
-	isComplete  bool     // true if async operation completed
+	operationID *string // nil for sync messages, value for async operations
+	isProgress  bool    // true if this is a progress update
+	isComplete  bool    // true if async operation completed
 }
 
 // tabSection represents a tab section in the TUI with configurable fields and content
@@ -82,15 +82,23 @@ func (ts *tabSection) FieldHandlers() []*field {
 }
 
 // NewTabSection creates and initializes a new tabSection with the given title and footer
+// NewTabSection creates a new tab section and automatically adds it to the TUI
+//
 // Example:
 //
 //	tab := tui.NewTabSection("BUILD", "Press enter to compile")
 func (t *DevTUI) NewTabSection(title, footer string) *tabSection {
-	return &tabSection{
+	tab := &tabSection{
 		title:         title,
 		sectionFooter: footer,
 		tui:           t,
 	}
+
+	// Automatically add to tabSections and initialize
+	t.initTabSection(tab, len(t.tabSections))
+	t.tabSections = append(t.tabSections, tab)
+
+	return tab
 }
 
 // SetIndex sets the index of the tab section

@@ -10,6 +10,36 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+// Default handlers for init.go
+
+// DefaultEditableHandler - Default editable field for init
+type DefaultEditableHandler struct {
+	currentValue string
+}
+
+func (h *DefaultEditableHandler) Label() string { return "Editable Field" }
+func (h *DefaultEditableHandler) Value() string { return h.currentValue }
+func (h *DefaultEditableHandler) Editable() bool { return true }
+func (h *DefaultEditableHandler) Timeout() time.Duration { return 0 }
+
+func (h *DefaultEditableHandler) Change(newValue any) (string, error) {
+	strValue := newValue.(string)
+	h.currentValue = strValue
+	return fmt.Sprintf("Value changed to %s", strValue), nil
+}
+
+// DefaultActionHandler - Default action field for init
+type DefaultActionHandler struct{}
+
+func (h *DefaultActionHandler) Label() string { return "Non-Editable Field" }
+func (h *DefaultActionHandler) Value() string { return "non-editable value" }
+func (h *DefaultActionHandler) Editable() bool { return false }
+func (h *DefaultActionHandler) Timeout() time.Duration { return 0 }
+
+func (h *DefaultActionHandler) Change(newValue any) (string, error) {
+	return "Action executed", nil
+}
+
 // channelMsg es un tipo especial para mensajes del canal
 type channelMsg tabContent
 
@@ -107,23 +137,13 @@ func NewTUI(c *TuiConfig) *DevTUI {
 
 	// Create a default tab section using the initialized TUI
 	defaultTab := tui.NewTabSection(defaultTabName, "build footer example")
-	defaultTab.NewField(
-		"Editable Field",
-		"initial editable value",
-		true,
-		func(newValue any) (string, error) {
-			strValue := newValue.(string)
-			return fmt.Sprintf("Value changed to %s", strValue), nil
-		},
-	).
-		NewField(
-			"Non-Editable Field",
-			"non-editable value",
-			false,
-			func(newValue any) (string, error) {
-				return "Action executed", nil
-			},
-		)
+	
+	// Create default handlers
+	editableHandler := &DefaultEditableHandler{currentValue: "initial editable value"}
+	actionHandler := &DefaultActionHandler{}
+	
+	defaultTab.NewField(editableHandler).
+		NewField(actionHandler)
 
 	// Add the default tab to the sections
 	tui.tabSections = []*tabSection{defaultTab}

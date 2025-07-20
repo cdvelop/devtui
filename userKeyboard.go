@@ -1,11 +1,8 @@
 package devtui
 
 import (
-	"fmt"
-
 	"slices"
 
-	"github.com/cdvelop/messagetype"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -34,19 +31,12 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 		case tea.KeyEnter: // Guardar cambios o ejecutar acción
 			// Verificar si hubo cambios (incluyendo borrar el contenido)
 			if currentField.tempEditValue != currentField.Value() {
-				if currentField.changeFunc != nil {
-					// Llamar changeFunc con el nuevo valor ANTES de establecerlo
-					msg, err := currentField.changeFunc(currentField.tempEditValue)
-					if err != nil {
-						// Si hay un error, mostrarlo en la pestaña actual
-						currentTab.addNewContent(messagetype.Error, fmt.Sprintf("%v %v", currentField.Name(), err))
-					} else {
-						// Solo aplicar el resultado de changeFunc si no hay error
-						currentField.SetValue(msg)
-					}
-					h.editingConfigOpen(false, currentField, msg)
+				if currentField.handler != nil {
+					// Trigger async change operation  
+					currentField.handleEnter()
+					h.editingConfigOpen(false, currentField, "")
 				} else {
-					// Si no hay changeFunc, simplemente aplicar el valor directamente
+					// Legacy fallback - should not happen in new implementation
 					currentField.SetValue(currentField.tempEditValue)
 					h.editingConfigOpen(false, currentField, "")
 				}
@@ -147,16 +137,10 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 	} else { // Si el campo no es editable, solo ejecutar la acción
 		switch msg.Type {
 		case tea.KeyEnter:
-			msgType := messagetype.Success
 			// content eg: "Browser Opened"
-			if currentField.changeFunc != nil {
-				content, err := currentField.changeFunc(currentField.Value())
-				if err != nil {
-					msgType = messagetype.Error
-					content = fmt.Sprintf("%s %s %s", currentField.Name(), content, err.Error())
-				}
-				currentField.SetValue(content)
-				currentTab.addNewContent(msgType, content)
+			if currentField.handler != nil {
+				// Trigger async operation for non-editable fields (action buttons)
+				currentField.handleEnter()
 			}
 			h.editModeActivated = false
 			h.updateViewport() // Asegurar que se actualice la vista para mostrar el mensaje
@@ -220,15 +204,9 @@ func (h *DevTUI) handleNormalModeKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 			fieldHandlers := currentTab.FieldHandlers()
 			field := fieldHandlers[currentTab.indexActiveEditField]
 			if !field.Editable() {
-				msgType := messagetype.Success
-				if field.changeFunc != nil {
-					content, err := field.changeFunc(field.Value())
-					if err != nil {
-						msgType = messagetype.Error
-						content = fmt.Sprintf("%s %s %s", field.Name(), content, err.Error())
-					}
-					field.SetValue(content)
-					currentTab.addNewContent(msgType, content)
+				// Trigger async operation for non-editable fields
+				if field.handler != nil {
+					field.handleEnter()
 				}
 			} else {
 				// Para campos editables, activar modo de edición explícitamente

@@ -50,7 +50,7 @@ func (h *DevTUI) renderFooterInput() string {
 	horizontalPadding := 1 // Este valor viene del Padding(0, 1) en headerTitleStyle
 
 	// Truncar la etiqueta si es necesario y añadir ":" al final
-	labelText := tinystring.Convert(field.name).Truncate(labelWidth-1, 0).String() + ":"
+	labelText := tinystring.Convert(field.Name()).Truncate(labelWidth-1, 0).String() + ":"
 
 	// Aplicar el estilo base para garantizar un ancho fijo
 	fixedWidthLabel := h.labelStyle.Render(labelText)
@@ -62,18 +62,18 @@ func (h *DevTUI) renderFooterInput() string {
 	info := h.renderScrollInfo()
 
 	// OR if you need truncation:
-	labelText = tinystring.Convert(field.name).Truncate(labelWidth-1, 0).String()
+	labelText = tinystring.Convert(field.Name()).Truncate(labelWidth-1, 0).String()
 	valueWidth, _ := h.calculateInputWidths(labelText)
 
 	var showCursor bool
 	// Preparar el valor del campo
-	valueText := field.value
+	valueText := field.Value()
 	// Usar tempEditValue si existe (modo edición)
 	if field.tempEditValue != "" {
 		valueText = field.tempEditValue
 	}
 	// Mostrar cursor solo si estamos en modo edición y el campo es editable
-	if h.editModeActivated && field.editable {
+	if h.editModeActivated && field.Editable() {
 		showCursor = true
 	}
 
@@ -83,12 +83,12 @@ func (h *DevTUI) renderFooterInput() string {
 		Padding(0, horizontalPadding) // Añadir padding consistente
 
 	// Aplicar estilos según el estado
-	if h.editModeActivated && field.editable {
+	if h.editModeActivated && field.Editable() {
 		// Estilo para edición activa
 		inputValueStyle = inputValueStyle.
 			Background(lipgloss.Color(h.Lowlight)).
 			Foreground(lipgloss.Color(h.Foreground))
-	} else if !field.editable {
+	} else if !field.Editable() {
 		// Estilo para campos no editables
 		inputValueStyle = inputValueStyle.
 			Background(lipgloss.Color(h.Foreground)).

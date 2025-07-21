@@ -2,6 +2,8 @@ package devtui
 
 import (
 	"errors"
+	"strings"
+	"sync"
 	"time"
 )
 
@@ -48,10 +50,15 @@ func (h *TestNonEditableHandler) Change(newValue any) (string, error) {
 // PortTestHandler - Manejador específico para tests de puerto (centralizado aquí)
 type PortTestHandler struct {
 	currentPort string
+	mu          sync.RWMutex // Para proteger currentPort de race conditions
 }
 
-func (h *PortTestHandler) Label() string          { return "Server Port" }
-func (h *PortTestHandler) Value() string          { return h.currentPort }
+func (h *PortTestHandler) Label() string { return "Server Port" }
+func (h *PortTestHandler) Value() string {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	return h.currentPort
+}
 func (h *PortTestHandler) Editable() bool         { return true }
 func (h *PortTestHandler) Timeout() time.Duration { return 0 }
 
@@ -63,28 +70,23 @@ func (h *PortTestHandler) Change(newValue any) (string, error) {
 		return "", errors.New("port out of range")
 	}
 
-	// Accept valid ports
+	// Accept valid ports - protegido por mutex
+	h.mu.Lock()
 	h.currentPort = newPort
+	h.mu.Unlock()
+
 	return "Port updated to " + newPort, nil
 }
 
 // NewTestFieldHandler creates a new test handler with basic functionality
 // Esta función mantiene compatibilidad con tests existentes
 func NewTestFieldHandler(label, value string, editable bool, changeFunc func(newValue any) (string, error)) FieldHandler {
-	if editable {
-		handler := &TestEditableHandler{currentValue: value}
-		// Si hay una función de cambio personalizada, crear un handler especial
-		if changeFunc != nil {
-			return &CustomTestHandler{
-				label:      label,
-				value:      value,
-				editable:   editable,
-				changeFunc: changeFunc,
-			}
-		}
-		return handler
-	} else {
-		return &TestNonEditableHandler{}
+	// Siempre usar CustomTestHandler para permitir configuración completa
+	return &CustomTestHandler{
+		label:      label,
+		value:      value,
+		editable:   editable,
+		changeFunc: changeFunc,
 	}
 }
 
@@ -105,9 +107,21 @@ func (h *CustomTestHandler) Change(newValue any) (string, error) {
 	if h.changeFunc != nil {
 		result, err := h.changeFunc(newValue)
 		if err == nil {
-			// Simple: usar el nuevo valor para handlers editables
-			if h.editable {
-				h.value = newValue.(string)
+			inputStr := newValue.(string)
+
+			// Special handling for empty values and transformations
+			if inputStr == "" {
+				// If input is empty and result doesn't look like a status message,
+				// treat result as the new field value (for default value transformations)
+				if result != "" && !strings.Contains(result, "Saved") && !strings.Contains(result, "Error") {
+					h.value = result
+				} else {
+					// Empty input with status message - field becomes empty
+					h.value = ""
+				}
+			} else {
+				// Non-empty input: use input as the new value
+				h.value = inputStr
 			}
 		}
 		return result, err

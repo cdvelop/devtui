@@ -78,13 +78,19 @@ func TestHandleKeyboard(t *testing.T) {
 
 	// Test case: Editing mode, modifying text
 	t.Run("Editing mode - Text input", func(t *testing.T) {
-		// Reset para esta prueba
+		// Reset para esta prueba - use DefaultTUIForTest for consistency
 		h := DefaultTUIForTest(func(messages ...any) {
 			// Test logger - do nothing
 		})
 
-		// Setup: Enter editing mode
-		field := prepareFieldForEditing(t, h)
+		// Configurar viewport para tener espacio suficiente para el texto
+		h.viewport.Width = 80
+		h.viewport.Height = 24
+
+		// Navigate to first test tab and get the editable field
+		testTabIndex := GetFirstTestTabIndex()
+		h.activeTab = testTabIndex
+		field := h.tabSections[testTabIndex].FieldHandlers()[0] // TestEditableHandler with "initial test value"
 
 		// Simular que el usuario entra en modo edición presionando Enter
 		// Esto debería inicializar tempEditValue con el valor actual
@@ -95,6 +101,11 @@ func TestHandleKeyboard(t *testing.T) {
 		// Verificar que estamos en modo edición y tempEditValue está inicializado
 		if !h.editModeActivated {
 			t.Fatal("Should be in edit mode after pressing Enter")
+		}
+
+		// Check that tempEditValue is properly initialized
+		if field.tempEditValue != field.Value() {
+			t.Errorf("Expected tempEditValue to be initialized with field value '%s', got '%s'", field.Value(), field.tempEditValue)
 		}
 
 		// Mover cursor al inicio para simular usuario posicionándose

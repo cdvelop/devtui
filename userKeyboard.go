@@ -110,19 +110,16 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 		case tea.KeyRunes:
 			// Handle normal character input - convert everything to runes for proper handling
 			if len(msg.Runes) > 0 {
-				// Si aún no hay valor temporal, NO copiar el valor original automáticamente
-				// Solo inicializar como string vacío si está vacío
-				if currentField.tempEditValue == "" {
-					currentField.tempEditValue = ""
-				}
-
+				// NOTA: No inicializar tempEditValue aquí si está vacío
+				// Si está vacío, significa que el usuario limpió el campo intencionalmente
 				runes := []rune(currentField.tempEditValue)
 				if currentField.cursor > len(runes) {
 					currentField.cursor = len(runes)
 				}
 
 				// Verificar si agregar los nuevos caracteres excedería el ancho disponible
-				if len(runes)+len(msg.Runes) < availableTextWidth {
+				totalChars := len(runes) + len(msg.Runes)
+				if totalChars < availableTextWidth {
 					// Insert the new runes at cursor position
 					newRunes := make([]rune, 0, len(runes)+len(msg.Runes))
 					newRunes = append(newRunes, runes[:currentField.cursor]...)

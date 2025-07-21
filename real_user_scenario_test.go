@@ -9,38 +9,26 @@ import (
 // TestRealUserScenario simula exactamente lo que describe el usuario
 func TestRealUserScenario(t *testing.T) {
 	t.Run("Change port from 8080 to 80 like user described", func(t *testing.T) {
-		// Setup exactly like main.go
-		config := &TuiConfig{
-			AppName:       "DevTUI - New Async API Demo",
-			TabIndexStart: 0,
-			ExitChan:      make(chan bool),
-			Color: &ColorStyle{
-				Foreground: "#F4F4F4",
-				Background: "#000000",
-				Highlight:  "#FF6600",
-				Lowlight:   "#666666",
-			},
-			LogToFile: func(messages ...any) {
-				t.Logf("DevTUI Log: %v", messages)
-			},
-		}
-
-		tui := NewTUI(config)
+		// Setup using centralized DefaultTUIForTest
+		tui := DefaultTUIForTest(func(messages ...any) {
+			t.Logf("DevTUI Log: %v", messages)
+		})
 
 		// Create port handler exactly like main.go
 		portHandler := &PortTestHandler{currentPort: "8080"}
 
 		// Configure tab exactly like main.go
-		tui.NewTabSection("Server", "Server configuration").
-			NewField(portHandler)
+		serverTab := tui.NewTabSection("Server", "Server configuration")
+		serverTab.NewField(portHandler)
 
 		// Initialize viewport
 		tui.viewport.Width = 80
 		tui.viewport.Height = 24
 
-		// Navigate to Server tab (should be index 1 after SHORTCUTS)
-		tui.activeTab = 1
-		portField := tui.tabSections[1].FieldHandlers()[0]
+		// Get server tab index and set active
+		serverTabIndex := len(tui.tabSections) - 1
+		tui.activeTab = serverTabIndex
+		portField := tui.tabSections[serverTabIndex].FieldHandlers()[0]
 
 		t.Logf("=== SIMULATING USER SCENARIO ===")
 		t.Logf("Step 1: Initial state - field.Value(): '%s'", portField.Value())
@@ -117,26 +105,20 @@ func TestRealUserScenario(t *testing.T) {
 	})
 
 	t.Run("Test what UI actually displays during editing", func(t *testing.T) {
-		// Setup
-		config := &TuiConfig{
-			AppName:  "DevTUI - UI Test",
-			ExitChan: make(chan bool),
-			Color: &ColorStyle{
-				Foreground: "#F4F4F4",
-				Background: "#000000",
-				Highlight:  "#FF6600",
-				Lowlight:   "#666666",
-			},
-		}
+		// Setup using centralized DefaultTUIForTest
+		tui := DefaultTUIForTest()
 
-		tui := NewTUI(config)
 		portHandler := &PortTestHandler{currentPort: "8080"}
-		tui.NewTabSection("Server", "Server configuration").NewField(portHandler)
+		serverTab := tui.NewTabSection("Server", "Server configuration")
+		serverTab.NewField(portHandler)
+
 		tui.viewport.Width = 80
 		tui.viewport.Height = 24
-		tui.activeTab = 1
 
-		portField := tui.tabSections[1].FieldHandlers()[0]
+		serverTabIndex := len(tui.tabSections) - 1
+		tui.activeTab = serverTabIndex
+
+		portField := tui.tabSections[serverTabIndex].FieldHandlers()[0]
 
 		// Test the UI rendering during different phases
 		t.Logf("=== TESTING UI RENDERING ===")
@@ -147,7 +129,13 @@ func TestRealUserScenario(t *testing.T) {
 
 		// Phase 2: During editing
 		tui.HandleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
-		portField.tempEditValue = "80" // User has typed "80"
+
+		// Realistic: User clears field and types "80"
+		for i := 0; i < 5; i++ { // Clear "8080"
+			tui.HandleKeyboard(tea.KeyMsg{Type: tea.KeyBackspace})
+		}
+		tui.HandleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'8'}})
+		tui.HandleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'0'}})
 
 		content2 := tui.ContentView()
 		t.Logf("Phase 2 - During editing (user typed '80'):\n%s", content2)

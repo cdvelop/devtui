@@ -62,12 +62,11 @@ func TestFooterView(t *testing.T) {
 
 // TestRenderFooterInput verifica el comportamiento específico del renderizado del input
 func TestRenderFooterInput(t *testing.T) {
-	h := DefaultTUIForTest(func(messages ...any) {
-		// Test logger - do nothing
-	})
-
 	// Caso 1: Campo editable en modo edición debe mostrar cursor
 	t.Run("Editable field in edit mode shows cursor", func(t *testing.T) {
+		h := DefaultTUIForTest(func(messages ...any) {
+			// Test logger - do nothing
+		})
 		h.editModeActivated = true
 		tab := h.tabSections[h.activeTab]
 
@@ -92,6 +91,10 @@ func TestRenderFooterInput(t *testing.T) {
 
 	// Caso 2: Campo no editable no debe mostrar cursor
 	t.Run("Non-editable field doesn't show cursor", func(t *testing.T) {
+		h := DefaultTUIForTest(func(messages ...any) {
+			// Test logger - do nothing
+		})
+
 		// Configurar campo no editable
 		if len(h.tabSections[h.activeTab].FieldHandlers()) == 0 {
 			// Crear un campo si no hay ninguno
@@ -122,6 +125,10 @@ func TestRenderFooterInput(t *testing.T) {
 
 	// Nuevo test - Caso 4: Verificar que se maneja correctamente el índice fuera de rango
 	t.Run("Index out of range is handled correctly", func(t *testing.T) {
+		h := DefaultTUIForTest(func(messages ...any) {
+			// Test logger - do nothing
+		})
+
 		expectedValue := "Value index OK"
 		// Configurar un índice activo fuera de rango
 		tab := h.tabSections[h.activeTab]
@@ -141,6 +148,10 @@ func TestRenderFooterInput(t *testing.T) {
 
 	// Nuevo test - Caso 5: Verificar el estilo correcto cuando está seleccionado pero no en modo edición
 	t.Run("Field has correct style when selected but not in edit mode", func(t *testing.T) {
+		h := DefaultTUIForTest(func(messages ...any) {
+			// Test logger - do nothing
+		})
+
 		tab := h.tabSections[h.activeTab]
 		tab.setFieldHandlers([]*field{})
 		testHandler := NewTestFieldHandler("Test", "Value", true, nil)

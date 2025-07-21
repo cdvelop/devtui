@@ -25,7 +25,13 @@ func (h *DevTUI) ContentView() string {
 		h.activeTab = 0
 	}
 
-	tabContent := h.tabSections[h.activeTab].tabContents
+	// Proteger el acceso a tabContents con mutex
+	section := h.tabSections[h.activeTab]
+	section.mu.RLock()
+	tabContent := make([]tabContent, len(section.tabContents)) // Copia para evitar retener el lock
+	copy(tabContent, section.tabContents)
+	section.mu.RUnlock()
+
 	var contentLines []string
 	for _, content := range tabContent {
 		formattedMsg := h.formatMessage(content)

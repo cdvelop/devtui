@@ -2,6 +2,7 @@ package devtui
 
 import (
 	"strings"
+	"sync"
 
 	"github.com/cdvelop/messagetype"
 )
@@ -33,6 +34,7 @@ type tabSection struct {
 	tabContents          []tabContent // message contents
 	indexActiveEditField int          // Índice del campo de configuración seleccionado
 	tui                  *DevTUI
+	mu                   sync.RWMutex // Para proteger tabContents de race conditions
 }
 
 // Write implementa io.Writer para capturar la salida de otros procesos
@@ -53,6 +55,8 @@ func (ts *tabSection) Write(p []byte) (n int, err error) {
 }
 
 func (t *tabSection) addNewContent(msgType messagetype.Type, content string) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
 	t.tabContents = append(t.tabContents, t.tui.newContent(content, msgType, t))
 }
 

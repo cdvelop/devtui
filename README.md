@@ -164,35 +164,30 @@ DevTUI uses a handler-based approach where each field implements the `FieldHandl
 ```go
 // FieldHandler interface - implement this for each field
 type FieldHandler interface {
-    Label() string                    // Field display name
-    Value() string                    // Current field value
+    Label() string                    // Field display name/label
+    Value() string                    // Current field VALUE (not description)
     Editable() bool                   // true for input fields, false for actions
     Change(newValue any) (string, error) // Handle field changes/actions
     Timeout() time.Duration           // Operation timeout (0 = no timeout)
 }
-
-// Add fields using handler instances
-tui.NewTabSection("TabName", "Description").
-    NewField(handler1).
-    NewField(handler2)
 ```
 
-#### Key Features:
-- **Transparent Async**: Write simple synchronous `Change` methods; DevTUI handles goroutines automatically
-- **Visual Feedback**: Automatic spinners during operations, no additional code needed  
-- **Timeout Support**: Configurable timeouts per handler with graceful error handling
-- **Type Safety**: Strong typing with interfaces, easy to test and maintain
+#### Important: Value() Method
+The `Value()` method should return the **actual field value**, not a description:
+- ✅ **Correct**: `"8080"` (for a port field), `"c"` (for a mode selector)
+- ❌ **Incorrect**: `"Current port is 8080"`, `"Coding mode"` (descriptions)
+- **Rationale**: DevTUI displays this value in the field, and users expect to see the actual value they can edit
 
 #### Handler Examples:
 
-**Editable Field with Validation:**
+**Editable Field with Value:**
 ```go
 type DatabaseURLHandler struct {
     currentURL string
 }
 
 func (h *DatabaseURLHandler) Label() string { return "Database URL" }
-func (h *DatabaseURLHandler) Value() string { return h.currentURL }
+func (h *DatabaseURLHandler) Value() string { return h.currentURL } // Actual URL value
 func (h *DatabaseURLHandler) Editable() bool { return true }
 func (h *DatabaseURLHandler) Timeout() time.Duration { return 10 * time.Second }
 func (h *DatabaseURLHandler) Change(newValue any) (string, error) {
@@ -216,7 +211,7 @@ type BuildProjectHandler struct {
 }
 
 func (h *BuildProjectHandler) Label() string { return "Build Project" }
-func (h *BuildProjectHandler) Value() string { return "Press Enter to build" }
+func (h *BuildProjectHandler) Value() string { return "Press Enter to build" } // Action instruction
 func (h *BuildProjectHandler) Editable() bool { return false }
 func (h *BuildProjectHandler) Timeout() time.Duration { return 60 * time.Second }
 func (h *BuildProjectHandler) Change(newValue any) (string, error) {
@@ -228,6 +223,24 @@ func (h *BuildProjectHandler) Change(newValue any) (string, error) {
     return "Build completed successfully", nil
 }
 ```
+
+#### Value() Method Guidelines:
+- **Editable fields**: Return the actual editable value (`"localhost"`, `"8080"`, `"production"`)
+- **Action buttons**: Return instruction text (`"Press Enter to build"`, `"Click to deploy"`)
+- **Mode selectors**: Return current mode value (`"c"`, `"debug"`, `"enabled"`)
+- **Status fields**: Return current status (`"connected"`, `"running"`, `"stopped"`)
+
+// Add fields using handler instances
+tui.NewTabSection("TabName", "Description").
+    NewField(handler1).
+    NewField(handler2)
+```
+
+#### Key Features:
+- **Transparent Async**: Write simple synchronous `Change` methods; DevTUI handles goroutines automatically
+- **Visual Feedback**: Automatic spinners during operations, no additional code needed  
+- **Timeout Support**: Configurable timeouts per handler with graceful error handling
+- **Type Safety**: Strong typing with interfaces, easy to test and maintain
 
 ### Message System
 Messages are automatically generated from field operations and displayed in the viewport:

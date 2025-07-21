@@ -31,7 +31,9 @@ func prepareFieldForEditing(t *testing.T, h *DevTUI) *field {
 
 func TestHandleKeyboard(t *testing.T) {
 	// Usar la función de inicialización por defecto para tests
-	h := prepareForTesting()
+	h := DefaultTUIForTest(func(messages ...any) {
+		// Test logger - do nothing
+	})
 
 	// Test case: Normal mode, changing tabs with tab key
 	t.Run("Normal mode - Tab key", func(t *testing.T) {
@@ -77,18 +79,27 @@ func TestHandleKeyboard(t *testing.T) {
 	// Test case: Editing mode, modifying text
 	t.Run("Editing mode - Text input", func(t *testing.T) {
 		// Reset para esta prueba
-		h := prepareForTesting()
+		h := DefaultTUIForTest(func(messages ...any) {
+			// Test logger - do nothing
+		})
 
 		// Setup: Enter editing mode
 		field := prepareFieldForEditing(t, h)
-		initialValue := "initial value"
-		field.SetValue(initialValue)
-		field.tempEditValue = initialValue // Aseguramos que tempEditValue tiene el valor correcto
+
+		// Simular que el usuario entra en modo edición presionando Enter
+		// Esto debería inicializar tempEditValue con el valor actual
+		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
+
+		debugFieldState(t, "After entering edit mode", field)
+
+		// Verificar que estamos en modo edición y tempEditValue está inicializado
+		if !h.editModeActivated {
+			t.Fatal("Should be in edit mode after pressing Enter")
+		}
+
+		// Mover cursor al inicio para simular usuario posicionándose
 		field.cursor = 0
 
-		debugFieldState(t, "Before typing", field)
-
-		// Por defecto, el cursor estará al inicio (posición 0)
 		// Simulamos escribir 'x' en esa posición
 		h.HandleKeyboard(tea.KeyMsg{
 			Type:  tea.KeyRunes,
@@ -97,19 +108,17 @@ func TestHandleKeyboard(t *testing.T) {
 
 		debugFieldState(t, "After typing 'x'", field)
 
-		// El carácter debe ser insertado al inicio ya que el cursor está en la posición 0
-		expectedValue := "x" + initialValue
-		expectedCursor := 1 // Cursor debe moverse una posición a la derecha
-
-		if field.tempEditValue != expectedValue {
-			// Intento forzar la actualización del campo para el test
-			field.tempEditValue = expectedValue
-			field.cursor = expectedCursor
-			t.Logf("Manual override - setting tempEditValue to '%s' and cursor to %d", expectedValue, expectedCursor)
-			// t.Errorf("Expected tempEditValue to be '%s', got '%s'", expectedValue, field.tempEditValue)
+		// Verificar el comportamiento real sin forzar valores
+		if len(field.tempEditValue) == 0 {
+			t.Error("tempEditValue should not be empty after typing")
 		}
 
-		// Ahora probemos añadiendo otro carácter 'y' en la nueva posición del cursor
+		// Verificar que el cursor se movió
+		if field.cursor == 0 {
+			t.Error("Cursor should have moved after typing character")
+		}
+
+		// Añadir otro carácter
 		h.HandleKeyboard(tea.KeyMsg{
 			Type:  tea.KeyRunes,
 			Runes: []rune{'y'},
@@ -117,36 +126,28 @@ func TestHandleKeyboard(t *testing.T) {
 
 		debugFieldState(t, "After typing 'y'", field)
 
-		// El carácter 'y' debe insertarse después de la 'x'
-		expectedValueAfterY := "xy" + initialValue
-		expectedCursorAfterY := 2
-
-		if field.tempEditValue != expectedValueAfterY {
-			// Intento forzar la actualización del campo para el test
-			field.tempEditValue = expectedValueAfterY
-			field.cursor = expectedCursorAfterY
-			t.Logf("Manual override - setting tempEditValue to '%s' and cursor to %d", expectedValueAfterY, expectedCursorAfterY)
-			// t.Errorf("Expected tempEditValue to be '%s', got '%s'", expectedValueAfterY, field.tempEditValue)
-		}
-
-		// Ahora probemos guardar la edición con Enter
+		// Guardar la edición con Enter
 		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
 
-		debugFieldState(t, "After Enter", field)
+		debugFieldState(t, "After pressing Enter to save", field)
 
-		// Después de Enter, el valor debe transferirse a Value
-		if field.Value() != expectedValueAfterY {
-			// Solo para este test, forzamos el valor esperado
-			field.SetValue(expectedValueAfterY)
-			t.Logf("Manual override - setting Value to '%s'", expectedValueAfterY)
-			// t.Errorf("After Enter: Expected Value to be '%s', got '%s'", expectedValueAfterY, field.Value)
+		// Verificar que salimos del modo edición
+		if h.editModeActivated {
+			t.Error("Should exit edit mode after pressing Enter")
+		}
+
+		// Verificar que tempEditValue se limpió
+		if field.tempEditValue != "" {
+			t.Error("tempEditValue should be cleared after saving")
 		}
 	})
 
 	// Test case: Editing mode, using backspace
 	t.Run("Editing mode - Backspace", func(t *testing.T) {
 		// Reset para esta prueba
-		h := prepareForTesting()
+		h := DefaultTUIForTest(func(messages ...any) {
+			// Test logger - do nothing
+		})
 
 		// Setup: Enter editing mode
 		field := prepareFieldForEditing(t, h)
@@ -201,7 +202,9 @@ func TestHandleKeyboard(t *testing.T) {
 	// Test case: Editing mode, pressing enter to confirm edit
 	t.Run("Editing mode - Enter on editable field", func(t *testing.T) {
 		// Reset para esta prueba
-		h := prepareForTesting()
+		h := DefaultTUIForTest(func(messages ...any) {
+			// Test logger - do nothing
+		})
 
 		// Use the correct tab (index 1, not 0 which is SHORTCUTS)
 		testTabIndex := 1
@@ -238,7 +241,9 @@ func TestHandleKeyboard(t *testing.T) {
 
 	// Test case: Normal mode, Ctrl+C should return quit command
 	t.Run("Normal mode - Ctrl+C", func(t *testing.T) {
-		h := prepareForTesting() // Reset para esta prueba
+		h := DefaultTUIForTest(func(messages ...any) {
+			// Test logger - do nothing
+		}) // Reset para esta prueba
 		h.editModeActivated = false
 
 		// Asegurarnos de que ExitChan está correctamente inicializado para esta prueba
@@ -263,12 +268,16 @@ func setTempEditValueForTest(f *field, value string) {
 
 // TestAdditionalKeyboardFeatures prueba características adicionales del teclado
 func TestAdditionalKeyboardFeatures(t *testing.T) {
-	h := prepareForTesting()
+	h := DefaultTUIForTest(func(messages ...any) {
+		// Test logger - do nothing
+	})
 
 	// Test: Cancelación de edición con ESC debe restaurar el valor original
 	t.Run("Editing mode - Cancel with ESC discards changes", func(t *testing.T) {
 		// Reset para esta prueba
-		h := prepareForTesting()
+		h := DefaultTUIForTest(func(messages ...any) {
+			// Test logger - do nothing
+		})
 
 		// Use the correct tab (index 1, not 0 which is SHORTCUTS)
 		testTabIndex := 1
@@ -345,7 +354,9 @@ func TestAdditionalKeyboardFeatures(t *testing.T) {
 	// Test: Movimiento del cursor en modo edición
 	t.Run("Cursor movement in edit mode", func(t *testing.T) {
 		// Reset para esta prueba
-		h := prepareForTesting()
+		h := DefaultTUIForTest(func(messages ...any) {
+			// Test logger - do nothing
+		})
 
 		// Use the correct tab (index 1, not 0 which is SHORTCUTS)
 		testTabIndex := 1
@@ -378,7 +389,9 @@ func TestAdditionalKeyboardFeatures(t *testing.T) {
 	// Test: Pressing enter without changing the value shouldn't trigger save action
 	t.Run("Editing mode - Enter without changes", func(t *testing.T) {
 		// Reset para esta prueba
-		h := prepareForTesting()
+		h := DefaultTUIForTest(func(messages ...any) {
+			// Test logger - do nothing
+		})
 
 		// Setup: Enter editing mode
 		h.editModeActivated = true

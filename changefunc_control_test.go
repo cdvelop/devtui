@@ -2,7 +2,6 @@ package devtui
 
 import (
 	"errors"
-	"os"
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -22,7 +21,7 @@ func TestChangeFuncControlsEmptyFieldBehavior(t *testing.T) {
 		})
 
 		// Create TUI with custom field
-		h := DefaultTUIForTest(func(messages ...any) {})
+		h := DefaultTUIForTest()
 		h.viewport.Width = 80
 		h.viewport.Height = 24
 
@@ -63,9 +62,6 @@ func TestChangeFuncControlsEmptyFieldBehavior(t *testing.T) {
 	})
 
 	t.Run("changeFunc can accept and transform empty values", func(t *testing.T) {
-		// Ensure TEST_MODE is set for synchronous execution
-		os.Setenv("TEST_MODE", "true")
-
 		// Custom handler that accepts empty values and transforms them
 		customHandler := NewTestFieldHandler("Optional Field", "original value", true, func(value any) (string, error) {
 			strValue := value.(string)

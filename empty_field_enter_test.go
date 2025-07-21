@@ -10,9 +10,7 @@ import (
 func TestEmptyFieldEnterBehavior(t *testing.T) {
 	t.Run("Empty field should call changeFunc with empty string when Enter is pressed", func(t *testing.T) {
 		// Setup
-		h := DefaultTUIForTest(func(messages ...any) {
-			// Test logger - do nothing
-		})
+		h := DefaultTUIForTest()
 
 		// Initialize viewport
 		h.viewport.Width = 80
@@ -27,18 +25,16 @@ func TestEmptyFieldEnterBehavior(t *testing.T) {
 
 		// Switch to the test tab and enter editing mode
 		h.activeTab = testTabIndex
-		h.editModeActivated = true
-		h.tabSections[testTabIndex].indexActiveEditField = 0
-
-		// Initialize editing with current value
-		field.SetTempEditValueForTest(field.Value())
-		field.SetCursorForTest(len([]rune(field.Value())))
+		// Realistic: User enters edit mode by pressing Enter
+		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
 
 		t.Logf("Initial state - Value: '%s', tempEditValue: '%s'", field.Value(), field.tempEditValue)
 
-		// User clears the entire field
-		field.SetTempEditValueForTest("")
-		field.SetCursorForTest(0)
+		// Realistic: User clears the entire field with backspace
+		// Clear existing text (should be "initial test value" = 18 chars)
+		for i := 0; i < 25; i++ { // More backspaces to ensure complete clearing
+			h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyBackspace})
+		}
 
 		t.Logf("After clearing - Value: '%s', tempEditValue: '%s'", field.Value(), field.tempEditValue)
 
@@ -77,7 +73,7 @@ func TestEmptyFieldEnterBehavior(t *testing.T) {
 		})
 
 		// Create TUI with custom field
-		h := DefaultTUIForTest(func(messages ...any) {})
+		h := DefaultTUIForTest()
 		h.viewport.Width = 80
 		h.viewport.Height = 24
 
@@ -91,16 +87,14 @@ func TestEmptyFieldEnterBehavior(t *testing.T) {
 
 		// Switch to test tab and enter editing mode
 		h.activeTab = testTabIndex
-		h.editModeActivated = true
-		h.tabSections[testTabIndex].indexActiveEditField = 0
+		// Realistic: User enters edit mode by pressing Enter
+		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
 
-		// Initialize editing
-		field.tempEditValue = field.Value()
-		field.cursor = len([]rune(field.Value()))
-
-		// Clear the field
-		field.tempEditValue = ""
-		field.cursor = 0
+		// Realistic: Clear the field with backspace
+		// Clear existing text ("original value" = ~14 chars)
+		for i := 0; i < 25; i++ { // Enough backspaces to ensure complete clearing
+			h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyBackspace})
+		}
 
 		// Press Enter
 		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})

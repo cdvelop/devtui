@@ -134,7 +134,7 @@ type TuiConfig struct {
 	Color *ColorStyle
 
 	LogToFile func(messages ...any) // function to write log error
-	TestMode  bool                  // if true, don't send automatic shortcuts message
+	TestMode  bool                  // only used in tests to enable synchronous behavior
 }
 
 // NewTUI creates a new DevTUI instance and initializes it.

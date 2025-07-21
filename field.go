@@ -3,7 +3,6 @@ package devtui
 import (
 	"context"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/cdvelop/messagetype"
@@ -186,14 +185,14 @@ func (f *field) sendSuccessMessage(content string) {
 }
 
 // executeAsyncChange executes the handler's Change method asynchronously
-func (f *field) executeAsyncChange() {
+func (f *field) executeAsyncChange(valueToSave any) {
 	if f.handler == nil || f.asyncState == nil {
 		return
 	}
 
 	// In test mode, execute synchronously for predictable test behavior
-	if os.Getenv("TEST_MODE") == "true" {
-		f.executeChangeSync()
+	if f.parentTab != nil && f.parentTab.tui != nil && f.parentTab.tui.TestMode {
+		f.executeChangeSyncWithValue(valueToSave)
 		return
 	}
 
@@ -217,8 +216,8 @@ func (f *field) executeAsyncChange() {
 	}
 	f.asyncState.startTime = time.Now()
 
-	// Get current value based on field type
-	currentValue := f.getCurrentValue()
+	// Use the pre-captured value instead of getCurrentValue()
+	currentValue := valueToSave
 
 	// Execute user's Change method with context monitoring
 	resultChan := make(chan struct {
@@ -289,18 +288,36 @@ func (f *field) executeChangeSync() {
 	}
 }
 
+// executeChangeSyncWithValue executes the handler's Change method synchronously with pre-captured value
+func (f *field) executeChangeSyncWithValue(valueToSave any) {
+	if f.handler == nil {
+		return
+	}
+
+	// In sync test mode, we don't generate operation IDs or send messages to avoid race conditions
+	// Use the pre-captured value directly
+	_, err := f.handler.Change(valueToSave)
+
+	// In test mode, we don't send messages to UI to avoid race conditions
+	// The test can verify the handler's internal state directly
+	_ = err // We still execute the handler but don't send UI messages
+}
+
 // handleEnter triggers async operation when user presses Enter
 func (f *field) handleEnter() {
 	if f.handler == nil {
 		return
 	}
 
+	// Capture the current value BEFORE any state changes
+	valueToSave := f.getCurrentValue()
+
 	// In test mode, execute synchronously without goroutine
-	if os.Getenv("TEST_MODE") == "true" {
-		f.executeChangeSync()
+	if f.parentTab != nil && f.parentTab.tui != nil && f.parentTab.tui.TestMode {
+		f.executeChangeSyncWithValue(valueToSave)
 		return
 	}
 
 	// DevTUI handles async internally - user doesn't see this complexity
-	go f.executeAsyncChange()
+	go f.executeAsyncChange(valueToSave)
 }

@@ -10,7 +10,9 @@ import (
 
 // TestFooterView verifica el comportamiento del renderizado del footer
 func TestFooterView(t *testing.T) {
-	h := prepareForTesting()
+	h := DefaultTUIForTest(func(messages ...any) {
+		// Test logger - do nothing
+	})
 
 	// Caso 1: Tab sin fields debe mostrar el scrollbar estándar
 	t.Run("Footer with no fields shows scrollbar", func(t *testing.T) {
@@ -60,7 +62,9 @@ func TestFooterView(t *testing.T) {
 
 // TestRenderFooterInput verifica el comportamiento específico del renderizado del input
 func TestRenderFooterInput(t *testing.T) {
-	h := prepareForTesting()
+	h := DefaultTUIForTest(func(messages ...any) {
+		// Test logger - do nothing
+	})
 
 	// Caso 1: Campo editable en modo edición debe mostrar cursor
 	t.Run("Editable field in edit mode shows cursor", func(t *testing.T) {
@@ -167,7 +171,9 @@ func TestRenderFooterInput(t *testing.T) {
 
 // Nuevo test para verificar el modo automático de edición
 func TestAutoEditMode(t *testing.T) {
-	h := prepareForTesting()
+	h := DefaultTUIForTest(func(messages ...any) {
+		// Test logger - do nothing
+	})
 
 	t.Run("Auto edit mode activates with single editable field", func(t *testing.T) {
 		// Configurar un solo campo editable
@@ -225,7 +231,9 @@ func TestAutoEditMode(t *testing.T) {
 
 // Nuevos tests para la navegación y comportamiento de teclas
 func TestInputNavigation(t *testing.T) {
-	h := prepareForTesting()
+	h := DefaultTUIForTest(func(messages ...any) {
+		// Test logger - do nothing
+	})
 
 	// Configurar múltiples campos para prueba de navegación
 	tab := h.tabSections[h.activeTab]
@@ -289,7 +297,9 @@ func TestInputNavigation(t *testing.T) {
 
 	t.Run("Enter enters edit mode", func(t *testing.T) {
 		// Reset para esta prueba
-		h := prepareForTesting()
+		h := DefaultTUIForTest(func(messages ...any) {
+			// Test logger - do nothing
+		})
 
 		// Configurar un campo editable
 		tab := h.tabSections[h.activeTab]
@@ -312,7 +322,9 @@ func TestInputNavigation(t *testing.T) {
 
 	t.Run("Esc exits edit mode", func(t *testing.T) {
 		// Reset para esta prueba
-		h := prepareForTesting()
+		h := DefaultTUIForTest(func(messages ...any) {
+			// Test logger - do nothing
+		})
 
 		// Configurar un campo editable
 		tab := h.tabSections[h.activeTab]
@@ -335,7 +347,9 @@ func TestInputNavigation(t *testing.T) {
 
 	t.Run("Left/right moves cursor in edit mode", func(t *testing.T) {
 		// Reset para esta prueba y configurar un campo editable
-		h := prepareForTesting()
+		h := DefaultTUIForTest(func(messages ...any) {
+			// Test logger - do nothing
+		})
 		tab := h.tabSections[h.activeTab]
 		tab.setFieldHandlers([]*field{})
 		testHandler := NewTestFieldHandler("Test", "Value1", true, nil)

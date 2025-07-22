@@ -8,7 +8,9 @@ import (
 
 // setupTestWithEditableField configures a test environment with an editable field
 func setupTestWithEditableField(t *testing.T) (*DevTUI, *field) {
-	h := DefaultTUIForTest(func(messages ...any) {
+	// Create test handler and TUI
+	testHandler := NewTestEditableHandler("Test Field", "initial value")
+	h := DefaultTUIForTest(testHandler, func(messages ...any) {
 		// Test logger - do nothing
 	})
 
@@ -16,8 +18,8 @@ func setupTestWithEditableField(t *testing.T) (*DevTUI, *field) {
 	h.viewport.Width = 80
 	h.viewport.Height = 24
 
-	// Use the first non-SHORTCUTS tab (should be index 1)
-	testTabIndex := 1
+	// Use centralized function to get correct tab index
+	testTabIndex := GetFirstTestTabIndex()
 	if testTabIndex >= len(h.tabSections) {
 		t.Fatalf("Expected at least %d tab sections, got %d", testTabIndex+1, len(h.tabSections))
 	}

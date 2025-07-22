@@ -1,6 +1,7 @@
 package devtui
 
 import (
+	"io"
 	"strings"
 	"sync"
 
@@ -22,6 +23,9 @@ type tabContent struct {
 	operationID *string // nil for sync messages, value for async operations
 	isProgress  bool    // true if this is a progress update
 	isComplete  bool    // true if async operation completed
+
+	// NEW: Handler identification
+	handlerName string // Handler name for message source identification
 }
 
 // tabSection represents a tab section in the TUI with configurable fields and content
@@ -35,6 +39,10 @@ type tabSection struct {
 	indexActiveEditField int          // Índice del campo de configuración seleccionado
 	tui                  *DevTUI
 	mu                   sync.RWMutex // Para proteger tabContents de race conditions
+
+	// NEW: Writing handler registry for external handlers
+	writingHandlers map[string]WritingHandler // handlerName -> WritingHandler instance
+	activeWriter    string                    // current active writer name for io.Writer calls
 }
 
 // Write implementa io.Writer para capturar la salida de otros procesos
@@ -44,7 +52,18 @@ func (ts *tabSection) Write(p []byte) (n int, err error) {
 		// Detectar automáticamente el tipo de mensaje
 		msgType := messagetype.DetectMessageType(msg)
 
-		ts.tui.sendMessage(msg, msgType, ts)
+		// NEW: Determine handler name and operation ID from active writer
+		var handlerName string
+		var operationID string
+
+		if ts.activeWriter != "" && ts.writingHandlers != nil {
+			if handler, exists := ts.writingHandlers[ts.activeWriter]; exists {
+				handlerName = handler.Name()
+				operationID = handler.GetLastOperationID()
+			}
+		}
+
+		ts.tui.sendMessageWithHandler(msg, msgType, ts, handlerName, operationID)
 		// Si es un error, escribirlo en el archivo de log
 		if msgType == messagetype.Error {
 			ts.tui.LogToFile(msg)
@@ -54,10 +73,68 @@ func (ts *tabSection) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
+// NEW: RegisterWritingHandler registers a writing handler and returns a dedicated writer
+func (ts *tabSection) RegisterWritingHandler(handler WritingHandler) io.Writer {
+	if ts.writingHandlers == nil {
+		ts.writingHandlers = make(map[string]WritingHandler)
+	}
+
+	handlerName := handler.Name()
+	ts.writingHandlers[handlerName] = handler
+
+	// Return handler-specific writer
+	return &HandlerWriter{
+		tabSection:  ts,
+		handlerName: handlerName,
+	}
+}
+
+// NEW: SetActiveWriter sets the current active writer for general io.Writer calls
+func (ts *tabSection) SetActiveWriter(handlerName string) {
+	ts.activeWriter = handlerName
+}
+
+// NEW: HandlerWriter wraps tabSection with handler identification
+type HandlerWriter struct {
+	tabSection  *tabSection
+	handlerName string
+}
+
+func (hw *HandlerWriter) Write(p []byte) (n int, err error) {
+	msg := strings.TrimSpace(string(p))
+	if msg != "" {
+		msgType := messagetype.DetectMessageType(msg)
+
+		// Debug: Log the message and detected type
+		println("DEBUG: Message:", msg, "Detected Type:", int(msgType), "Expected Success:", int(messagetype.Success))
+
+		var operationID string
+		if hw.tabSection.writingHandlers != nil {
+			if handler, exists := hw.tabSection.writingHandlers[hw.handlerName]; exists {
+				operationID = handler.GetLastOperationID()
+			}
+		}
+
+		hw.tabSection.tui.sendMessageWithHandler(msg, msgType, hw.tabSection, hw.handlerName, operationID)
+
+		if msgType == messagetype.Error {
+			hw.tabSection.tui.LogToFile(msg)
+		}
+	}
+	return len(p), nil
+}
+
 func (t *tabSection) addNewContent(msgType messagetype.Type, content string) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	t.tabContents = append(t.tabContents, t.tui.newContent(content, msgType, t))
+}
+
+// NEW: addNewContentWithHandler adds content with handler identification
+func (t *tabSection) addNewContentWithHandler(msgType messagetype.Type, content string, handlerName string) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.tabContents = append(t.tabContents, t.tui.newContentWithHandler(content, msgType, t, handlerName))
 }
 
 // Title returns the tab section title

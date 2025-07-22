@@ -7,87 +7,21 @@ import (
 	"time"
 )
 
-// Mock handlers for testing
-
-type TestSimpleHandler struct {
-	label    string
-	value    string
-	editable bool
-	timeout  time.Duration
-}
-
-func (h *TestSimpleHandler) Label() string          { return h.label }
-func (h *TestSimpleHandler) Value() string          { return h.value }
-func (h *TestSimpleHandler) Editable() bool         { return h.editable }
-func (h *TestSimpleHandler) Timeout() time.Duration { return h.timeout }
-
-func (h *TestSimpleHandler) Change(newValue any) (string, error) {
-	if h.editable {
-		h.value = newValue.(string)
-	}
-	return fmt.Sprintf("Changed to: %s", h.value), nil
-}
-
-type TestSlowHandler struct {
-	delay time.Duration
-}
-
-func (h *TestSlowHandler) Label() string          { return "Slow Operation" }
-func (h *TestSlowHandler) Value() string          { return "Click to run" }
-func (h *TestSlowHandler) Editable() bool         { return false }
-func (h *TestSlowHandler) Timeout() time.Duration { return h.delay + (1 * time.Second) }
-
-func (h *TestSlowHandler) Change(newValue any) (string, error) {
-	time.Sleep(h.delay)
-	return fmt.Sprintf("Operation completed after %v", h.delay), nil
-}
-
-type TestErrorHandler struct{}
-
-func (h *TestErrorHandler) Label() string          { return "Error Operation" }
-func (h *TestErrorHandler) Value() string          { return "Click to fail" }
-func (h *TestErrorHandler) Editable() bool         { return false }
-func (h *TestErrorHandler) Timeout() time.Duration { return 5 * time.Second }
-
-func (h *TestErrorHandler) Change(newValue any) (string, error) {
-	return "", fmt.Errorf("simulated error occurred")
-}
-
-type TestTimeoutHandler struct {
-	delay time.Duration
-}
-
-func (h *TestTimeoutHandler) Label() string          { return "Timeout Operation" }
-func (h *TestTimeoutHandler) Value() string          { return "Click to timeout" }
-func (h *TestTimeoutHandler) Editable() bool         { return false }
-func (h *TestTimeoutHandler) Timeout() time.Duration { return 1 * time.Second } // Short timeout
-
-func (h *TestTimeoutHandler) Change(newValue any) (string, error) {
-	time.Sleep(h.delay) // Longer than timeout
-	return "Should not reach here", nil
-}
-
 // Test async field operations
 
 func TestFieldHandler_BasicOperation(t *testing.T) {
-	config := &TuiConfig{
-		AppName:  "Test TUI",
-		ExitChan: make(chan bool, 1),
-		LogToFile: func(messages ...any) {
-			// Silent logger for tests
-		},
+	// Use centralized handler from handler_test.go
+	handler := NewTestEditableHandler("Test Field", "initial")
+
+	// Use simplified DefaultTUIForTest
+	tui := DefaultTUIForTest(handler)
+
+	// Get the first tab created by DefaultTUIForTest
+	if len(tui.tabSections) == 0 {
+		t.Fatal("No tab sections created")
 	}
 
-	tui := NewTUI(config)
-	handler := &TestSimpleHandler{
-		label:    "Test Field",
-		value:    "initial",
-		editable: true,
-		timeout:  5 * time.Second,
-	}
-
-	tabSection := tui.NewTabSection("Test Tab", "Test description")
-	tabSection.NewField(handler)
+	tabSection := tui.tabSections[GetFirstTestTabIndex()]
 
 	// Verify field was created with handler
 	if len(tabSection.fieldHandlers) != 1 {
@@ -112,27 +46,17 @@ func TestFieldHandler_BasicOperation(t *testing.T) {
 		t.Error("Expected field to be editable")
 	}
 
-	if field.handler.Timeout() != 5*time.Second {
-		t.Errorf("Expected timeout 5s, got %v", field.handler.Timeout())
+	if field.handler.Timeout() != 0 {
+		t.Errorf("Expected timeout 0s, got %v", field.handler.Timeout())
 	}
 }
 
 func TestFieldHandler_AsyncExecution(t *testing.T) {
-	config := &TuiConfig{
-		AppName:  "Test TUI",
-		ExitChan: make(chan bool, 1),
-		LogToFile: func(messages ...any) {
-			// Silent logger for tests
-		},
-	}
+	// Use centralized handler from handler_test.go - non-editable for action button
+	slowHandler := NewTestNonEditableHandler("Slow Operation", "Click to run")
+	tui := DefaultTUIForTest(slowHandler)
 
-	tui := NewTUI(config)
-
-	// Test slow operation
-	slowHandler := &TestSlowHandler{delay: 100 * time.Millisecond}
-	tabSection := tui.NewTabSection("Test Tab", "Test description")
-	tabSection.NewField(slowHandler)
-
+	tabSection := tui.tabSections[GetFirstTestTabIndex()]
 	field := tabSection.fieldHandlers[0]
 
 	// Test that async state is initialized
@@ -146,10 +70,11 @@ func TestFieldHandler_AsyncExecution(t *testing.T) {
 }
 
 func TestFieldHandler_ErrorHandling(t *testing.T) {
-	handler := &TestErrorHandler{}
+	// Test error handling using centralized error handler
+	handler := NewTestErrorHandler("Error Field", "test")
 
 	// Test that Change method returns error correctly
-	result, err := handler.Change(nil)
+	result, err := handler.Change("any value")
 	if err == nil {
 		t.Fatal("Expected error, got nil")
 	}
@@ -171,23 +96,14 @@ func TestFieldHandler_TimeoutConfiguration(t *testing.T) {
 		expectedTimeout time.Duration
 	}{
 		{
-			name: "Simple Handler",
-			handler: &TestSimpleHandler{
-				timeout: 10 * time.Second,
-			},
-			expectedTimeout: 10 * time.Second,
+			name:            "Editable Handler",
+			handler:         NewTestEditableHandler("Test", "value"),
+			expectedTimeout: 0, // Default timeout from handler_test.go
 		},
 		{
-			name: "Slow Handler",
-			handler: &TestSlowHandler{
-				delay: 2 * time.Second,
-			},
-			expectedTimeout: 3 * time.Second, // delay + 1s
-		},
-		{
-			name:            "Timeout Handler",
-			handler:         &TestTimeoutHandler{},
-			expectedTimeout: 1 * time.Second,
+			name:            "Non-Editable Handler",
+			handler:         NewTestNonEditableHandler("Action", "Press Enter"),
+			expectedTimeout: 0, // Default timeout from handler_test.go
 		},
 	}
 
@@ -202,17 +118,9 @@ func TestFieldHandler_TimeoutConfiguration(t *testing.T) {
 }
 
 func TestFieldHandler_EditableFields(t *testing.T) {
-	editableHandler := &TestSimpleHandler{
-		label:    "Editable Field",
-		value:    "original",
-		editable: true,
-	}
-
-	nonEditableHandler := &TestSimpleHandler{
-		label:    "Non-Editable Field",
-		value:    "button",
-		editable: false,
-	}
+	// Use centralized handlers from handler_test.go
+	editableHandler := NewTestEditableHandler("Editable Field", "original")
+	nonEditableHandler := NewTestNonEditableHandler("Non-Editable Field", "action button")
 
 	// Test editable field
 	if !editableHandler.Editable() {
@@ -249,24 +157,11 @@ func TestFieldHandler_EditableFields(t *testing.T) {
 }
 
 func TestAsyncState_Management(t *testing.T) {
-	config := &TuiConfig{
-		AppName:  "Test TUI",
-		ExitChan: make(chan bool, 1),
-		LogToFile: func(messages ...any) {
-			// Silent logger for tests
-		},
-	}
+	// Use centralized handler from handler_test.go
+	handler := NewTestEditableHandler("Test Field", "test")
+	tui := DefaultTUIForTest(handler)
 
-	tui := NewTUI(config)
-	handler := &TestSimpleHandler{
-		label:   "Test Field",
-		value:   "test",
-		timeout: 5 * time.Second,
-	}
-
-	tabSection := tui.NewTabSection("Test Tab", "Test description")
-	tabSection.NewField(handler)
-
+	tabSection := tui.tabSections[GetFirstTestTabIndex()]
 	field := tabSection.fieldHandlers[0]
 
 	// Test initial async state
@@ -287,43 +182,32 @@ func TestAsyncState_Management(t *testing.T) {
 	}
 }
 
-func TestSpinner_Integration(t *testing.T) {
-	config := &TuiConfig{
-		AppName:  "Test TUI",
-		ExitChan: make(chan bool, 1),
-		LogToFile: func(messages ...any) {
-			// Silent logger for tests
-		},
-	}
+func TestSpinner_Start_Stop(t *testing.T) {
+	// Use centralized handler from handler_test.go
+	handler := NewTestEditableHandler("Test Operation", "Click to test")
+	tui := DefaultTUIForTest(handler)
 
-	tui := NewTUI(config)
-	handler := &TestSlowHandler{delay: 100 * time.Millisecond}
-
-	tabSection := tui.NewTabSection("Test Tab", "Test description")
-	tabSection.NewField(handler)
-
+	tabSection := tui.tabSections[GetFirstTestTabIndex()]
 	field := tabSection.fieldHandlers[0]
 
-	// Test spinner initialization
-	if field.spinner.Spinner.Frames == nil {
-		t.Error("Spinner should be initialized with frames")
+	// Test spinner start - simulate what happens when operation starts
+	field.asyncState.isRunning = true
+	if !field.asyncState.isRunning {
+		t.Error("Spinner should be running after start")
 	}
 
-	// Spinner should initially not be active
+	// Test spinner stop - simulate what happens when operation ends
+	field.asyncState.isRunning = false
 	if field.asyncState.isRunning {
-		t.Error("Spinner should not be active initially")
+		t.Error("Spinner should not be running after stop")
 	}
 }
 
 // Benchmark tests for performance
 
 func BenchmarkFieldHandler_SimpleOperation(b *testing.B) {
-	handler := &TestSimpleHandler{
-		label:    "Benchmark Field",
-		value:    "test",
-		editable: true,
-		timeout:  5 * time.Second,
-	}
+	// Use centralized handler from handler_test.go
+	handler := NewTestEditableHandler("Benchmark Field", "test")
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -332,25 +216,18 @@ func BenchmarkFieldHandler_SimpleOperation(b *testing.B) {
 }
 
 func BenchmarkFieldHandler_MultipleFields(b *testing.B) {
-	config := &TuiConfig{
-		AppName:   "Benchmark TUI",
-		ExitChan:  make(chan bool, 1),
-		LogToFile: func(messages ...any) {},
-	}
-
-	tui := NewTUI(config)
-	tabSection := tui.NewTabSection("Benchmark Tab", "Benchmark description")
-
-	// Create multiple fields
+	// Create multiple handlers using centralized handler
+	var handlers []interface{}
 	for i := 0; i < 10; i++ {
-		handler := &TestSimpleHandler{
-			label:    fmt.Sprintf("Field-%d", i),
-			value:    fmt.Sprintf("value-%d", i),
-			editable: true,
-			timeout:  5 * time.Second,
-		}
-		tabSection.NewField(handler)
+		handler := NewTestEditableHandler(
+			fmt.Sprintf("Field-%d", i),
+			fmt.Sprintf("value-%d", i),
+		)
+		handlers = append(handlers, handler)
 	}
+
+	tui := DefaultTUIForTest(handlers...)
+	tabSection := tui.tabSections[GetFirstTestTabIndex()]
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

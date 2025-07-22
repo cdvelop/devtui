@@ -105,14 +105,9 @@ func TestRenderFooterInput(t *testing.T) {
 
 		h.editModeActivated = true
 		h.tabSections[h.activeTab].indexActiveEditField = 0
-		tab := h.tabSections[h.activeTab]
-		field := tab.FieldHandlers()[0]
-		// Usar el handler para modificar el campo en lugar de métodos deprecados
-		if testHandler, ok := field.handler.(*TestFieldHandler); ok {
-			testHandler.SetLabel("Test")
-			testHandler.SetValue("Value")
-			testHandler.SetEditable(false)
-		}
+		// Los handlers centralizados no necesitan SetLabel/SetValue ya que son inmutables
+		// El test verifica que no contiene cursor cuando no es editable
+		// Ya tenemos un handler no-editable del DefaultTUIForTest
 
 		// Renderizar input
 		result := h.renderFooterInput()

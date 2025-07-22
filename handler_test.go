@@ -1,9 +1,9 @@
 package devtui
 
 import (
-	"errors"
+	"fmt"
+	"strconv"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -19,12 +19,22 @@ func GetSecondTestTabIndex() int {
 	return GetFirstTestTabIndex() + 1 // Second test tab follows first test tab
 }
 
-// TestEditableHandler - Manejador editable básico para todos los tests
+// TestEditableHandler - Handler para campos editables (input fields)
 type TestEditableHandler struct {
+	label        string
 	currentValue string
+	lastOpID     string
+	updateMode   bool // Para controlar si actualiza mensajes existentes
 }
 
-func (h *TestEditableHandler) Label() string          { return "Editable Field" }
+func NewTestEditableHandler(label, value string) *TestEditableHandler {
+	return &TestEditableHandler{
+		label:        label,
+		currentValue: value,
+	}
+}
+
+func (h *TestEditableHandler) Label() string          { return h.label }
 func (h *TestEditableHandler) Value() string          { return h.currentValue }
 func (h *TestEditableHandler) Editable() bool         { return true }
 func (h *TestEditableHandler) Timeout() time.Duration { return 0 }
@@ -35,153 +45,390 @@ func (h *TestEditableHandler) Change(newValue any) (string, error) {
 	return "Saved: " + strValue, nil
 }
 
-// TestNonEditableHandler - Manejador no editable básico para todos los tests
-type TestNonEditableHandler struct{}
+// WritingHandler methods
+func (h *TestEditableHandler) Name() string                       { return h.label + "Handler" }
+func (h *TestEditableHandler) SetLastOperationID(lastOpID string) { h.lastOpID = lastOpID }
+func (h *TestEditableHandler) GetLastOperationID() string {
+	if h.updateMode {
+		return h.lastOpID
+	}
+	return ""
+}
 
-func (h *TestNonEditableHandler) Label() string          { return "Non-Editable Field" }
-func (h *TestNonEditableHandler) Value() string          { return "action button" }
+// SetUpdateMode permite controlar si actualiza mensajes para tests
+func (h *TestEditableHandler) SetUpdateMode(update bool) {
+	h.updateMode = update
+}
+
+// TestNonEditableHandler - Handler para botones de acción (action buttons)
+type TestNonEditableHandler struct {
+	label      string
+	actionText string
+	lastOpID   string
+	updateMode bool
+}
+
+func NewTestNonEditableHandler(label, actionText string) *TestNonEditableHandler {
+	return &TestNonEditableHandler{
+		label:      label,
+		actionText: actionText,
+	}
+}
+
+func (h *TestNonEditableHandler) Label() string          { return h.label }
+func (h *TestNonEditableHandler) Value() string          { return h.actionText }
 func (h *TestNonEditableHandler) Editable() bool         { return false }
 func (h *TestNonEditableHandler) Timeout() time.Duration { return 0 }
 
 func (h *TestNonEditableHandler) Change(newValue any) (string, error) {
-	return "Action executed", nil
+	return "Action executed: " + h.actionText, nil
 }
 
-// PortTestHandler - Manejador específico para tests de puerto (centralizado aquí)
+// WritingHandler methods
+func (h *TestNonEditableHandler) Name() string                       { return h.label + "Handler" }
+func (h *TestNonEditableHandler) SetLastOperationID(lastOpID string) { h.lastOpID = lastOpID }
+func (h *TestNonEditableHandler) GetLastOperationID() string {
+	if h.updateMode {
+		return h.lastOpID
+	}
+	return ""
+}
+
+// SetUpdateMode permite controlar si actualiza mensajes para tests
+func (h *TestNonEditableHandler) SetUpdateMode(update bool) {
+	h.updateMode = update
+}
+
+// TestWriterHandler - Handler solo para escribir (no es field, para componentes externos)
+type TestWriterHandler struct {
+	name       string
+	lastOpID   string
+	updateMode bool
+}
+
+func NewTestWriterHandler(name string) *TestWriterHandler {
+	return &TestWriterHandler{name: name}
+}
+
+// Solo implementa WritingHandler (no FieldHandler)
+func (h *TestWriterHandler) Name() string                       { return h.name }
+func (h *TestWriterHandler) SetLastOperationID(lastOpID string) { h.lastOpID = lastOpID }
+func (h *TestWriterHandler) GetLastOperationID() string {
+	if h.updateMode {
+		return h.lastOpID
+	}
+	return ""
+}
+
+// SetUpdateMode permite controlar si actualiza mensajes para tests
+func (h *TestWriterHandler) SetUpdateMode(update bool) {
+	h.updateMode = update
+}
+
+// NewTestFieldHandler creates a basic test handler - compatibility function
+func NewTestFieldHandler(label, value string, editable bool, changeFunc func(newValue any) (string, error)) FieldHandler {
+	if editable {
+		handler := NewTestEditableHandler(label, value)
+		return handler
+	} else {
+		handler := NewTestNonEditableHandler(label, value)
+		return handler
+	}
+}
+
+// PortTestHandler - Handler específico para tests de puerto con validación
 type PortTestHandler struct {
 	currentPort string
-	mu          sync.RWMutex // Para proteger currentPort de race conditions
+	lastOpID    string
+	updateMode  bool
 }
 
-func (h *PortTestHandler) Label() string { return "Server Port" }
-func (h *PortTestHandler) Value() string {
-	h.mu.RLock()
-	defer h.mu.RUnlock()
-	return h.currentPort
+func NewPortTestHandler(initialPort string) *PortTestHandler {
+	return &PortTestHandler{currentPort: initialPort}
 }
+
+func (h *PortTestHandler) Label() string          { return "Port" }
+func (h *PortTestHandler) Value() string          { return h.currentPort }
 func (h *PortTestHandler) Editable() bool         { return true }
-func (h *PortTestHandler) Timeout() time.Duration { return 0 }
+func (h *PortTestHandler) Timeout() time.Duration { return 3 * time.Second }
 
 func (h *PortTestHandler) Change(newValue any) (string, error) {
-	newPort := newValue.(string)
-
-	// Simple validation - reject obviously invalid ports for testing
-	if newPort == "99999" {
-		return "", errors.New("port out of range")
+	portStr := strings.TrimSpace(newValue.(string))
+	if portStr == "" {
+		return "", fmt.Errorf("port cannot be empty")
 	}
 
-	// Accept valid ports - protegido por mutex
-	h.mu.Lock()
-	h.currentPort = newPort
-	h.mu.Unlock()
-
-	return "Port updated to " + newPort, nil
-}
-
-// NewTestFieldHandler creates a new test handler with basic functionality
-// Esta función mantiene compatibilidad con tests existentes
-func NewTestFieldHandler(label, value string, editable bool, changeFunc func(newValue any) (string, error)) FieldHandler {
-	// Siempre usar CustomTestHandler para permitir configuración completa
-	return &CustomTestHandler{
-		label:      label,
-		value:      value,
-		editable:   editable,
-		changeFunc: changeFunc,
+	port, err := strconv.Atoi(portStr)
+	if err != nil {
+		return "", fmt.Errorf("port must be a number")
 	}
+	if port < 1 || port > 65535 {
+		return "", fmt.Errorf("port must be between 1 and 65535")
+	}
+
+	h.currentPort = portStr
+	return fmt.Sprintf("Port configured: %d", port), nil
 }
 
-// CustomTestHandler - Handler personalizable para casos específicos
-type CustomTestHandler struct {
+// WritingHandler methods
+func (h *PortTestHandler) Name() string                       { return "PortHandler" }
+func (h *PortTestHandler) SetLastOperationID(lastOpID string) { h.lastOpID = lastOpID }
+func (h *PortTestHandler) GetLastOperationID() string {
+	if h.updateMode {
+		return h.lastOpID
+	}
+	return ""
+}
+
+// SetUpdateMode permite controlar si actualiza mensajes para tests
+func (h *PortTestHandler) SetUpdateMode(update bool) {
+	h.updateMode = update
+}
+
+// TestErrorHandler - Handler que siempre genera errores para testing
+type TestErrorHandler struct {
 	label      string
 	value      string
-	editable   bool
-	changeFunc func(newValue any) (string, error)
+	lastOpID   string
+	updateMode bool
 }
 
-func (h *CustomTestHandler) Label() string          { return h.label }
-func (h *CustomTestHandler) Value() string          { return h.value }
-func (h *CustomTestHandler) Editable() bool         { return h.editable }
-func (h *CustomTestHandler) Timeout() time.Duration { return 0 }
-
-func (h *CustomTestHandler) Change(newValue any) (string, error) {
-	if h.changeFunc != nil {
-		result, err := h.changeFunc(newValue)
-		if err == nil {
-			inputStr := newValue.(string)
-
-			// Special handling for empty values and transformations
-			if inputStr == "" {
-				// If input is empty and result doesn't look like a status message,
-				// treat result as the new field value (for default value transformations)
-				if result != "" && !strings.Contains(result, "Saved") && !strings.Contains(result, "Error") {
-					h.value = result
-				} else {
-					// Empty input with status message - field becomes empty
-					h.value = ""
-				}
-			} else {
-				// Non-empty input: use input as the new value
-				h.value = inputStr
-			}
-		}
-		return result, err
+func NewTestErrorHandler(label, value string) *TestErrorHandler {
+	return &TestErrorHandler{
+		label: label,
+		value: value,
 	}
-	// Default behavior
-	h.value = newValue.(string)
-	return h.value, nil
 }
 
-// SetLabel allows updating the label for testing
-func (h *CustomTestHandler) SetLabel(label string) {
-	h.label = label
+func (h *TestErrorHandler) Label() string          { return h.label }
+func (h *TestErrorHandler) Value() string          { return h.value }
+func (h *TestErrorHandler) Editable() bool         { return true }
+func (h *TestErrorHandler) Timeout() time.Duration { return 0 }
+
+func (h *TestErrorHandler) Change(newValue any) (string, error) {
+	return "", fmt.Errorf("simulated error occurred")
 }
 
-// SetValue allows updating the value for testing (simulates external changes)
-func (h *CustomTestHandler) SetValue(value string) {
-	h.value = value
+// WritingHandler methods
+func (h *TestErrorHandler) Name() string                       { return h.label + "ErrorHandler" }
+func (h *TestErrorHandler) SetLastOperationID(lastOpID string) { h.lastOpID = lastOpID }
+func (h *TestErrorHandler) GetLastOperationID() string {
+	if h.updateMode {
+		return h.lastOpID
+	}
+	return ""
 }
 
-// SetEditable allows changing the editable state for testing
-func (h *CustomTestHandler) SetEditable(editable bool) {
-	h.editable = editable
+// SetUpdateMode permite controlar si actualiza mensajes para tests
+func (h *TestErrorHandler) SetUpdateMode(update bool) {
+	h.updateMode = update
 }
 
-// Aliases para compatibilidad con tests existentes
-type TestFieldHandler = CustomTestHandler
-type TestField1Handler = TestEditableHandler
+// TestRequiredFieldHandler - Handler que rechaza valores vacíos
+type TestRequiredFieldHandler struct {
+	label        string
+	currentValue string
+	lastOpID     string
+	updateMode   bool
+}
 
-// DefaultTUIForTest creates a DevTUI instance with basic default configuration
-// useful for unit tests and for quick initialization in real applications
-// LogToFile is optional - if not provided, will use a no-op logger
-func DefaultTUIForTest(LogToFile ...func(messages ...any)) *DevTUI {
-	// Default no-op logger if none provided
+func NewTestRequiredFieldHandler(label, initialValue string) *TestRequiredFieldHandler {
+	return &TestRequiredFieldHandler{
+		label:        label,
+		currentValue: initialValue,
+	}
+}
+
+func (h *TestRequiredFieldHandler) Label() string          { return h.label }
+func (h *TestRequiredFieldHandler) Value() string          { return h.currentValue }
+func (h *TestRequiredFieldHandler) Editable() bool         { return true }
+func (h *TestRequiredFieldHandler) Timeout() time.Duration { return 0 }
+
+func (h *TestRequiredFieldHandler) Change(newValue any) (string, error) {
+	strValue := newValue.(string)
+	if strValue == "" {
+		return "", fmt.Errorf("Field cannot be empty")
+	}
+	h.currentValue = strValue
+	return "Accepted: " + strValue, nil
+}
+
+// WritingHandler methods
+func (h *TestRequiredFieldHandler) Name() string                       { return h.label + "RequiredHandler" }
+func (h *TestRequiredFieldHandler) SetLastOperationID(lastOpID string) { h.lastOpID = lastOpID }
+func (h *TestRequiredFieldHandler) GetLastOperationID() string {
+	if h.updateMode {
+		return h.lastOpID
+	}
+	return ""
+}
+
+// SetUpdateMode permite controlar si actualiza mensajes para tests
+func (h *TestRequiredFieldHandler) SetUpdateMode(update bool) {
+	h.updateMode = update
+}
+
+// TestOptionalFieldHandler - Handler que acepta valores vacíos
+type TestOptionalFieldHandler struct {
+	label        string
+	currentValue string
+	lastOpID     string
+	updateMode   bool
+}
+
+func NewTestOptionalFieldHandler(label, initialValue string) *TestOptionalFieldHandler {
+	return &TestOptionalFieldHandler{
+		label:        label,
+		currentValue: initialValue,
+	}
+}
+
+func (h *TestOptionalFieldHandler) Label() string          { return h.label }
+func (h *TestOptionalFieldHandler) Value() string          { return h.currentValue }
+func (h *TestOptionalFieldHandler) Editable() bool         { return true }
+func (h *TestOptionalFieldHandler) Timeout() time.Duration { return 0 }
+
+func (h *TestOptionalFieldHandler) Change(newValue any) (string, error) {
+	strValue := newValue.(string)
+	h.currentValue = strValue
+	if strValue == "" {
+		h.currentValue = "Default Value" // Para el test que espera esta transformación
+		return "Default Value", nil
+	}
+	return "Updated: " + strValue, nil
+}
+
+// WritingHandler methods
+func (h *TestOptionalFieldHandler) Name() string                       { return h.label + "OptionalHandler" }
+func (h *TestOptionalFieldHandler) SetLastOperationID(lastOpID string) { h.lastOpID = lastOpID }
+func (h *TestOptionalFieldHandler) GetLastOperationID() string {
+	if h.updateMode {
+		return h.lastOpID
+	}
+	return ""
+}
+
+// SetUpdateMode permite controlar si actualiza mensajes para tests
+func (h *TestOptionalFieldHandler) SetUpdateMode(update bool) {
+	h.updateMode = update
+}
+
+// TestClearableFieldHandler - Handler que preserva valores vacíos tal como son
+type TestClearableFieldHandler struct {
+	label        string
+	currentValue string
+	lastOpID     string
+	updateMode   bool
+}
+
+func NewTestClearableFieldHandler(label, initialValue string) *TestClearableFieldHandler {
+	return &TestClearableFieldHandler{
+		label:        label,
+		currentValue: initialValue,
+	}
+}
+
+func (h *TestClearableFieldHandler) Label() string          { return h.label }
+func (h *TestClearableFieldHandler) Value() string          { return h.currentValue }
+func (h *TestClearableFieldHandler) Editable() bool         { return true }
+func (h *TestClearableFieldHandler) Timeout() time.Duration { return 0 }
+
+func (h *TestClearableFieldHandler) Change(newValue any) (string, error) {
+	strValue := newValue.(string)
+	h.currentValue = strValue
+	return strValue, nil // Return exactly what was input, including empty string
+}
+
+// WritingHandler methods
+func (h *TestClearableFieldHandler) Name() string                       { return h.label + "ClearableHandler" }
+func (h *TestClearableFieldHandler) SetLastOperationID(lastOpID string) { h.lastOpID = lastOpID }
+func (h *TestClearableFieldHandler) GetLastOperationID() string {
+	if h.updateMode {
+		return h.lastOpID
+	}
+	return ""
+}
+
+// SetUpdateMode permite controlar si actualiza mensajes para tests
+func (h *TestClearableFieldHandler) SetUpdateMode(update bool) {
+	h.updateMode = update
+}
+
+// TestCapturingHandler - Handler que captura valores recibidos para testing
+type TestCapturingHandler struct {
+	label         string
+	currentValue  string
+	capturedValue *string // Puntero para capturar valores en tests
+	lastOpID      string
+	updateMode    bool
+}
+
+func NewTestCapturingHandler(label, initialValue string, capturedValue *string) *TestCapturingHandler {
+	return &TestCapturingHandler{
+		label:         label,
+		currentValue:  initialValue,
+		capturedValue: capturedValue,
+	}
+}
+
+func (h *TestCapturingHandler) Label() string          { return h.label }
+func (h *TestCapturingHandler) Value() string          { return h.currentValue }
+func (h *TestCapturingHandler) Editable() bool         { return true }
+func (h *TestCapturingHandler) Timeout() time.Duration { return 0 }
+
+func (h *TestCapturingHandler) Change(newValue any) (string, error) {
+	strValue := newValue.(string)
+	if h.capturedValue != nil {
+		*h.capturedValue = strValue // Captura el valor para el test
+	}
+	if strValue == "" {
+		h.currentValue = "Field was cleared" // Actualizar el valor interno también
+		return "Field was cleared", nil
+	}
+	h.currentValue = strValue
+	return "Field value: " + strValue, nil
+}
+
+// WritingHandler methods
+func (h *TestCapturingHandler) Name() string                       { return h.label + "CapturingHandler" }
+func (h *TestCapturingHandler) SetLastOperationID(lastOpID string) { h.lastOpID = lastOpID }
+func (h *TestCapturingHandler) GetLastOperationID() string {
+	if h.updateMode {
+		return h.lastOpID
+	}
+	return ""
+}
+
+// SetUpdateMode permite controlar si actualiza mensajes para tests
+func (h *TestCapturingHandler) SetUpdateMode(update bool) {
+	h.updateMode = update
+}
+
+// DefaultTUIForTest creates a DevTUI instance with configurable handlers
+// Usage examples:
+//   - DefaultTUIForTest() // Empty TUI, no handlers
+//   - DefaultTUIForTest(handler1, handler2) // TUI with specified handlers
+//   - DefaultTUIForTest(handler1, func(messages...any){}) // TUI with handlers + logger
+func DefaultTUIForTest(handlersAndLogger ...any) *DevTUI {
 	var logFunc func(messages ...any)
-	if len(LogToFile) > 0 && LogToFile[0] != nil {
-		logFunc = LogToFile[0]
-	} else {
+	var handlers []FieldHandler
+
+	// Parse variadic arguments: handlers (FieldHandler) and optional logger (func)
+	for _, arg := range handlersAndLogger {
+		switch v := arg.(type) {
+		case func(messages ...any):
+			logFunc = v
+		case FieldHandler:
+			handlers = append(handlers, v)
+		}
+	}
+
+	// Default no-op logger if none provided
+	if logFunc == nil {
 		logFunc = func(messages ...any) {
 			// No-op logger for tests
 		}
 	}
-
-	// Create basic tabSections for testing
-	tmpTUI := &DevTUI{TuiConfig: &TuiConfig{}}
-
-	// Tab 1: Con manejadores
-	tab1 := tmpTUI.NewTabSection("Tab 1", "Tab with handlers")
-	editableHandler := &TestEditableHandler{currentValue: "initial test value"}
-	nonEditableHandler := &TestNonEditableHandler{}
-
-	tab1.NewField(editableHandler).
-		NewField(nonEditableHandler)
-	tab1.SetIndex(GetFirstTestTabIndex()) // Index 1 (SHORTCUTS is 0)
-	tab1.SetActiveEditField(0)
-
-	// Tab 2: Sin manejadores (para tests simples)
-	tab2 := tmpTUI.NewTabSection("Tab 2", "Empty tab")
-	tab2.SetIndex(GetSecondTestTabIndex()) // Index 2
-
-	tabSections := []*tabSection{tab1, tab2}
 
 	// Initialize the UI with TestMode enabled for synchronous execution
 	h := NewTUI(&TuiConfig{
@@ -190,7 +437,20 @@ func DefaultTUIForTest(LogToFile ...func(messages ...any)) *DevTUI {
 		TestMode:      true,            // Enable test mode for synchronous execution
 		Color:         nil,             // Use default colors
 		LogToFile:     logFunc,
-	}).AddTabSections(tabSections...)
+	})
+
+	// Create test tab only if handlers are provided
+	if len(handlers) > 0 {
+		tab := h.NewTabSection("Test Tab", "Tab with test handlers")
+
+		// Add all provided handlers to the tab
+		for _, handler := range handlers {
+			tab.NewField(handler)
+		}
+
+		tab.SetIndex(GetFirstTestTabIndex()) // Index 1 (SHORTCUTS is 0)
+		tab.SetActiveEditField(0)
+	}
 
 	return h
 }

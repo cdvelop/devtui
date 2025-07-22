@@ -12,8 +12,9 @@ import (
 // 3. User types "g" and it should show only "g", not "g initial test value"
 func TestUserScenarioExactReplication(t *testing.T) {
 	t.Run("Exact user scenario: clear field then type should not show old value", func(t *testing.T) {
-		// Setup: Create TUI with default configuration
-		h := DefaultTUIForTest(func(messages ...any) {
+		// Setup: Create TUI with test handler
+		testHandler := NewTestEditableHandler("Test Field", "initial test value")
+		h := DefaultTUIForTest(testHandler, func(messages ...any) {
 			// Test logger - do nothing
 		})
 
@@ -110,8 +111,9 @@ func TestUserScenarioExactReplication(t *testing.T) {
 // TestBackspaceAfterClear tests that backspace also works correctly after clearing
 func TestBackspaceAfterClear(t *testing.T) {
 	t.Run("Backspace should work correctly when field is cleared", func(t *testing.T) {
-		// Setup
-		h := DefaultTUIForTest(func(messages ...any) {})
+		// Setup with test handler
+		testHandler := NewTestEditableHandler("Test Field", "test value")
+		h := DefaultTUIForTest(testHandler, func(messages ...any) {})
 		h.viewport.Width = 80
 		h.viewport.Height = 24
 

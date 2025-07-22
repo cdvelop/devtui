@@ -10,8 +10,9 @@ import (
 // and typing new content, the old value gets concatenated with the new input
 func TestFieldEditingBugReplication(t *testing.T) {
 	t.Run("Bug replication: After clearing field and typing, old value gets concatenated", func(t *testing.T) {
-		// Setup: Create TUI with default configuration
-		h := DefaultTUIForTest(func(messages ...any) {
+		// Setup: Create TUI with test handler
+		testHandler := NewTestEditableHandler("Test Field", "initial test value")
+		h := DefaultTUIForTest(testHandler, func(messages ...any) {
 			// Test logger - do nothing
 		})
 
@@ -74,8 +75,9 @@ func TestFieldEditingBugReplication(t *testing.T) {
 // TestFieldEditingCorrectBehavior tests the correct behavior after fixing the bug
 func TestFieldEditingCorrectBehavior(t *testing.T) {
 	t.Run("Field editing should work correctly when tempEditValue is empty", func(t *testing.T) {
-		// Setup
-		h := DefaultTUIForTest(func(messages ...any) {
+		// Setup with test handler
+		testHandler := NewTestEditableHandler("Test Field", "initial test value")
+		h := DefaultTUIForTest(testHandler, func(messages ...any) {
 			// Test logger - do nothing
 		})
 

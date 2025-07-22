@@ -9,8 +9,9 @@ import (
 // TestEmptyFieldEnterBehavior tests the behavior when user clears a field and presses Enter
 func TestEmptyFieldEnterBehavior(t *testing.T) {
 	t.Run("Empty field should call changeFunc with empty string when Enter is pressed", func(t *testing.T) {
-		// Setup
-		h := DefaultTUIForTest()
+		// Setup with test handler
+		testHandler := NewTestEditableHandler("Test Field", "initial test value")
+		h := DefaultTUIForTest(testHandler)
 
 		// Initialize viewport
 		h.viewport.Width = 80
@@ -62,26 +63,18 @@ func TestEmptyFieldEnterBehavior(t *testing.T) {
 	})
 
 	t.Run("Field should NOT revert to original value when cleared and Enter is pressed", func(t *testing.T) {
-		// Custom handler that allows empty values
+		// Handler centralizado que captura valores recibidos
 		var receivedValue string
-		customHandler := NewTestFieldHandler("Test Field", "original value", true, func(value any) (string, error) {
-			receivedValue = value.(string)
-			if receivedValue == "" {
-				return "Field was cleared", nil
-			}
-			return "Field value: " + receivedValue, nil
-		})
+		customHandler := NewTestCapturingHandler("Test Field", "original value", &receivedValue)
 
 		// Create TUI with custom field
-		h := DefaultTUIForTest()
+		h := DefaultTUIForTest(customHandler)
 		h.viewport.Width = 80
 		h.viewport.Height = 24
 
-		// Replace the default field with our custom one
+		// Get the field from the test tab
 		testTabIndex := GetFirstTestTabIndex()
 		tab := h.tabSections[testTabIndex]
-		tab.setFieldHandlers([]*field{})
-		tab.NewField(customHandler)
 
 		field := tab.FieldHandlers()[0]
 

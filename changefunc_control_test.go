@@ -1,7 +1,6 @@
 package devtui
 
 import (
-	"errors"
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -11,25 +10,17 @@ import (
 // over what happens when a field is cleared, not DevTUI
 func TestChangeFuncControlsEmptyFieldBehavior(t *testing.T) {
 	t.Run("changeFunc can reject empty values", func(t *testing.T) {
-		// Custom handler that rejects empty values
-		customHandler := NewTestFieldHandler("Required Field", "initial value", true, func(value any) (string, error) {
-			strValue := value.(string)
-			if strValue == "" {
-				return "", errors.New("Field cannot be empty")
-			}
-			return "Accepted: " + strValue, nil
-		})
+		// Handler centralizado que rechaza valores vacíos
+		customHandler := NewTestRequiredFieldHandler("Required Field", "initial value")
 
 		// Create TUI with custom field
-		h := DefaultTUIForTest()
+		h := DefaultTUIForTest(customHandler)
 		h.viewport.Width = 80
 		h.viewport.Height = 24
 
-		// Replace the default field with our custom one
+		// Get the field from the test tab
 		testTabIndex := GetFirstTestTabIndex()
 		tab := h.tabSections[testTabIndex]
-		tab.setFieldHandlers([]*field{})
-		tab.NewField(customHandler)
 
 		field := tab.FieldHandlers()[0]
 
@@ -62,25 +53,17 @@ func TestChangeFuncControlsEmptyFieldBehavior(t *testing.T) {
 	})
 
 	t.Run("changeFunc can accept and transform empty values", func(t *testing.T) {
-		// Custom handler that accepts empty values and transforms them
-		customHandler := NewTestFieldHandler("Optional Field", "original value", true, func(value any) (string, error) {
-			strValue := value.(string)
-			if strValue == "" {
-				return "Default Value", nil
-			}
-			return "User Input: " + strValue, nil
-		})
+		// Handler centralizado que acepta valores vacíos
+		customHandler := NewTestOptionalFieldHandler("Optional Field", "original value")
 
 		// Create TUI with custom field
-		h := DefaultTUIForTest(func(messages ...any) {})
+		h := DefaultTUIForTest(customHandler, func(messages ...any) {})
 		h.viewport.Width = 80
 		h.viewport.Height = 24
 
-		// Replace the default field
+		// Get the field from the test tab
 		testTabIndex := GetFirstTestTabIndex()
 		tab := h.tabSections[testTabIndex]
-		tab.setFieldHandlers([]*field{})
-		tab.NewField(customHandler)
 
 		field := tab.FieldHandlers()[0]
 
@@ -108,22 +91,17 @@ func TestChangeFuncControlsEmptyFieldBehavior(t *testing.T) {
 	})
 
 	t.Run("changeFunc can preserve empty values", func(t *testing.T) {
-		// Custom handler that allows and preserves empty values
-		customHandler := NewTestFieldHandler("Clearable Field", "some value", true, func(value any) (string, error) {
-			strValue := value.(string)
-			return strValue, nil // Return exactly what was input, including empty string
-		})
+		// Handler centralizado que preserva valores vacíos tal como son
+		customHandler := NewTestClearableFieldHandler("Clearable Field", "some value")
 
 		// Create TUI with custom field
-		h := DefaultTUIForTest(func(messages ...any) {})
+		h := DefaultTUIForTest(customHandler, func(messages ...any) {})
 		h.viewport.Width = 80
 		h.viewport.Height = 24
 
-		// Replace the default field
+		// Get the field from the test tab
 		testTabIndex := GetFirstTestTabIndex()
 		tab := h.tabSections[testTabIndex]
-		tab.setFieldHandlers([]*field{})
-		tab.NewField(customHandler)
 
 		field := tab.FieldHandlers()[0]
 

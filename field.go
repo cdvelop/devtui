@@ -18,6 +18,17 @@ type FieldHandler interface {
 	Editable() bool                      // Whether field is editable or action button
 	Change(newValue any) (string, error) // SAME signature as current changeFunc
 	Timeout() time.Duration              // Return 0 for no timeout, or specific duration
+
+	// NEW: WritingHandler methods (REQUIRED for all handlers)
+	WritingHandler
+}
+
+// WritingHandler interface provides message source identification and operation ID management
+// ALL handlers must implement this interface for message source control
+type WritingHandler interface {
+	Name() string                       // Handler identifier (e.g., "TinyWasm", "MainServer")
+	SetLastOperationID(lastOpID string) // DevTUI calls this after processing each message
+	GetLastOperationID() string         // Handler returns ID for message updates, "" for new messages
 }
 
 // Internal async state management (not exported)
@@ -70,6 +81,14 @@ func (ts *tabSection) NewField(handler FieldHandler) *tabSection {
 	// Configure spinner
 	f.spinner.Spinner = spinner.Dot
 	f.spinner.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("69"))
+
+	// AUTO-REGISTER: FieldHandlers are automatically registered for writing
+	// Initialize writingHandlers map if needed
+	if ts.writingHandlers == nil {
+		ts.writingHandlers = make(map[string]WritingHandler)
+	}
+	// Register the handler for writing capability
+	ts.writingHandlers[handler.Name()] = handler
 
 	ts.addFields(f)
 	return ts

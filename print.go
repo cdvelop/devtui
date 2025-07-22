@@ -31,6 +31,26 @@ func (d *DevTUI) sendMessage(content string, mt messagetype.Type, tabSection *ta
 	d.tabContentsChan <- newContent
 }
 
+// NEW: sendMessageWithHandler sends a message with handler identification
+func (d *DevTUI) sendMessageWithHandler(content string, mt messagetype.Type, tabSection *tabSection, handlerName string, operationID string) {
+	tabSection.addNewContentWithHandler(mt, content, handlerName)
+
+	var opIDs []string
+	if operationID != "" {
+		opIDs = []string{operationID}
+	}
+
+	newContent := d.newContentWithHandler(content, mt, tabSection, handlerName, opIDs...)
+	d.tabContentsChan <- newContent
+
+	// Call SetLastOperationID on the handler after processing
+	if tabSection.writingHandlers != nil {
+		if handler, exists := tabSection.writingHandlers[handlerName]; exists {
+			handler.SetLastOperationID(newContent.Id)
+		}
+	}
+}
+
 func (h *DevTUI) newContent(content string, mt messagetype.Type, tabSection *tabSection, operationID ...string) tabContent {
 	var id string
 	var opID *string
@@ -61,6 +81,38 @@ func (h *DevTUI) newContent(content string, mt messagetype.Type, tabSection *tab
 	}
 }
 
+// NEW: newContentWithHandler creates tabContent with handler identification
+func (h *DevTUI) newContentWithHandler(content string, mt messagetype.Type, tabSection *tabSection, handlerName string, operationID ...string) tabContent {
+	var id string
+	var opID *string
+
+	if len(operationID) > 0 && operationID[0] != "" {
+		// Use provided operation ID for async operations
+		id = operationID[0]
+		opID = &operationID[0]
+	} else {
+		// Generate new ID for regular operations
+		if h.id != nil {
+			id = h.id.GetNewID()
+		} else {
+			id = "temp-id"
+			h.LogToFile("Warning: unixid not initialized, using fallback ID")
+		}
+		opID = nil // Not an async operation
+	}
+
+	return tabContent{
+		Id:          id,
+		Content:     content,
+		Type:        mt,
+		tabSection:  tabSection,
+		operationID: opID,
+		isProgress:  false,       // Will be set by specific async methods
+		isComplete:  false,       // Will be set by specific async methods
+		handlerName: handlerName, // NEW: Include handler name
+	}
+}
+
 // formatMessage formatea un mensaje según su tipo
 func (t *DevTUI) formatMessage(msg tabContent) string {
 
@@ -70,6 +122,12 @@ func (t *DevTUI) formatMessage(msg tabContent) string {
 	} else {
 		// When unixid is not initialized, use a simple timestamp format
 		timeStr = t.timeStyle.Render("--:--:--")
+	}
+
+	// NEW: Include handler name in message format
+	var handlerName string
+	if msg.handlerName != "" {
+		handlerName = fmt.Sprintf("[%s] ", msg.handlerName)
 	}
 
 	// timeStr := t.timeStyle.Render(msg.Time.Format("15:04:05"))
@@ -88,5 +146,5 @@ func (t *DevTUI) formatMessage(msg tabContent) string {
 		// 	msg.Content= msg.Content
 	}
 
-	return fmt.Sprintf("%s %s", timeStr, msg.Content)
+	return fmt.Sprintf("%s %s%s", timeStr, handlerName, msg.Content)
 }

@@ -19,19 +19,16 @@ func prepareFieldForEditing(t *testing.T, h *DevTUI) *field {
 	h.activeTab = testTabIndex
 	h.editModeActivated = true
 	h.tabSections[testTabIndex].indexActiveEditField = 0
-	tab := h.tabSections[testTabIndex]
-	tab.setFieldHandlers([]*field{})
-	testHandler := NewTestFieldHandler("Test", "initial value", true, nil)
-	tab.NewField(testHandler)
-	field := tab.FieldHandlers()[0]
-	field.tempEditValue = field.Value() // Inicializar tempEditValue con el valor actual
-	field.cursor = 0                    // Inicializar cursor
+	field := h.tabSections[testTabIndex].FieldHandlers()[0] // Usar field existente del DefaultTUIForTest
+	field.tempEditValue = field.Value()                     // Inicializar tempEditValue con el valor actual
+	field.cursor = 0                                        // Inicializar cursor
 	return field
 }
 
 func TestHandleKeyboard(t *testing.T) {
-	// Usar la función de inicialización por defecto para tests
-	h := DefaultTUIForTest(func(messages ...any) {
+	// Usar la función de inicialización por defecto para tests con handler
+	testHandler := NewTestEditableHandler("Test Field", "initial value")
+	h := DefaultTUIForTest(testHandler, func(messages ...any) {
 		// Test logger - do nothing
 	})
 
@@ -78,8 +75,9 @@ func TestHandleKeyboard(t *testing.T) {
 
 	// Test case: Editing mode, modifying text
 	t.Run("Editing mode - Text input", func(t *testing.T) {
-		// Reset para esta prueba - use DefaultTUIForTest for consistency
-		h := DefaultTUIForTest(func(messages ...any) {
+		// Reset para esta prueba con test handler
+		testHandler := NewTestEditableHandler("Test Field", "initial test value")
+		h := DefaultTUIForTest(testHandler, func(messages ...any) {
 			// Test logger - do nothing
 		})
 
@@ -155,8 +153,9 @@ func TestHandleKeyboard(t *testing.T) {
 
 	// Test case: Editing mode, using backspace
 	t.Run("Editing mode - Backspace", func(t *testing.T) {
-		// Reset para esta prueba
-		h := DefaultTUIForTest(func(messages ...any) {
+		// Reset para esta prueba con test handler
+		testHandler := NewTestEditableHandler("Test Field", "initial value")
+		h := DefaultTUIForTest(testHandler, func(messages ...any) {
 			// Test logger - do nothing
 		})
 
@@ -212,13 +211,14 @@ func TestHandleKeyboard(t *testing.T) {
 
 	// Test case: Editing mode, pressing enter to confirm edit
 	t.Run("Editing mode - Enter on editable field", func(t *testing.T) {
-		// Reset para esta prueba
-		h := DefaultTUIForTest(func(messages ...any) {
+		// Reset para esta prueba con test handler
+		testHandler := NewTestEditableHandler("Test Field", "initial value")
+		h := DefaultTUIForTest(testHandler, func(messages ...any) {
 			// Test logger - do nothing
 		})
 
-		// Use the correct tab (index 1, not 0 which is SHORTCUTS)
-		testTabIndex := 1
+		// Use centralized function to get correct tab index
+		testTabIndex := GetFirstTestTabIndex()
 
 		// Setup: Enter editing mode on the correct tab
 		h.activeTab = testTabIndex
@@ -252,7 +252,9 @@ func TestHandleKeyboard(t *testing.T) {
 
 	// Test case: Normal mode, Ctrl+C should return quit command
 	t.Run("Normal mode - Ctrl+C", func(t *testing.T) {
-		h := DefaultTUIForTest(func(messages ...any) {
+		// Reset para esta prueba con test handler
+		testHandler := NewTestEditableHandler("Test Field", "initial value")
+		h := DefaultTUIForTest(testHandler, func(messages ...any) {
 			// Test logger - do nothing
 		}) // Reset para esta prueba
 		h.editModeActivated = false
@@ -279,14 +281,16 @@ func setTempEditValueForTest(f *field, value string) {
 
 // TestAdditionalKeyboardFeatures prueba características adicionales del teclado
 func TestAdditionalKeyboardFeatures(t *testing.T) {
-	h := DefaultTUIForTest(func(messages ...any) {
+	testHandler := NewTestEditableHandler("Test Field", "Initial value")
+	h := DefaultTUIForTest(testHandler, func(messages ...any) {
 		// Test logger - do nothing
 	})
 
 	// Test: Cancelación de edición con ESC debe restaurar el valor original
 	t.Run("Editing mode - Cancel with ESC discards changes", func(t *testing.T) {
-		// Reset para esta prueba
-		h := DefaultTUIForTest(func(messages ...any) {
+		// Reset para esta prueba con handler editable
+		testHandler := NewTestEditableHandler("Test Field", "Original value")
+		h := DefaultTUIForTest(testHandler, func(messages ...any) {
 			// Test logger - do nothing
 		})
 
@@ -298,12 +302,9 @@ func TestAdditionalKeyboardFeatures(t *testing.T) {
 		h.editModeActivated = true
 		h.tabSections[testTabIndex].indexActiveEditField = 0
 		field := h.tabSections[testTabIndex].FieldHandlers()[0]
-		originalValue := "Original value"
 
-		// Access the handler directly to set the value (since SetValue is deprecated)
-		if handler, ok := field.GetHandlerForTest().(*TestField1Handler); ok {
-			handler.currentValue = originalValue
-		}
+		// Los handlers centralizados ya tienen valores iniciales configurados
+		// No necesitamos modificar el valor directamente ya que los handlers son inmutables
 
 		setTempEditValueForTest(field, "modified") // Simular que ya se ha hecho una edición
 
@@ -324,9 +325,10 @@ func TestAdditionalKeyboardFeatures(t *testing.T) {
 		}
 
 		// Verificamos que el valor volvió al original
-		if field.Value() != originalValue {
+		expectedValue := "Original value" // El valor inicial del handler
+		if field.Value() != expectedValue {
 			t.Errorf("After ESC: Expected value to be restored to '%s', got '%s'",
-				originalValue, field.Value())
+				expectedValue, field.Value())
 		}
 
 		// Verificamos que el campo tempEditValue fue limpiado
@@ -364,12 +366,13 @@ func TestAdditionalKeyboardFeatures(t *testing.T) {
 
 	// Test: Movimiento del cursor en modo edición
 	t.Run("Cursor movement in edit mode", func(t *testing.T) {
-		// Reset para esta prueba
-		h := DefaultTUIForTest(func(messages ...any) {
+		// Reset para esta prueba con test handler
+		testHandler := NewTestEditableHandler("Test Field", "test value")
+		h := DefaultTUIForTest(testHandler, func(messages ...any) {
 			// Test logger - do nothing
 		})
 
-		// Use the correct tab (index 1, not 0 which is SHORTCUTS)
+		// Use centralized function to get correct tab index
 		testTabIndex := 1
 
 		// Configuración inicial - modo edición en el tab correcto
@@ -399,8 +402,9 @@ func TestAdditionalKeyboardFeatures(t *testing.T) {
 
 	// Test: Pressing enter without changing the value shouldn't trigger save action
 	t.Run("Editing mode - Enter without changes", func(t *testing.T) {
-		// Reset para esta prueba
-		h := DefaultTUIForTest(func(messages ...any) {
+		// Reset para esta prueba con test handler
+		testHandler := NewTestEditableHandler("Test Field", "unchanged value")
+		h := DefaultTUIForTest(testHandler, func(messages ...any) {
 			// Test logger - do nothing
 		})
 

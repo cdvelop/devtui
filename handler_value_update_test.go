@@ -27,7 +27,7 @@ func (h *ThreadSafePortTestHandler) Value() string {
 	return h.currentPort
 }
 
-func (h *ThreadSafePortTestHandler) Change(newValue any, progress ...func(string, ...float64)) (string, error) {
+func (h *ThreadSafePortTestHandler) Change(newValue any, progress ...func(string)) (string, error) {
 	portStr := strings.TrimSpace(newValue.(string))
 	if portStr == "" {
 		return "", fmt.Errorf("port cannot be empty")

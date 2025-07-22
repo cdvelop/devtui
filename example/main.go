@@ -28,7 +28,7 @@ func (h *HostConfigHandler) Value() string          { return h.currentHost }
 func (h *HostConfigHandler) Editable() bool         { return true }
 func (h *HostConfigHandler) Timeout() time.Duration { return 5 * time.Second }
 
-func (h *HostConfigHandler) Change(newValue any, progress ...func(string, ...float64)) (string, error) {
+func (h *HostConfigHandler) Change(newValue any, progress ...func(string)) (string, error) {
 	host := strings.TrimSpace(newValue.(string))
 	if host == "" {
 		return "", fmt.Errorf("host cannot be empty")
@@ -39,9 +39,9 @@ func (h *HostConfigHandler) Change(newValue any, progress ...func(string, ...flo
 		progressCallback := progress[0]
 		progressCallback("Validating host configuration...")
 		time.Sleep(500 * time.Millisecond)
-		progressCallback("Checking network connectivity...", 50.0)
+		progressCallback("Checking network connectivity...")
 		time.Sleep(500 * time.Millisecond)
-		progressCallback("Host validation complete", 100.0)
+		progressCallback("Host validation complete")
 	} else {
 		// Fallback - simulate network validation
 		time.Sleep(1 * time.Second)
@@ -67,7 +67,7 @@ func (h *PortConfigHandler) Value() string          { return h.currentPort }
 func (h *PortConfigHandler) Editable() bool         { return true }
 func (h *PortConfigHandler) Timeout() time.Duration { return 3 * time.Second }
 
-func (h *PortConfigHandler) Change(newValue any, progress ...func(string, ...float64)) (string, error) {
+func (h *PortConfigHandler) Change(newValue any, progress ...func(string)) (string, error) {
 	portStr := strings.TrimSpace(newValue.(string))
 	if portStr == "" {
 		return "", fmt.Errorf("port cannot be empty")
@@ -86,9 +86,9 @@ func (h *PortConfigHandler) Change(newValue any, progress ...func(string, ...flo
 		progressCallback := progress[0]
 		progressCallback("Validating port number...")
 		time.Sleep(300 * time.Millisecond)
-		progressCallback("Checking port availability...", 60.0)
+		progressCallback("Checking port availability...")
 		time.Sleep(400 * time.Millisecond)
-		progressCallback("Port validation complete", 100.0)
+		progressCallback("Port validation complete")
 	}
 
 	h.currentPort = portStr
@@ -115,7 +115,7 @@ func (h *BuildActionHandler) Value() string          { return "Press Enter to bu
 func (h *BuildActionHandler) Editable() bool         { return false }
 func (h *BuildActionHandler) Timeout() time.Duration { return 30 * time.Second }
 
-func (h *BuildActionHandler) Change(newValue any, progress ...func(string, ...float64)) (string, error) {
+func (h *BuildActionHandler) Change(newValue any, progress ...func(string)) (string, error) {
 	// Use progress callback if available
 	if len(progress) > 0 {
 		progressCallback := progress[0]
@@ -123,20 +123,20 @@ func (h *BuildActionHandler) Change(newValue any, progress ...func(string, ...fl
 		progressCallback(fmt.Sprintf("Initiating %s build...", h.buildType))
 		time.Sleep(500 * time.Millisecond)
 
-		progressCallback("Checking dependencies...", 25.0)
+		progressCallback("Checking dependencies...")
 		time.Sleep(1 * time.Second)
 
-		progressCallback("Compiling source code...", 60.0)
+		progressCallback("Compiling source code...")
 		if h.buildType == "Production" {
 			time.Sleep(2 * time.Second)
 		} else {
 			time.Sleep(1 * time.Second)
 		}
 
-		progressCallback("Generating artifacts...", 85.0)
+		progressCallback("Generating artifacts...")
 		time.Sleep(500 * time.Millisecond)
 
-		progressCallback("Build finalization...", 100.0)
+		progressCallback("Build finalization...")
 	} else {
 		// Fallback - simulate build process
 		var buildDuration time.Duration
@@ -173,7 +173,7 @@ func (h *DeployActionHandler) Value() string          { return "Press Enter to d
 func (h *DeployActionHandler) Editable() bool         { return false }
 func (h *DeployActionHandler) Timeout() time.Duration { return 45 * time.Second }
 
-func (h *DeployActionHandler) Change(newValue any, progress ...func(string, ...float64)) (string, error) {
+func (h *DeployActionHandler) Change(newValue any, progress ...func(string)) (string, error) {
 	// Use progress callback if available
 	if len(progress) > 0 {
 		progressCallback := progress[0]
@@ -181,23 +181,23 @@ func (h *DeployActionHandler) Change(newValue any, progress ...func(string, ...f
 		progressCallback(fmt.Sprintf("Initiating deployment to %s...", h.environment))
 		time.Sleep(500 * time.Millisecond)
 
-		progressCallback("Preparing deployment package...", 20.0)
+		progressCallback("Preparing deployment package...")
 		time.Sleep(1 * time.Second)
 
-		progressCallback("Uploading to servers...", 40.0)
+		progressCallback("Uploading to servers...")
 		if h.environment == "Production" {
 			time.Sleep(3 * time.Second)
 		} else {
 			time.Sleep(1 * time.Second)
 		}
 
-		progressCallback("Configuring services...", 70.0)
+		progressCallback("Configuring services...")
 		time.Sleep(1 * time.Second)
 
-		progressCallback("Running health checks...", 90.0)
+		progressCallback("Running health checks...")
 		time.Sleep(800 * time.Millisecond)
 
-		progressCallback("Deployment completed", 100.0)
+		progressCallback("Deployment completed")
 	} else {
 		// Fallback - simulate deployment process
 		var deployDuration time.Duration
@@ -230,7 +230,7 @@ func (h *WelcomeHandler) Value() string          { return "Press Enter to view f
 func (h *WelcomeHandler) Editable() bool         { return false }
 func (h *WelcomeHandler) Timeout() time.Duration { return 1 * time.Second }
 
-func (h *WelcomeHandler) Change(newValue any, progress ...func(string, ...float64)) (string, error) {
+func (h *WelcomeHandler) Change(newValue any, progress ...func(string)) (string, error) {
 	// Simple handler - no progress needed since it's instant
 	return "DevTUI Features:\n• Async operations with dynamic progress messages\n• Configurable timeouts\n• Error handling\n• Real-time progress feedback\n• Handler-based architecture", nil
 }

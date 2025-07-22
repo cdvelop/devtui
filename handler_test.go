@@ -47,7 +47,7 @@ func (h *TestEditableHandler) Value() string {
 func (h *TestEditableHandler) Editable() bool         { return true }
 func (h *TestEditableHandler) Timeout() time.Duration { return 0 }
 
-func (h *TestEditableHandler) Change(newValue any, progress ...func(string, ...float64)) (string, error) {
+func (h *TestEditableHandler) Change(newValue any, progress ...func(string)) (string, error) {
 	strValue := newValue.(string)
 	h.mu.Lock()
 	h.currentValue = strValue
@@ -107,7 +107,7 @@ func (h *TestNonEditableHandler) Value() string {
 func (h *TestNonEditableHandler) Editable() bool         { return false }
 func (h *TestNonEditableHandler) Timeout() time.Duration { return 0 }
 
-func (h *TestNonEditableHandler) Change(newValue any, progress ...func(string, ...float64)) (string, error) {
+func (h *TestNonEditableHandler) Change(newValue any, progress ...func(string)) (string, error) {
 	h.mu.RLock()
 	actionText := h.actionText
 	h.mu.RUnlock()
@@ -209,7 +209,7 @@ func (h *PortTestHandler) Value() string {
 func (h *PortTestHandler) Editable() bool         { return true }
 func (h *PortTestHandler) Timeout() time.Duration { return 3 * time.Second }
 
-func (h *PortTestHandler) Change(newValue any, progress ...func(string, ...float64)) (string, error) {
+func (h *PortTestHandler) Change(newValue any, progress ...func(string)) (string, error) {
 	portStr := strings.TrimSpace(newValue.(string))
 	if portStr == "" {
 		return "", fmt.Errorf("port cannot be empty")
@@ -275,7 +275,7 @@ func (h *TestErrorHandler) Value() string          { return h.value }
 func (h *TestErrorHandler) Editable() bool         { return true }
 func (h *TestErrorHandler) Timeout() time.Duration { return 0 }
 
-func (h *TestErrorHandler) Change(newValue any, progress ...func(string, ...float64)) (string, error) {
+func (h *TestErrorHandler) Change(newValue any, progress ...func(string)) (string, error) {
 	return "", fmt.Errorf("simulated error occurred")
 }
 
@@ -314,7 +314,7 @@ func (h *TestRequiredFieldHandler) Value() string          { return h.currentVal
 func (h *TestRequiredFieldHandler) Editable() bool         { return true }
 func (h *TestRequiredFieldHandler) Timeout() time.Duration { return 0 }
 
-func (h *TestRequiredFieldHandler) Change(newValue any, progress ...func(string, ...float64)) (string, error) {
+func (h *TestRequiredFieldHandler) Change(newValue any, progress ...func(string)) (string, error) {
 	strValue := newValue.(string)
 	if strValue == "" {
 		return "", fmt.Errorf("Field cannot be empty")
@@ -358,7 +358,7 @@ func (h *TestOptionalFieldHandler) Value() string          { return h.currentVal
 func (h *TestOptionalFieldHandler) Editable() bool         { return true }
 func (h *TestOptionalFieldHandler) Timeout() time.Duration { return 0 }
 
-func (h *TestOptionalFieldHandler) Change(newValue any, progress ...func(string, ...float64)) (string, error) {
+func (h *TestOptionalFieldHandler) Change(newValue any, progress ...func(string)) (string, error) {
 	strValue := newValue.(string)
 	h.currentValue = strValue
 	if strValue == "" {
@@ -403,7 +403,7 @@ func (h *TestClearableFieldHandler) Value() string          { return h.currentVa
 func (h *TestClearableFieldHandler) Editable() bool         { return true }
 func (h *TestClearableFieldHandler) Timeout() time.Duration { return 0 }
 
-func (h *TestClearableFieldHandler) Change(newValue any, progress ...func(string, ...float64)) (string, error) {
+func (h *TestClearableFieldHandler) Change(newValue any, progress ...func(string)) (string, error) {
 	strValue := newValue.(string)
 	h.currentValue = strValue
 	return strValue, nil // Return exactly what was input, including empty string
@@ -446,7 +446,7 @@ func (h *TestCapturingHandler) Value() string          { return h.currentValue }
 func (h *TestCapturingHandler) Editable() bool         { return true }
 func (h *TestCapturingHandler) Timeout() time.Duration { return 0 }
 
-func (h *TestCapturingHandler) Change(newValue any, progress ...func(string, ...float64)) (string, error) {
+func (h *TestCapturingHandler) Change(newValue any, progress ...func(string)) (string, error) {
 	strValue := newValue.(string)
 	if h.capturedValue != nil {
 		*h.capturedValue = strValue // Captura el valor para el test

@@ -38,7 +38,7 @@ func (h *HostHandler) Label() string { return "Host" }
 func (h *HostHandler) Value() string { return h.currentHost }
 func (h *HostHandler) Editable() bool { return true }
 func (h *HostHandler) Timeout() time.Duration { return 5 * time.Second }
-func (h *HostHandler) Change(newValue any, progress ...func(string, ...float64)) (string, error) {
+func (h *HostHandler) Change(newValue any, progress ...func(string)) (string, error) {
     host := strings.TrimSpace(newValue.(string))
     if host == "" {
         return "", fmt.Errorf("host cannot be empty")
@@ -49,9 +49,9 @@ func (h *HostHandler) Change(newValue any, progress ...func(string, ...float64))
         progressCallback := progress[0]
         progressCallback("Validating host configuration...")
         time.Sleep(500 * time.Millisecond)
-        progressCallback("Checking network connectivity...", 50.0)
+        progressCallback("Checking network connectivity...")
         time.Sleep(500 * time.Millisecond)
-        progressCallback("Host validation complete", 100.0)
+        progressCallback("Host validation complete")
     } else {
         time.Sleep(1 * time.Second) // Fallback for sync execution
     }
@@ -80,12 +80,12 @@ func main() {
 
 ```go
 type FieldHandler interface {
-    WritingHandler                                               // Embedded for message tracking
-    Label() string                                              // Field display name
-    Value() string                                              // Current field value
-    Editable() bool                                            // true=input, false=action
-    Change(newValue any, progress ...func(string, ...float64)) (string, error) // Handle changes with progress
-    Timeout() time.Duration                                    // Operation timeout
+    WritingHandler                                      // Embedded for message tracking
+    Label() string                                      // Field display name
+    Value() string                                      // Current field value
+    Editable() bool                                     // true=input, false=action
+    Change(newValue any, progress ...func(string)) (string, error) // Handle changes with progress
+    Timeout() time.Duration                             // Operation timeout
 }
 
 type WritingHandler interface {
@@ -110,20 +110,18 @@ type WritingHandler interface {
 The `Change` method receives an optional progress callback that can be used to provide real-time feedback:
 
 ```go
-func (h *BuildHandler) Change(newValue any, progress ...func(string, ...float64)) (string, error) {
+func (h *BuildHandler) Change(newValue any, progress ...func(string)) (string, error) {
     if len(progress) > 0 {
         progressCallback := progress[0]
         
-        // Message-only updates
+        // Simple message updates
         progressCallback("Initiating build process...")
         time.Sleep(500 * time.Millisecond)
         
-        // Message with percentage
-        progressCallback("Compiling source code...", 45.0)
+        progressCallback("Compiling source code...")
         time.Sleep(1 * time.Second)
         
-        // Final status
-        progressCallback("Build complete", 100.0)
+        progressCallback("Build complete")
     }
     
     return "Build completed successfully", nil

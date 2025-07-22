@@ -11,11 +11,11 @@ import (
 // FieldHandler interface defines the contract for field handlers
 // This replaces the individual parameters approach with a unified interface
 type FieldHandler interface {
-	Label() string                                                             // Field label (e.g., "Server Port")
-	Value() string                                                             // Current field value (e.g., "8080")
-	Editable() bool                                                            // Whether field is editable or action button
-	Change(newValue any, progress ...func(string, ...float64)) (string, error) // Handler with optional progress callback
-	Timeout() time.Duration                                                    // Return 0 for no timeout, or specific duration
+	Label() string                                                 // Field label (e.g., "Server Port")
+	Value() string                                                 // Current field value (e.g., "8080")
+	Editable() bool                                                // Whether field is editable or action button
+	Change(newValue any, progress ...func(string)) (string, error) // Handler with optional progress callback
+	Timeout() time.Duration                                        // Return 0 for no timeout, or specific duration
 
 	// NEW: WritingHandler methods (REQUIRED for all handlers)
 	WritingHandler
@@ -252,7 +252,7 @@ func (f *field) executeAsyncChange(valueToSave any) {
 	f.asyncState.startTime = time.Now()
 
 	// Create progress callback for handler
-	progressCallback := func(message string, percent ...float64) {
+	progressCallback := func(message string) {
 		f.sendProgressMessage(message)
 	}
 
@@ -322,7 +322,7 @@ func (f *field) executeChangeSync() {
 	currentValue := f.getCurrentValue()
 
 	// Create empty progress callback for sync execution
-	progressCallback := func(message string, percent ...float64) {
+	progressCallback := func(message string) {
 		// In sync mode, we could log progress but not send to UI to avoid race conditions
 	}
 
@@ -348,7 +348,7 @@ func (f *field) executeChangeSyncWithValue(valueToSave any) {
 	// Use the pre-captured value directly
 
 	// Create empty progress callback for sync test execution
-	progressCallback := func(message string, percent ...float64) {
+	progressCallback := func(message string) {
 		// In sync test mode, we don't send messages to avoid race conditions
 	}
 

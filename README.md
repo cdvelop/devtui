@@ -38,12 +38,24 @@ func (h *HostHandler) Label() string { return "Host" }
 func (h *HostHandler) Value() string { return h.currentHost }
 func (h *HostHandler) Editable() bool { return true }
 func (h *HostHandler) Timeout() time.Duration { return 5 * time.Second }
-func (h *HostHandler) Change(newValue any) (string, error) {
+func (h *HostHandler) Change(newValue any, progress ...func(string, ...float64)) (string, error) {
     host := strings.TrimSpace(newValue.(string))
     if host == "" {
         return "", fmt.Errorf("host cannot be empty")
     }
-    time.Sleep(1 * time.Second) // Async operation
+    
+    // Use progress callback for real-time updates
+    if len(progress) > 0 {
+        progressCallback := progress[0]
+        progressCallback("Validating host configuration...")
+        time.Sleep(500 * time.Millisecond)
+        progressCallback("Checking network connectivity...", 50.0)
+        time.Sleep(500 * time.Millisecond)
+        progressCallback("Host validation complete", 100.0)
+    } else {
+        time.Sleep(1 * time.Second) // Fallback for sync execution
+    }
+    
     h.currentHost = host
     return fmt.Sprintf("Host configured: %s", host), nil
 }
@@ -68,20 +80,79 @@ func main() {
 
 ```go
 type FieldHandler interface {
-    WritingHandler                         // Embedded for message tracking
-    Label() string                         // Field display name
-    Value() string                         // Current field value
-    Editable() bool                       // true=input, false=action
-    Change(newValue any) (string, error)  // Handle changes/actions
-    Timeout() time.Duration               // Operation timeout
+    WritingHandler                                               // Embedded for message tracking
+    Label() string                                              // Field display name
+    Value() string                                              // Current field value
+    Editable() bool                                            // true=input, false=action
+    Change(newValue any, progress ...func(string, ...float64)) (string, error) // Handle changes with progress
+    Timeout() time.Duration                                    // Operation timeout
 }
 
 type WritingHandler interface {
-    Name() string                          // Handler identifier
-    SetLastOperationID(id string)         // Set operation ID
-    GetLastOperationID() string           // Get operation ID
+    Name() string                          // Handler identifier (must be unique)
+    SetLastOperationID(id string)         // Set operation ID for message updates
+    GetLastOperationID() string           // Get operation ID for message reuse
 }
 ```
+
+## Features
+
+- **Dynamic Progress Messages**: Real-time progress updates with custom messages
+- **Message Update In-Place**: Operations update existing messages instead of creating new ones
+- **Handler-based Architecture**: Clean separation of concerns with interface-based design
+- **Automatic Async Operations**: Operations run asynchronously with progress feedback
+- **Operation ID Tracking**: Messages are tracked and updated using operation IDs
+- **Configurable Timeouts**: Each handler can specify its own timeout duration
+- **Multiple Handler Instances**: Same handler type can have multiple instances with unique names
+
+## Progress Callback Usage
+
+The `Change` method receives an optional progress callback that can be used to provide real-time feedback:
+
+```go
+func (h *BuildHandler) Change(newValue any, progress ...func(string, ...float64)) (string, error) {
+    if len(progress) > 0 {
+        progressCallback := progress[0]
+        
+        // Message-only updates
+        progressCallback("Initiating build process...")
+        time.Sleep(500 * time.Millisecond)
+        
+        // Message with percentage
+        progressCallback("Compiling source code...", 45.0)
+        time.Sleep(1 * time.Second)
+        
+        // Final status
+        progressCallback("Build complete", 100.0)
+    }
+    
+    return "Build completed successfully", nil
+}
+```
+
+Each progress call updates the same message line in the TUI, providing smooth real-time feedback without cluttering the interface.
+
+## Important Notes
+
+### Handler Name Uniqueness
+When using multiple instances of the same handler type, ensure each has a unique name:
+
+```go
+type BuildHandler struct {
+    buildType string
+    lastOpID  string
+}
+
+func (h *BuildHandler) Name() string { 
+    return fmt.Sprintf("Build_%s", h.buildType) // Unique per instance
+}
+
+// Usage
+prodBuild := &BuildHandler{buildType: "Production"}
+devBuild := &BuildHandler{buildType: "Development"}
+```
+
+This ensures each handler maintains its own message history and updates correctly.
 
 ## Navigation
 - **Tab/Shift+Tab**: Switch between tabs

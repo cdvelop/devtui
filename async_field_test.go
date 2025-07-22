@@ -182,27 +182,6 @@ func TestAsyncState_Management(t *testing.T) {
 	}
 }
 
-func TestSpinner_Start_Stop(t *testing.T) {
-	// Use centralized handler from handler_test.go
-	handler := NewTestEditableHandler("Test Operation", "Click to test")
-	tui := DefaultTUIForTest(handler)
-
-	tabSection := tui.tabSections[GetFirstTestTabIndex()]
-	field := tabSection.fieldHandlers[0]
-
-	// Test spinner start - simulate what happens when operation starts
-	field.asyncState.isRunning = true
-	if !field.asyncState.isRunning {
-		t.Error("Spinner should be running after start")
-	}
-
-	// Test spinner stop - simulate what happens when operation ends
-	field.asyncState.isRunning = false
-	if field.asyncState.isRunning {
-		t.Error("Spinner should not be running after stop")
-	}
-}
-
 // Benchmark tests for performance
 
 func BenchmarkFieldHandler_SimpleOperation(b *testing.B) {

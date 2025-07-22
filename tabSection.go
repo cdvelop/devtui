@@ -134,6 +134,33 @@ func (t *tabSection) addNewContentWithHandler(msgType messagetype.Type, content 
 	t.tabContents = append(t.tabContents, t.tui.newContentWithHandler(content, msgType, t, handlerName))
 }
 
+// NEW: updateOrAddContentWithHandler updates existing content by operationID or adds new if not found
+// Returns true if content was updated, false if new content was added
+func (t *tabSection) updateOrAddContentWithHandler(msgType messagetype.Type, content string, handlerName string, operationID string) (updated bool, newContent tabContent) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	// If operationID is provided, try to find and update existing content
+	if operationID != "" {
+		for i := range t.tabContents {
+			// Match by both operationID and handlerName to ensure each handler updates its own message
+			if t.tabContents[i].operationID != nil &&
+				*t.tabContents[i].operationID == operationID &&
+				t.tabContents[i].handlerName == handlerName {
+				// Update existing content
+				t.tabContents[i].Content = content
+				t.tabContents[i].Type = msgType
+				return true, t.tabContents[i]
+			}
+		}
+	}
+
+	// If not found or no operationID, add new content
+	newContent = t.tui.newContentWithHandler(content, msgType, t, handlerName, operationID)
+	t.tabContents = append(t.tabContents, newContent)
+	return false, newContent
+}
+
 // Title returns the tab section title
 func (ts *tabSection) Title() string {
 	return ts.title

@@ -6,18 +6,16 @@ import (
 	"time"
 
 	"github.com/cdvelop/messagetype"
-	"github.com/charmbracelet/bubbles/spinner"
-	"github.com/charmbracelet/lipgloss"
 )
 
 // FieldHandler interface defines the contract for field handlers
 // This replaces the individual parameters approach with a unified interface
 type FieldHandler interface {
-	Label() string                       // Field label (e.g., "Server Port")
-	Value() string                       // Current field value (e.g., "8080")
-	Editable() bool                      // Whether field is editable or action button
-	Change(newValue any) (string, error) // SAME signature as current changeFunc
-	Timeout() time.Duration              // Return 0 for no timeout, or specific duration
+	Label() string                                                             // Field label (e.g., "Server Port")
+	Value() string                                                             // Current field value (e.g., "8080")
+	Editable() bool                                                            // Whether field is editable or action button
+	Change(newValue any, progress ...func(string, ...float64)) (string, error) // Handler with optional progress callback
+	Timeout() time.Duration                                                    // Return 0 for no timeout, or specific duration
 
 	// NEW: WritingHandler methods (REQUIRED for all handlers)
 	WritingHandler
@@ -49,7 +47,6 @@ type field struct {
 
 	// NEW: Internal async state
 	asyncState *internalAsyncState
-	spinner    spinner.Model
 
 	// UNCHANGED: Existing internal fields
 	tempEditValue string // use for edit
@@ -76,11 +73,7 @@ func (ts *tabSection) NewField(handler FieldHandler) *tabSection {
 		handler:    handler,
 		parentTab:  ts,
 		asyncState: &internalAsyncState{},
-		spinner:    spinner.New(),
 	}
-	// Configure spinner
-	f.spinner.Spinner = spinner.Dot
-	f.spinner.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("69"))
 
 	// AUTO-REGISTER: FieldHandlers are automatically registered for writing
 	// Initialize writingHandlers map if needed
@@ -177,7 +170,12 @@ func (f *field) getCurrentValue() any {
 // sendProgressMessage sends a progress message through parent tab
 func (f *field) sendProgressMessage(content string) {
 	if f.parentTab != nil && f.parentTab.tui != nil && f.asyncState != nil {
-		f.parentTab.tui.sendMessage(content, messagetype.Info, f.parentTab, f.asyncState.operationID)
+		handlerName := ""
+		if f.handler != nil {
+			handlerName = f.handler.Name()
+		}
+
+		f.parentTab.tui.sendMessageWithHandler(content, messagetype.Info, f.parentTab, handlerName, f.asyncState.operationID)
 	}
 }
 
@@ -188,7 +186,13 @@ func (f *field) sendErrorMessage(content string) {
 		if f.asyncState != nil {
 			operationID = f.asyncState.operationID
 		}
-		f.parentTab.tui.sendMessage(content, messagetype.Error, f.parentTab, operationID)
+
+		handlerName := ""
+		if f.handler != nil {
+			handlerName = f.handler.Name()
+		}
+
+		f.parentTab.tui.sendMessageWithHandler(content, messagetype.Error, f.parentTab, handlerName, operationID)
 	}
 }
 
@@ -199,7 +203,13 @@ func (f *field) sendSuccessMessage(content string) {
 		if f.asyncState != nil {
 			operationID = f.asyncState.operationID
 		}
-		f.parentTab.tui.sendMessage(content, messagetype.Success, f.parentTab, operationID)
+
+		handlerName := ""
+		if f.handler != nil {
+			handlerName = f.handler.Name()
+		}
+
+		f.parentTab.tui.sendMessageWithHandler(content, messagetype.Success, f.parentTab, handlerName, operationID)
 	}
 }
 
@@ -229,11 +239,22 @@ func (f *field) executeAsyncChange(valueToSave any) {
 	f.asyncState.cancel = cancel
 	f.asyncState.isRunning = true
 
-	// Generate ONE operation ID for the entire async operation
+	// Generate ONE operation ID for the entire async operation OR reuse existing one
 	if f.parentTab != nil && f.parentTab.tui != nil && f.parentTab.tui.id != nil {
-		f.asyncState.operationID = f.parentTab.tui.id.GetNewID()
+		// Check if handler has existing operationID to reuse (for updates)
+		if existingID := f.handler.GetLastOperationID(); existingID != "" {
+			f.asyncState.operationID = existingID
+		} else {
+			// Generate new ID for new operations
+			f.asyncState.operationID = f.parentTab.tui.id.GetNewID()
+		}
 	}
 	f.asyncState.startTime = time.Now()
+
+	// Create progress callback for handler
+	progressCallback := func(message string, percent ...float64) {
+		f.sendProgressMessage(message)
+	}
 
 	// Use the pre-captured value instead of getCurrentValue()
 	currentValue := valueToSave
@@ -245,7 +266,7 @@ func (f *field) executeAsyncChange(valueToSave any) {
 	}, 1)
 
 	go func() {
-		result, err := f.handler.Change(currentValue)
+		result, err := f.handler.Change(currentValue, progressCallback)
 		resultChan <- struct {
 			result string
 			err    error
@@ -278,7 +299,6 @@ func (f *field) executeAsyncChange(valueToSave any) {
 	}
 
 	cancel() // Clean up context
-	// Spinner will automatically stop when isRunning = false
 }
 
 // executeChangeSync executes the handler's Change method synchronously (for tests)
@@ -289,14 +309,25 @@ func (f *field) executeChangeSync() {
 
 	// Generate operation ID for message routing (same as async version)
 	if f.asyncState != nil && f.parentTab != nil && f.parentTab.tui != nil && f.parentTab.tui.id != nil {
-		f.asyncState.operationID = f.parentTab.tui.id.GetNewID()
+		// Check if handler has existing operationID to reuse (for updates)
+		if existingID := f.handler.GetLastOperationID(); existingID != "" {
+			f.asyncState.operationID = existingID
+		} else {
+			// Generate new ID for new operations
+			f.asyncState.operationID = f.parentTab.tui.id.GetNewID()
+		}
 	}
 
 	// Get current value based on field type
 	currentValue := f.getCurrentValue()
 
+	// Create empty progress callback for sync execution
+	progressCallback := func(message string, percent ...float64) {
+		// In sync mode, we could log progress but not send to UI to avoid race conditions
+	}
+
 	// Execute user's Change method synchronously
-	result, err := f.handler.Change(currentValue)
+	result, err := f.handler.Change(currentValue, progressCallback)
 
 	if err != nil {
 		// Handler decides error message content
@@ -315,7 +346,13 @@ func (f *field) executeChangeSyncWithValue(valueToSave any) {
 
 	// In sync test mode, we don't generate operation IDs or send messages to avoid race conditions
 	// Use the pre-captured value directly
-	_, err := f.handler.Change(valueToSave)
+
+	// Create empty progress callback for sync test execution
+	progressCallback := func(message string, percent ...float64) {
+		// In sync test mode, we don't send messages to avoid race conditions
+	}
+
+	_, err := f.handler.Change(valueToSave, progressCallback)
 
 	// In test mode, we don't send messages to UI to avoid race conditions
 	// The test can verify the handler's internal state directly

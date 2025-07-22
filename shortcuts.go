@@ -43,7 +43,7 @@ func (h *ShortcutsHandler) Value() string          { return "Press Enter to view
 func (h *ShortcutsHandler) Editable() bool         { return false }
 func (h *ShortcutsHandler) Timeout() time.Duration { return 0 }
 
-func (h *ShortcutsHandler) Change(newValue any) (string, error) {
+func (h *ShortcutsHandler) Change(newValue any, progress ...func(string, ...float64)) (string, error) {
 	return h.shortcuts, nil
 }
 

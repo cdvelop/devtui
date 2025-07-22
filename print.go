@@ -33,14 +33,10 @@ func (d *DevTUI) sendMessage(content string, mt messagetype.Type, tabSection *ta
 
 // NEW: sendMessageWithHandler sends a message with handler identification
 func (d *DevTUI) sendMessageWithHandler(content string, mt messagetype.Type, tabSection *tabSection, handlerName string, operationID string) {
-	tabSection.addNewContentWithHandler(mt, content, handlerName)
+	// Use update or add function that handles operationID reuse
+	_, newContent := tabSection.updateOrAddContentWithHandler(mt, content, handlerName, operationID)
 
-	var opIDs []string
-	if operationID != "" {
-		opIDs = []string{operationID}
-	}
-
-	newContent := d.newContentWithHandler(content, mt, tabSection, handlerName, opIDs...)
+	// Always send to channel to trigger UI update, regardless of whether content was updated or added new
 	d.tabContentsChan <- newContent
 
 	// Call SetLastOperationID on the handler after processing

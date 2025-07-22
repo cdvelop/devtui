@@ -14,8 +14,15 @@ import (
 
 type HostConfigHandler struct {
 	currentHost string
+	lastOpID    string
 }
 
+// WritingHandler implementation
+func (h *HostConfigHandler) Name() string                 { return "HostConfigHandler" }
+func (h *HostConfigHandler) SetLastOperationID(id string) { h.lastOpID = id }
+func (h *HostConfigHandler) GetLastOperationID() string   { return h.lastOpID }
+
+// FieldHandler implementation
 func (h *HostConfigHandler) Label() string          { return "Host" }
 func (h *HostConfigHandler) Value() string          { return h.currentHost }
 func (h *HostConfigHandler) Editable() bool         { return true }
@@ -36,8 +43,15 @@ func (h *HostConfigHandler) Change(newValue any) (string, error) {
 
 type PortConfigHandler struct {
 	currentPort string
+	lastOpID    string
 }
 
+// WritingHandler implementation
+func (h *PortConfigHandler) Name() string                 { return "PortConfigHandler" }
+func (h *PortConfigHandler) SetLastOperationID(id string) { h.lastOpID = id }
+func (h *PortConfigHandler) GetLastOperationID() string   { return h.lastOpID }
+
+// FieldHandler implementation
 func (h *PortConfigHandler) Label() string          { return "Port" }
 func (h *PortConfigHandler) Value() string          { return h.currentPort }
 func (h *PortConfigHandler) Editable() bool         { return true }
@@ -63,12 +77,19 @@ func (h *PortConfigHandler) Change(newValue any) (string, error) {
 
 type BuildActionHandler struct {
 	buildType string
+	lastOpID  string
 }
 
 func NewBuildActionHandler(buildType string) *BuildActionHandler {
 	return &BuildActionHandler{buildType: buildType}
 }
 
+// WritingHandler implementation
+func (h *BuildActionHandler) Name() string                 { return "BuildActionHandler" }
+func (h *BuildActionHandler) SetLastOperationID(id string) { h.lastOpID = id }
+func (h *BuildActionHandler) GetLastOperationID() string   { return h.lastOpID }
+
+// FieldHandler implementation
 func (h *BuildActionHandler) Label() string          { return fmt.Sprintf("Build %s", h.buildType) }
 func (h *BuildActionHandler) Value() string          { return "Press Enter to build" }
 func (h *BuildActionHandler) Editable() bool         { return false }
@@ -89,12 +110,19 @@ func (h *BuildActionHandler) Change(newValue any) (string, error) {
 
 type DeployActionHandler struct {
 	environment string
+	lastOpID    string
 }
 
 func NewDeployActionHandler(env string) *DeployActionHandler {
 	return &DeployActionHandler{environment: env}
 }
 
+// WritingHandler implementation
+func (h *DeployActionHandler) Name() string                 { return "DeployActionHandler" }
+func (h *DeployActionHandler) SetLastOperationID(id string) { h.lastOpID = id }
+func (h *DeployActionHandler) GetLastOperationID() string   { return h.lastOpID }
+
+// FieldHandler implementation
 func (h *DeployActionHandler) Label() string          { return fmt.Sprintf("Deploy to %s", h.environment) }
 func (h *DeployActionHandler) Value() string          { return "Press Enter to deploy" }
 func (h *DeployActionHandler) Editable() bool         { return false }
@@ -116,6 +144,25 @@ func (h *DeployActionHandler) Change(newValue any) (string, error) {
 	return fmt.Sprintf("Successfully deployed to %s", h.environment), nil
 }
 
+type WelcomeHandler struct {
+	lastOpID string
+}
+
+// WritingHandler implementation
+func (h *WelcomeHandler) Name() string                 { return "WelcomeHandler" }
+func (h *WelcomeHandler) SetLastOperationID(id string) { h.lastOpID = id }
+func (h *WelcomeHandler) GetLastOperationID() string   { return h.lastOpID }
+
+// FieldHandler implementation
+func (h *WelcomeHandler) Label() string          { return "DevTUI Features" }
+func (h *WelcomeHandler) Value() string          { return "Press Enter to view features" }
+func (h *WelcomeHandler) Editable() bool         { return false }
+func (h *WelcomeHandler) Timeout() time.Duration { return 1 * time.Second }
+
+func (h *WelcomeHandler) Change(newValue any) (string, error) {
+	return "DevTUI Features:\n• Async operations with spinners\n• Configurable timeouts\n• Error handling\n• Progress feedback\n• Handler-based architecture", nil
+}
+
 func main() {
 	config := &devtui.TuiConfig{
 		AppName:       "DevTUI - New Async API Demo",
@@ -135,6 +182,7 @@ func main() {
 	tui := devtui.NewTUI(config)
 
 	// Create handlers
+	welcomeHandler := &WelcomeHandler{}
 	hostHandler := &HostConfigHandler{currentHost: "localhost"}
 	portHandler := &PortConfigHandler{currentPort: "8080"}
 	prodBuild := NewBuildActionHandler("Production")
@@ -143,6 +191,9 @@ func main() {
 	prodDeploy := NewDeployActionHandler("Production")
 
 	// Configure tabs with new handler-based API
+	tui.NewTabSection("Welcome", "DevTUI Demo Features").
+		NewField(welcomeHandler)
+
 	tui.NewTabSection("Server", "Server configuration").
 		NewField(hostHandler).
 		NewField(portHandler)
@@ -155,14 +206,6 @@ func main() {
 		NewField(stagingDeploy).
 		NewField(prodDeploy)
 
-	fmt.Println("Starting DevTUI with New Async API...")
-	fmt.Println("Features:")
-	fmt.Println("  • Async operations with spinners")
-	fmt.Println("  • Configurable timeouts")
-	fmt.Println("  • Error handling")
-	fmt.Println("  • Progress feedback")
-	fmt.Println()
-
 	// Usar un WaitGroup para esperar a que la UI termine
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -172,6 +215,4 @@ func main() {
 
 	// Esperar hasta que la UI termine
 	wg.Wait()
-
-	fmt.Println("Aplicación finalizada correctamente")
 }

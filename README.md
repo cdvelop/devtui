@@ -5,36 +5,11 @@
 
 Interactive Terminal User Interface library for Go applications development (principal tui in [**GoDEV** App](https://github.com/cdvelop/godev))
 
-## Features
-
-- Tab-based interface organization
-- Editable and non-editable fields with real-time validation
-- Keyboard navigation (Tab, Shift+Tab, Left/Right arrows, Enter, Esc)
-- Field validation and change callbacks
-- Message system with unique timestamps and types (Success, Error, Warning, Info)
-- Real-time content updates through channel-based messaging
-- Customizable styles and colors
-- Auto-detection of message types
-- Viewport-based scrolling content area
-
 ![devtui](tui.jpg)
 
-## Core Architecture
+## Quick Start
 
-### DevTUI Structure
-- **DevTUI**: Main TUI instance that manages tabs, keyboard input, and viewport
-- **tabSection**: Individual tabs containing fields and message content  
-- **field**: Input fields with validation, editing capabilities, and change handlers
-- **tabContent**: Messages with unique IDs, timestamps, and type classification
-
-### Message System
-Every action generates a `tabContent` message with:
-- **Unique ID**: Unix timestamp-based identifier for message tracking
-- **Content**: The actual message text
-- **Type**: Auto-detected or explicit (Success, Error, Warning, Info)
-- **tabSection**: Reference to the tab that generated the message
-
-## Basic Usage
+DevTUI uses a handler-based architecture where fields implement the `FieldHandler` interface for automatic async operations and message tracking.
 
 ```go
 package main
@@ -42,19 +17,23 @@ package main
 import (
     "fmt"
     "strings"
-    "strconv"
     "sync"
     "time"
     "github.com/cdvelop/devtui"
 )
 
-// Example handlers implementing the FieldHandler interface
-
-// Editable field handler
+// Handler implementing both interfaces
 type HostHandler struct {
     currentHost string
+    lastOpID    string
 }
 
+// WritingHandler methods
+func (h *HostHandler) Name() string { return "HostHandler" }
+func (h *HostHandler) SetLastOperationID(id string) { h.lastOpID = id }
+func (h *HostHandler) GetLastOperationID() string { return h.lastOpID }
+
+// FieldHandler methods  
 func (h *HostHandler) Label() string { return "Host" }
 func (h *HostHandler) Value() string { return h.currentHost }
 func (h *HostHandler) Editable() bool { return true }
@@ -64,79 +43,19 @@ func (h *HostHandler) Change(newValue any) (string, error) {
     if host == "" {
         return "", fmt.Errorf("host cannot be empty")
     }
-    // Simulate async network validation - DevTUI handles this transparently
-    time.Sleep(1 * time.Second)
+    time.Sleep(1 * time.Second) // Async operation
     h.currentHost = host
     return fmt.Sprintf("Host configured: %s", host), nil
 }
 
-// Port validation handler
-type PortHandler struct {
-    currentPort string
-}
-
-func (h *PortHandler) Label() string { return "Port" }
-func (h *PortHandler) Value() string { return h.currentPort }
-func (h *PortHandler) Editable() bool { return true }
-func (h *PortHandler) Timeout() time.Duration { return 0 } // No timeout needed
-func (h *PortHandler) Change(newValue any) (string, error) {
-    portStr := newValue.(string)
-    port, err := strconv.Atoi(portStr)
-    if err != nil {
-        return "", fmt.Errorf("port must be a number")
-    }
-    if port < 1 || port > 65535 {
-        return "", fmt.Errorf("port must be between 1 and 65535")
-    }
-    h.currentPort = portStr
-    return fmt.Sprintf("Port set to: %d", port), nil
-}
-
-// Non-editable action handler
-type DeployHandler struct {
-    environment string
-}
-
-func (h *DeployHandler) Label() string { return "Deploy" }
-func (h *DeployHandler) Value() string { return "Press Enter to deploy" }
-func (h *DeployHandler) Editable() bool { return false }
-func (h *DeployHandler) Timeout() time.Duration { return 30 * time.Second }
-func (h *DeployHandler) Change(newValue any) (string, error) {
-    // Simulate long deployment operation - DevTUI shows spinner automatically
-    time.Sleep(3 * time.Second)
-    return fmt.Sprintf("Deployed to %s successfully", h.environment), nil
-}
-
 func main() {
-    config := &devtui.TuiConfig{
-        AppName:       "MyApp",
-        TabIndexStart: 0,
-        ExitChan:      make(chan bool),
-        Color: &devtui.ColorStyle{
-            Foreground: "#F4F4F4",
-            Background: "#000000",
-            Highlight:  "#FF6600",
-            Lowlight:   "#666666",
-        },
-        LogToFile: func(messages ...any) {
-            fmt.Println(append([]any{"DevTUI Log:"}, messages...)...)
-        },
-    }
-
-    tui := devtui.NewTUI(config)
-
-    // Create handlers
-    hostHandler := &HostHandler{currentHost: "localhost"}
-    portHandler := &PortHandler{currentPort: "8080"}
-    deployHandler := &DeployHandler{environment: "production"}
-
-    // Use the handler-based API with async operations
-    tui.NewTabSection("Server", "Server configuration").
-        NewField(hostHandler).
-        NewField(portHandler)
-        
-    tui.NewTabSection("Actions", "Deployment operations").
-        NewField(deployHandler)
+    tui := devtui.NewTUI(&devtui.TuiConfig{
+        AppName: "MyApp",
+        ExitChan: make(chan bool),
+    })
+    
+    tui.NewTabSection("Server", "Configuration").
+        NewField(&HostHandler{currentHost: "localhost"})
 
     var wg sync.WaitGroup
     wg.Add(1)
@@ -145,303 +64,32 @@ func main() {
 }
 ```
 
-## API Reference
-
-### DevTUI Creation
-- `NewTUI(config *TuiConfig) *DevTUI`: Create new TUI instance
-- `DefaultTUIForTest() *DevTUI`: Create TUI with default testing configuration
-
-### Tab Management
-- `NewTabSection(name, description string) *tabSection`: Create new tab with chained API
-- `AddTabSections(tabs ...*tabSection)`: Add multiple tabs to TUI
-- `GetActiveTab() *tabSection`: Get currently active tab
-- `NextTab()` / `PreviousTab()`: Navigate between tabs
-
-### Field Management (Handler-based API)
-
-DevTUI uses a handler-based approach where each field implements the `FieldHandler` interface. This provides transparent asynchronous execution with visual feedback (spinners, progress indicators) and robust error handling.
+## Interfaces
 
 ```go
-// FieldHandler interface - implement this for each field
 type FieldHandler interface {
-    Label() string                    // Field display name/label
-    Value() string                    // Current field VALUE (not description)
-    Editable() bool                   // true for input fields, false for actions
-    Change(newValue any) (string, error) // Handle field changes/actions
-    Timeout() time.Duration           // Operation timeout (0 = no timeout)
+    WritingHandler                         // Embedded for message tracking
+    Label() string                         // Field display name
+    Value() string                         // Current field value
+    Editable() bool                       // true=input, false=action
+    Change(newValue any) (string, error)  // Handle changes/actions
+    Timeout() time.Duration               // Operation timeout
+}
+
+type WritingHandler interface {
+    Name() string                          // Handler identifier
+    SetLastOperationID(id string)         // Set operation ID
+    GetLastOperationID() string           // Get operation ID
 }
 ```
 
-#### Important: Value() Method
-The `Value()` method should return the **actual field value**, not a description:
-- ✅ **Correct**: `"8080"` (for a port field), `"c"` (for a mode selector)
-- ❌ **Incorrect**: `"Current port is 8080"`, `"Coding mode"` (descriptions)
-- **Rationale**: DevTUI displays this value in the field, and users expect to see the actual value they can edit
+## Navigation
+- **Tab/Shift+Tab**: Switch between tabs
+- **Left/Right**: Navigate fields within tab  
+- **Enter**: Edit/Execute
+- **Esc**: Cancel edit
+- **Ctrl+C**: Exit
 
-#### Handler Examples:
-
-**Editable Field with Value:**
-```go
-type DatabaseURLHandler struct {
-    currentURL string
-}
-
-func (h *DatabaseURLHandler) Label() string { return "Database URL" }
-func (h *DatabaseURLHandler) Value() string { return h.currentURL } // Actual URL value
-func (h *DatabaseURLHandler) Editable() bool { return true }
-func (h *DatabaseURLHandler) Timeout() time.Duration { return 10 * time.Second }
-func (h *DatabaseURLHandler) Change(newValue any) (string, error) {
-    url := strings.TrimSpace(newValue.(string))
-    if url == "" {
-        return "", fmt.Errorf("database URL cannot be empty")
-    }
-    
-    // Simulate database connection test - runs async automatically
-    time.Sleep(2 * time.Second)
-    
-    h.currentURL = url
-    return "Database connection verified successfully", nil
-}
-```
-
-**Action Button Handler:**
-```go
-type BuildProjectHandler struct {
-    projectPath string
-}
-
-func (h *BuildProjectHandler) Label() string { return "Build Project" }
-func (h *BuildProjectHandler) Value() string { return "Press Enter to build" } // Action instruction
-func (h *BuildProjectHandler) Editable() bool { return false }
-func (h *BuildProjectHandler) Timeout() time.Duration { return 60 * time.Second }
-func (h *BuildProjectHandler) Change(newValue any) (string, error) {
-    // Long-running build operation - spinner shows automatically
-    cmd := exec.Command("go", "build", h.projectPath)
-    if err := cmd.Run(); err != nil {
-        return "", fmt.Errorf("build failed: %v", err)
-    }
-    return "Build completed successfully", nil
-}
-```
-
-#### Value() Method Guidelines:
-- **Editable fields**: Return the actual editable value (`"localhost"`, `"8080"`, `"production"`)
-- **Action buttons**: Return instruction text (`"Press Enter to build"`, `"Click to deploy"`)
-- **Mode selectors**: Return current mode value (`"c"`, `"debug"`, `"enabled"`)
-- **Status fields**: Return current status (`"connected"`, `"running"`, `"stopped"`)
-
-// Add fields using handler instances
-tui.NewTabSection("TabName", "Description").
-    NewField(handler1).
-    NewField(handler2)
-```
-
-#### Key Features:
-- **Transparent Async**: Write simple synchronous `Change` methods; DevTUI handles goroutines automatically
-- **Visual Feedback**: Automatic spinners during operations, no additional code needed  
-- **Timeout Support**: Configurable timeouts per handler with graceful error handling
-- **Type Safety**: Strong typing with interfaces, easy to test and maintain
-
-### Message System
-Messages are automatically generated from field operations and displayed in the viewport:
-
-#### Message Types (Auto-detected):
-- **Error**: Contains error keywords ("error", "failed", "fail", etc.) - Red color
-- **Success**: Contains success keywords ("ok", "success", "complete", etc.) - Green color  
-- **Warning**: Contains warning keywords ("warn", "alert", "caution", etc.) - Yellow color
-- **Info**: Default type for other messages - Default color
-
-#### Message Structure:
-```go
-type tabContent struct {
-	id         string      // Unix timestamp-based unique identifier
-	content    string      // The actual message text
-	msgType    MessageType // Auto-detected message type
-	tabSection *tabSection // Reference to originating tab
-}
-```
-
-### Keyboard Navigation
-- **Tab**: Move to next field
-- **Shift+Tab**: Move to previous field  
-- **Left/Right Arrows**: Navigate between tabs
-- **Enter**: Edit field (editable) or trigger action (non-editable)
-- **Escape**: Cancel editing, return to navigation mode
-- **Ctrl+C**: Exit application
-- **Space**: Input space character in edit mode
-
-### Configuration
-```go
-type TuiConfig struct {
-	AppName       string                    // Application title
-	TabIndexStart int                       // Initial tab index (0-based)
-	ExitChan      chan bool                 // Channel for shutdown coordination
-	Color         *ColorStyle               // Optional color customization
-	LogToFile     func(messages ...any)     // Optional logging function
-}
-
-type ColorStyle struct {
-	Foreground string // Text color (hex format)
-	Background string // Background color (hex format) 
-	Highlight  string // Highlight color (hex format)
-	Lowlight   string // Lowlight color (hex format)
-}
-```
-
-## Advanced Examples
-
-### Multiple Field Types with Different Behaviors
-```go
-// Network configuration handlers
-type HostHandler struct {
-    currentHost string
-}
-
-func (h *HostHandler) Label() string { return "Host" }
-func (h *HostHandler) Value() string { return h.currentHost }
-func (h *HostHandler) Editable() bool { return true }
-func (h *HostHandler) Timeout() time.Duration { return 5 * time.Second }
-func (h *HostHandler) Change(newValue any) (string, error) {
-    host := strings.TrimSpace(newValue.(string))
-    if host == "" {
-        return "", fmt.Errorf("host cannot be empty")
-    }
-    
-    // Network validation - async with timeout
-    time.Sleep(1 * time.Second)
-    h.currentHost = host
-    return fmt.Sprintf("Host configured: %s", host), nil
-}
-
-type PortHandler struct {
-    currentPort string
-}
-
-func (h *PortHandler) Label() string { return "Port" }
-func (h *PortHandler) Value() string { return h.currentPort }
-func (h *PortHandler) Editable() bool { return true }
-func (h *PortHandler) Timeout() time.Duration { return 0 } // No timeout
-func (h *PortHandler) Change(newValue any) (string, error) {
-    portStr := newValue.(string)
-    port, err := strconv.Atoi(portStr)
-    if err != nil {
-        return "", fmt.Errorf("port must be a number")
-    }
-    if port < 1 || port > 65535 {
-        return "", fmt.Errorf("port must be between 1 and 65535")
-    }
-    h.currentPort = portStr
-    return fmt.Sprintf("Port set to: %d", port), nil
-}
-
-// Usage
-hostHandler := &HostHandler{currentHost: "localhost"}
-portHandler := &PortHandler{currentPort: "8080"}
-
-tui.NewTabSection("Network", "Server configuration").
-    NewField(hostHandler).
-    NewField(portHandler)
-```
-
-### Long-Running Operations with Progress Feedback
-```go
-// CI/CD Pipeline handler with timeout
-type DeploymentHandler struct {
-    environment string
-    version     string
-}
-
-func (h *DeploymentHandler) Label() string { 
-    return fmt.Sprintf("Deploy v%s", h.version) 
-}
-func (h *DeploymentHandler) Value() string { 
-    return fmt.Sprintf("Deploy to %s", h.environment) 
-}
-func (h *DeploymentHandler) Editable() bool { return false }
-func (h *DeploymentHandler) Timeout() time.Duration { return 2 * time.Minute }
-func (h *DeploymentHandler) Change(newValue any) (string, error) {
-    // Long deployment process - DevTUI shows spinner automatically
-    time.Sleep(5 * time.Second) // Simulate deployment
-    return fmt.Sprintf("Successfully deployed v%s to %s", h.version, h.environment), nil
-}
-
-// Health check handler with shorter timeout
-type HealthCheckHandler struct {
-    serviceName string
-}
-
-func (h *HealthCheckHandler) Label() string { return "Health Check" }
-func (h *HealthCheckHandler) Value() string { 
-    return fmt.Sprintf("Check %s status", h.serviceName) 
-}
-func (h *HealthCheckHandler) Editable() bool { return false }
-func (h *HealthCheckHandler) Timeout() time.Duration { return 10 * time.Second }
-func (h *HealthCheckHandler) Change(newValue any) (string, error) {
-    // Simulate health check API call
-    time.Sleep(2 * time.Second)
-    return fmt.Sprintf("%s is healthy and responding", h.serviceName), nil
-}
-
-// Usage
-deployHandler := &DeploymentHandler{environment: "production", version: "1.2.3"}
-healthHandler := &HealthCheckHandler{serviceName: "API Service"}
-
-tui.NewTabSection("Operations", "Deployment and monitoring").
-    NewField(deployHandler).
-    NewField(healthHandler)
-```
-
-### Multiple Tabs with Different Purposes
-```go
-// Create handlers for different functional areas
-databaseHandler := &DatabaseURLHandler{currentURL: "postgresql://localhost:5432/mydb"}
-apiKeyHandler := &APIKeyHandler{currentKey: ""}
-
-buildHandler := &BuildProjectHandler{projectPath: "./"}
-testHandler := &TestSuiteHandler{testPath: "./tests"}
-
-healthHandler := &HealthCheckHandler{serviceName: "API Service"}
-logHandler := &ViewLogsHandler{logLevel: "INFO"}
-
-// Organize into logical tabs
-tui.NewTabSection("Config", "Application settings").
-    NewField(databaseHandler).
-    NewField(apiKeyHandler)
-    
-tui.NewTabSection("Build", "Development operations").  
-    NewField(buildHandler).
-    NewField(testHandler)
-    
-tui.NewTabSection("Monitor", "System monitoring").
-    NewField(healthHandler).
-    NewField(logHandler)
-```
-
-## Key Features
-
-### Asynchronous Operations
-All field operations execute asynchronously with transparent internal handling:
-
-- **Non-blocking UI**: Interface remains responsive during long operations
-- **Visual Progress**: Automatic spinners and status indicators during execution  
-- **Timeout Support**: Configurable timeouts per operation with graceful error handling
-- **Error Management**: Clear error messages and safe operation cancellation
-- **Context Management**: Automatic cleanup of resources and goroutines
-
-### Handler Benefits
-- **Simple API**: Write synchronous code, get async behavior automatically
-- **Type Safety**: Strong typing with interfaces for better maintainability
-- **Easy Testing**: Mock handlers for comprehensive unit testing
-- **Clean Separation**: UI logic separated from business logic
-- **Extensible Design**: Easy to add new field types and behaviors
-
-### Visual Feedback
-- **Real-time Spinners**: Animated progress indicators during operations
-- **Status Messages**: Success, error, and progress messages in viewport
-- **Message Correlation**: Each operation tracked with unique IDs
-- **Auto-detection**: Message types automatically detected and colored
-
-## Dependencies
-
-- [Charmbracelet/bubbletea](https://github.com/charmbracelet/bubbletea)
-- [Charmbracelet/lipgloss](https://github.com/charmbracelet/lipgloss)
+## Documentation
+- [Advanced Examples](docs/EXAMPLES.md) - Multiple handlers and complex scenarios
+- [Migration Guide](docs/MIGRATION_GUIDE.md) - Update existing handlers

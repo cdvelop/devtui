@@ -105,9 +105,6 @@ func (hw *HandlerWriter) Write(p []byte) (n int, err error) {
 	if msg != "" {
 		msgType := messagetype.DetectMessageType(msg)
 
-		// Debug: Log the message and detected type
-		println("DEBUG: Message:", msg, "Detected Type:", int(msgType), "Expected Success:", int(messagetype.Success))
-
 		var operationID string
 		if hw.tabSection.writingHandlers != nil {
 			if handler, exists := hw.tabSection.writingHandlers[hw.handlerName]; exists {

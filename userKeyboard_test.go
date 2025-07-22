@@ -226,7 +226,6 @@ func TestHandleKeyboard(t *testing.T) {
 		h.tabSections[testTabIndex].indexActiveEditField = 0
 		field := h.tabSections[testTabIndex].FieldHandlers()[0]
 		originalValue := "test"
-		field.SetValue(originalValue)
 
 		// Usar helper para simular edición (ya que tempEditValue es privado)
 		setTempEditValueForTest(field, originalValue+" modified")
@@ -380,7 +379,6 @@ func TestAdditionalKeyboardFeatures(t *testing.T) {
 		h.editModeActivated = true
 		h.tabSections[testTabIndex].indexActiveEditField = 0
 		field := h.tabSections[testTabIndex].FieldHandlers()[0]
-		field.SetValue("hello")
 		setTempEditValueForTest(field, "hello") // Inicializar tempEditValue
 		setCursorForTest(field, 2)              // Cursor en medio (he|llo)
 
@@ -400,22 +398,6 @@ func TestAdditionalKeyboardFeatures(t *testing.T) {
 		}
 	})
 
-	// Test: Pressing enter without changing the value shouldn't trigger save action
-	t.Run("Editing mode - Enter without changes", func(t *testing.T) {
-		// Reset para esta prueba con test handler
-		testHandler := NewTestEditableHandler("Test Field", "unchanged value")
-		h := DefaultTUIForTest(testHandler, func(messages ...any) {
-			// Test logger - do nothing
-		})
-
-		// Setup: Enter editing mode
-		h.editModeActivated = true
-		h.tabSections[0].indexActiveEditField = 0
-		field := h.tabSections[0].FieldHandlers()[0]
-		originalValue := "test value"
-		field.SetValue(originalValue)
-		setTempEditValueForTest(field, originalValue) // Mismo valor que el original
-	})
 }
 
 // getTempEditValueForTest is a test helper to get tempEditValue for a field (for testing only)

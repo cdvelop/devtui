@@ -105,21 +105,11 @@ func (f *field) Name() string {
 	return ""
 }
 
-func (f *field) SetName(name string) {
-	// This method is deprecated with handler-based approach
-	// Handler manages its own label state
-}
-
 func (f *field) Value() string {
 	if f.handler != nil {
 		return f.handler.Value()
 	}
 	return ""
-}
-
-func (f *field) SetValue(value string) {
-	// This method is deprecated with handler-based approach
-	// Handler manages its own value state
 }
 
 // GetHandlerForTest returns the handler for testing purposes
@@ -132,11 +122,6 @@ func (f *field) Editable() bool {
 		return f.handler.Editable()
 	}
 	return false
-}
-
-func (f *field) SetEditable(editable bool) {
-	// This method is deprecated with handler-based approach
-	// Handler manages its own editable state
 }
 
 func (f *field) SetCursorAtEnd() {

@@ -35,10 +35,6 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 					// Trigger async change operation
 					currentField.handleEnter()
 					h.editingConfigOpen(false, currentField, "")
-				} else {
-					// Legacy fallback - should not happen in new implementation
-					currentField.SetValue(currentField.tempEditValue)
-					h.editingConfigOpen(false, currentField, "")
 				}
 			} else {
 				// Si no hubo cambios, solo salimos del modo edición sin mostrar mensajes

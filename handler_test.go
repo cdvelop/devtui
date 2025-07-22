@@ -226,7 +226,7 @@ func (h *PortTestHandler) Change(newValue any) (string, error) {
 	h.mu.Lock()
 	h.currentPort = portStr
 	h.mu.Unlock()
-	
+
 	return fmt.Sprintf("Port configured: %d", port), nil
 }
 

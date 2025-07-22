@@ -36,7 +36,6 @@ Viewport Navigation:
 
 Application:
   • Ctrl+C      - Exit application
-  • Ctrl+L      - Clear current tab content
 
 Field Types:
   • Editable    - Press Enter to edit, Esc to cancel

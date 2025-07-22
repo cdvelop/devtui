@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -21,6 +22,7 @@ func GetSecondTestTabIndex() int {
 
 // TestEditableHandler - Handler para campos editables (input fields)
 type TestEditableHandler struct {
+	mu           sync.RWMutex
 	label        string
 	currentValue string
 	lastOpID     string
@@ -34,21 +36,37 @@ func NewTestEditableHandler(label, value string) *TestEditableHandler {
 	}
 }
 
-func (h *TestEditableHandler) Label() string          { return h.label }
-func (h *TestEditableHandler) Value() string          { return h.currentValue }
+func (h *TestEditableHandler) Label() string { return h.label }
+
+func (h *TestEditableHandler) Value() string {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	return h.currentValue
+}
+
 func (h *TestEditableHandler) Editable() bool         { return true }
 func (h *TestEditableHandler) Timeout() time.Duration { return 0 }
 
 func (h *TestEditableHandler) Change(newValue any) (string, error) {
 	strValue := newValue.(string)
+	h.mu.Lock()
 	h.currentValue = strValue
+	h.mu.Unlock()
 	return "Saved: " + strValue, nil
 }
 
 // WritingHandler methods
-func (h *TestEditableHandler) Name() string                       { return h.label + "Handler" }
-func (h *TestEditableHandler) SetLastOperationID(lastOpID string) { h.lastOpID = lastOpID }
+func (h *TestEditableHandler) Name() string { return h.label + "Handler" }
+
+func (h *TestEditableHandler) SetLastOperationID(lastOpID string) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	h.lastOpID = lastOpID
+}
+
 func (h *TestEditableHandler) GetLastOperationID() string {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
 	if h.updateMode {
 		return h.lastOpID
 	}
@@ -57,11 +75,14 @@ func (h *TestEditableHandler) GetLastOperationID() string {
 
 // SetUpdateMode permite controlar si actualiza mensajes para tests
 func (h *TestEditableHandler) SetUpdateMode(update bool) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
 	h.updateMode = update
 }
 
 // TestNonEditableHandler - Handler para botones de acción (action buttons)
 type TestNonEditableHandler struct {
+	mu         sync.RWMutex
 	label      string
 	actionText string
 	lastOpID   string
@@ -75,19 +96,35 @@ func NewTestNonEditableHandler(label, actionText string) *TestNonEditableHandler
 	}
 }
 
-func (h *TestNonEditableHandler) Label() string          { return h.label }
-func (h *TestNonEditableHandler) Value() string          { return h.actionText }
+func (h *TestNonEditableHandler) Label() string { return h.label }
+
+func (h *TestNonEditableHandler) Value() string {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	return h.actionText
+}
+
 func (h *TestNonEditableHandler) Editable() bool         { return false }
 func (h *TestNonEditableHandler) Timeout() time.Duration { return 0 }
 
 func (h *TestNonEditableHandler) Change(newValue any) (string, error) {
-	return "Action executed: " + h.actionText, nil
+	h.mu.RLock()
+	actionText := h.actionText
+	h.mu.RUnlock()
+	return "Action executed: " + actionText, nil
 }
 
 // WritingHandler methods
-func (h *TestNonEditableHandler) Name() string                       { return h.label + "Handler" }
-func (h *TestNonEditableHandler) SetLastOperationID(lastOpID string) { h.lastOpID = lastOpID }
+func (h *TestNonEditableHandler) Name() string { return h.label + "Handler" }
+
+func (h *TestNonEditableHandler) SetLastOperationID(lastOpID string) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	h.lastOpID = lastOpID
+}
 func (h *TestNonEditableHandler) GetLastOperationID() string {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
 	if h.updateMode {
 		return h.lastOpID
 	}
@@ -96,11 +133,14 @@ func (h *TestNonEditableHandler) GetLastOperationID() string {
 
 // SetUpdateMode permite controlar si actualiza mensajes para tests
 func (h *TestNonEditableHandler) SetUpdateMode(update bool) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
 	h.updateMode = update
 }
 
 // TestWriterHandler - Handler solo para escribir (no es field, para componentes externos)
 type TestWriterHandler struct {
+	mu         sync.RWMutex
 	name       string
 	lastOpID   string
 	updateMode bool
@@ -111,9 +151,17 @@ func NewTestWriterHandler(name string) *TestWriterHandler {
 }
 
 // Solo implementa WritingHandler (no FieldHandler)
-func (h *TestWriterHandler) Name() string                       { return h.name }
-func (h *TestWriterHandler) SetLastOperationID(lastOpID string) { h.lastOpID = lastOpID }
+func (h *TestWriterHandler) Name() string { return h.name }
+
+func (h *TestWriterHandler) SetLastOperationID(lastOpID string) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	h.lastOpID = lastOpID
+}
+
 func (h *TestWriterHandler) GetLastOperationID() string {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
 	if h.updateMode {
 		return h.lastOpID
 	}
@@ -122,6 +170,8 @@ func (h *TestWriterHandler) GetLastOperationID() string {
 
 // SetUpdateMode permite controlar si actualiza mensajes para tests
 func (h *TestWriterHandler) SetUpdateMode(update bool) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
 	h.updateMode = update
 }
 
@@ -138,6 +188,7 @@ func NewTestFieldHandler(label, value string, editable bool, changeFunc func(new
 
 // PortTestHandler - Handler específico para tests de puerto con validación
 type PortTestHandler struct {
+	mu          sync.RWMutex
 	currentPort string
 	lastOpID    string
 	updateMode  bool
@@ -147,8 +198,14 @@ func NewPortTestHandler(initialPort string) *PortTestHandler {
 	return &PortTestHandler{currentPort: initialPort}
 }
 
-func (h *PortTestHandler) Label() string          { return "Port" }
-func (h *PortTestHandler) Value() string          { return h.currentPort }
+func (h *PortTestHandler) Label() string { return "Port" }
+
+func (h *PortTestHandler) Value() string {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	return h.currentPort
+}
+
 func (h *PortTestHandler) Editable() bool         { return true }
 func (h *PortTestHandler) Timeout() time.Duration { return 3 * time.Second }
 
@@ -166,14 +223,25 @@ func (h *PortTestHandler) Change(newValue any) (string, error) {
 		return "", fmt.Errorf("port must be between 1 and 65535")
 	}
 
+	h.mu.Lock()
 	h.currentPort = portStr
+	h.mu.Unlock()
+	
 	return fmt.Sprintf("Port configured: %d", port), nil
 }
 
 // WritingHandler methods
-func (h *PortTestHandler) Name() string                       { return "PortHandler" }
-func (h *PortTestHandler) SetLastOperationID(lastOpID string) { h.lastOpID = lastOpID }
+func (h *PortTestHandler) Name() string { return "PortHandler" }
+
+func (h *PortTestHandler) SetLastOperationID(lastOpID string) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	h.lastOpID = lastOpID
+}
+
 func (h *PortTestHandler) GetLastOperationID() string {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
 	if h.updateMode {
 		return h.lastOpID
 	}
@@ -182,6 +250,8 @@ func (h *PortTestHandler) GetLastOperationID() string {
 
 // SetUpdateMode permite controlar si actualiza mensajes para tests
 func (h *PortTestHandler) SetUpdateMode(update bool) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
 	h.updateMode = update
 }
 

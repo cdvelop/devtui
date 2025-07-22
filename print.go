@@ -23,10 +23,16 @@ func joinMessages(messages ...any) (Label string) {
 
 // sendMessage envía un mensaje al tui por el canal de mensajes
 func (d *DevTUI) sendMessage(content string, mt messagetype.Type, tabSection *tabSection, operationID ...string) {
+	var opID string
+	if len(operationID) > 0 {
+		opID = operationID[0]
+	}
+	newContent := d.createTabContent(content, mt, tabSection, "", opID)
 
-	tabSection.addNewContent(mt, content)
-
-	newContent := d.newContent(content, mt, tabSection, operationID...)
+	// Agregar contenido directamente al slice
+	tabSection.mu.Lock()
+	tabSection.tabContents = append(tabSection.tabContents, newContent)
+	tabSection.mu.Unlock()
 
 	d.tabContentsChan <- newContent
 }
@@ -47,74 +53,12 @@ func (d *DevTUI) sendMessageWithHandler(content string, mt messagetype.Type, tab
 	}
 }
 
-func (h *DevTUI) newContent(content string, mt messagetype.Type, tabSection *tabSection, operationID ...string) tabContent {
-	var id string
-	var opID *string
-
-	if len(operationID) > 0 && operationID[0] != "" {
-		// Use provided operation ID for async operations
-		id = operationID[0]
-		opID = &operationID[0]
-	} else {
-		// Generate new ID for regular operations (current behavior)
-		if h.id != nil {
-			id = h.id.GetNewID()
-		} else {
-			id = "temp-id"
-			h.LogToFile("Warning: unixid not initialized, using fallback ID")
-		}
-		opID = nil // Not an async operation
-	}
-
-	return tabContent{
-		Id:          id,
-		Content:     content,
-		Type:        mt,
-		tabSection:  tabSection,
-		operationID: opID,
-		isProgress:  false, // Will be set by specific async methods
-		isComplete:  false, // Will be set by specific async methods
-	}
-}
-
-// NEW: newContentWithHandler creates tabContent with handler identification
-func (h *DevTUI) newContentWithHandler(content string, mt messagetype.Type, tabSection *tabSection, handlerName string, operationID ...string) tabContent {
-	var id string
-	var opID *string
-
-	if len(operationID) > 0 && operationID[0] != "" {
-		// Use provided operation ID for async operations
-		id = operationID[0]
-		opID = &operationID[0]
-	} else {
-		// Generate new ID for regular operations
-		if h.id != nil {
-			id = h.id.GetNewID()
-		} else {
-			id = "temp-id"
-			h.LogToFile("Warning: unixid not initialized, using fallback ID")
-		}
-		opID = nil // Not an async operation
-	}
-
-	return tabContent{
-		Id:          id,
-		Content:     content,
-		Type:        mt,
-		tabSection:  tabSection,
-		operationID: opID,
-		isProgress:  false,       // Will be set by specific async methods
-		isComplete:  false,       // Will be set by specific async methods
-		handlerName: handlerName, // NEW: Include handler name
-	}
-}
-
 // formatMessage formatea un mensaje según su tipo
 func (t *DevTUI) formatMessage(msg tabContent) string {
 
 	var timeStr string
 	if t.id != nil {
-		timeStr = t.timeStyle.Render(t.id.UnixNanoToTime(msg.Id))
+		timeStr = t.timeStyle.Render(t.id.UnixNanoToTime(msg.Timestamp))
 	} else {
 		// When unixid is not initialized, use a simple timestamp format
 		timeStr = t.timeStyle.Render("--:--:--")
@@ -143,4 +87,40 @@ func (t *DevTUI) formatMessage(msg tabContent) string {
 	}
 
 	return fmt.Sprintf("%s %s%s", timeStr, handlerName, msg.Content)
+}
+
+// createTabContent creates tabContent with unified logic (replaces newContent and newContentWithHandler)
+func (h *DevTUI) createTabContent(content string, mt messagetype.Type, tabSection *tabSection, handlerName string, operationID string) tabContent {
+	// Timestamp SIEMPRE nuevo usando GetNewID - PANIC si no hay unixid
+	var timestamp string
+	if h.id != nil {
+		timestamp = h.id.GetNewID()
+	} else {
+		panic("DevTUI: unixid not initialized - cannot generate timestamp")
+	}
+
+	var id string
+	var opID *string
+
+	// Lógica unificada para ID
+	if operationID != "" {
+		id = operationID
+		opID = &operationID
+	} else {
+		// Usar el mismo timestamp como ID para operaciones nuevas
+		id = timestamp
+		opID = nil
+	}
+
+	return tabContent{
+		Id:          id,
+		Timestamp:   timestamp, // NUEVO campo
+		Content:     content,
+		Type:        mt,
+		tabSection:  tabSection,
+		operationID: opID,
+		isProgress:  false,
+		isComplete:  false,
+		handlerName: handlerName,
+	}
 }

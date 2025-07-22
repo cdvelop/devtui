@@ -14,7 +14,8 @@ const defaultTabName = "DEFAULT"
 
 // tabContent imprime contenido en la tui con id único
 type tabContent struct {
-	Id         string // unix number id eg: "1234567890"
+	Id         string // unix number id eg: "1234567890" - INMUTABLE
+	Timestamp  string // unix nano timestamp - MUTABLE (se actualiza en cada cambio)
 	Content    string
 	Type       messagetype.Type
 	tabSection *tabSection
@@ -124,7 +125,7 @@ func (hw *HandlerWriter) Write(p []byte) (n int, err error) {
 func (t *tabSection) addNewContent(msgType messagetype.Type, content string) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	t.tabContents = append(t.tabContents, t.tui.newContent(content, msgType, t))
+	t.tabContents = append(t.tabContents, t.tui.createTabContent(content, msgType, t, "", ""))
 }
 
 // NEW: updateOrAddContentWithHandler updates existing content by operationID or adds new if not found
@@ -143,13 +144,19 @@ func (t *tabSection) updateOrAddContentWithHandler(msgType messagetype.Type, con
 				// Update existing content
 				t.tabContents[i].Content = content
 				t.tabContents[i].Type = msgType
+				// Actualizar timestamp usando GetNewID directamente
+				if t.tui.id != nil {
+					t.tabContents[i].Timestamp = t.tui.id.GetNewID()
+				} else {
+					panic("DevTUI: unixid not initialized - cannot generate timestamp")
+				}
 				return true, t.tabContents[i]
 			}
 		}
 	}
 
 	// If not found or no operationID, add new content
-	newContent = t.tui.newContentWithHandler(content, msgType, t, handlerName, operationID)
+	newContent = t.tui.createTabContent(content, msgType, t, handlerName, operationID)
 	t.tabContents = append(t.tabContents, newContent)
 	return false, newContent
 }

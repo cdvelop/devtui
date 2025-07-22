@@ -96,10 +96,11 @@ func newTuiStyle(cs *ColorStyle) *tuiStyle {
 	t.fieldEditingStyle = t.fieldSelectedStyle.
 		Foreground(lipgloss.Color(t.Background))
 
-	// Estilo para los mensajes
+	// Estilo para los mensajes - VISUAL UPGRADE: Padding interno para mejor legibilidad
 	t.textContentStyle = lipgloss.NewStyle().
 		Foreground(lipgloss.Color(t.Foreground)).
-		PaddingLeft(0)
+		PaddingLeft(1).
+		PaddingRight(1)
 
 	t.lineHeadFootStyle = lipgloss.NewStyle().
 		Foreground(lipgloss.Color(t.Highlight))

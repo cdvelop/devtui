@@ -232,7 +232,7 @@ func (h *WelcomeHandler) Timeout() time.Duration { return 1 * time.Second }
 
 func (h *WelcomeHandler) Change(newValue any, progress ...func(string)) (string, error) {
 	// Simple handler - no progress needed since it's instant
-	return "DevTUI Features:\n• Async operations with dynamic progress messages\n• Configurable timeouts\n• Error handling\n• Real-time progress feedback\n• Handler-based architecture", nil
+	return "\nDevTUI Features:\n• Async operations with dynamic progress messages\n• Configurable timeouts\n• Error handling\n• Real-time progress feedback\n• Handler-based architecture", nil
 }
 
 func main() {

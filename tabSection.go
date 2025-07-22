@@ -14,7 +14,7 @@ const defaultTabName = "DEFAULT"
 
 // tabContent imprime contenido en la tui con id único
 type tabContent struct {
-	Id         string
+	Id         string // unix number id eg: "1234567890"
 	Content    string
 	Type       messagetype.Type
 	tabSection *tabSection
@@ -125,13 +125,6 @@ func (t *tabSection) addNewContent(msgType messagetype.Type, content string) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	t.tabContents = append(t.tabContents, t.tui.newContent(content, msgType, t))
-}
-
-// NEW: addNewContentWithHandler adds content with handler identification
-func (t *tabSection) addNewContentWithHandler(msgType messagetype.Type, content string, handlerName string) {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-	t.tabContents = append(t.tabContents, t.tui.newContentWithHandler(content, msgType, t, handlerName))
 }
 
 // NEW: updateOrAddContentWithHandler updates existing content by operationID or adds new if not found

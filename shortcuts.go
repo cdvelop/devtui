@@ -26,21 +26,15 @@ Field Editing:
 Text Editing (when in edit mode):
   • Left Arrow  - Move cursor left
   • Right Arrow - Move cursor right
-  • Backspace   - Delete character left
-  • Space       - Insert space
-  • Characters  - Insert text at cursor
+  • Backspace   - Create space
 
 Viewport Navigation:
-  • Up Arrow    - Scroll viewport up
-  • Down Arrow  - Scroll viewport down
+  • Up Arrow/Mouse Wheel - Scroll viewport up
+  • Down Arrow/Mouse Wheel - Scroll viewport down
 
 Application:
   • Ctrl+C      - Exit application
-
-Field Types:
-  • Editable    - Press Enter to edit, Esc to cancel
-  • Action      - Press Enter to execute, shows spinner during async operations`
-
+`
 	return &ShortcutsHandler{shortcuts: shortcuts}
 }
 

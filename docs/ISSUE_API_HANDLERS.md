@@ -116,9 +116,9 @@ func (h *DeployHandler) Execute(progress ...func(string)) error {
 }
 
 // Usage: 
-// tab.NewRunHandler(deployHandler).WithTimeout(30*time.Second)  // Async with 30s timeout
-// tab.NewRunHandler(deployHandler).WithTimeout(500*time.Millisecond) // Async 500ms (testing)
-// tab.NewRunHandler(deployHandler)                             // Sync (default)
+// tab.NewExecutionHandler(deployHandler).WithTimeout(30*time.Second)  // Async with 30s timeout
+// tab.NewExecutionHandler(deployHandler).WithTimeout(500*time.Millisecond) // Async 500ms (testing)
+// tab.NewExecutionHandler(deployHandler)                             // Sync (default)
 ```
 
 **3. Basic Writer (1 method)**
@@ -202,7 +202,7 @@ Even standalone writers (non-fields) require:
 **Decision**: Keep the current chaining API format but replace the complex unified interface with specialized, minimal interfaces.
 
 **Rationale**: 
-- Maintains the intuitive chaining syntax: `tui.NewTabSection().NewEditHandler().NewRunHandler()`
+- Maintains the intuitive chaining syntax: `tui.NewTabSection().NewEditHandler().NewExecutionHandler()`
 - Avoids loose functions that would complicate the API
 - Each handler type implements only the methods it actually needs
 
@@ -260,34 +260,39 @@ Even standalone writers (non-fields) require:
 
 ### Core Handler Types
 
+
+## Final Interface Design
+
+### Core Handler Types
+
 ```go
 // Base interface for read-only information display
 type HandlerDisplay interface {
     Label() string   // Display label (e.g., "Help", "Status")
-    Content() string // Display content (e.g., "help\n1-..\n2-...", "executing deploy wait...")
+    Content() string // Display content (e.g., "help1-2-...", "executing deploy wait...")
 }
 
 // For interactive fields that accept user input
 type HandlerEdit interface {
-    Label() string   // Field label (e.g., "Server Port", "Host Configuration")
-    Value() string   // Current/initial value (e.g., "8080", "localhost")
+    Label() string // Field label (e.g., "Server Port", "Host Configuration")
+    Value() string // Current/initial value (e.g., "8080", "localhost")
     Change(newValue any, progress ...func(string)) error
 }
 
 // For execute operations  
 type HandlerExecution interface {
-    Label() string   // Button label (e.g., "Deploy to Production", "Build Project")
+    Label() string // Button label (e.g., "Deploy to Production", "Build Project")
     Execute(progress ...func(string)) error
 }
 
 // Basic writer - creates new line for each write
 type HandlerWriter interface {
-    Label() string // Writer identifier (e.g., "webBuilder", "ApplicationLog")
+    Name() string // Writer identifier (e.g., "webBuilder", "ApplicationLog")
 }
 
 // Advanced writer - can update existing lines
 type HandlerTrackerWriter interface {
-    Label() string
+    Name() string // Writer identifier (e.g., "webBuilder", "ApplicationLog")
     MessageTracker
 }
 
@@ -304,7 +309,374 @@ type EditHandlerTracker interface {
 }
 ```
 
-### New Chaining API Usage with Optional Configuration
+### Internal anyHandler Structure (DISEÑO FINAL)
+
+```go
+// anyHandler - estructura privada que unifica todos los tipos de handlers
+// Reemplaza la interfaz fieldHandler para simplificar la lógica interna
+type anyHandler struct {
+    handlerType handlerType
+    timeout     time.Duration // Solo para edit/execution, 0 para display/writers
+    lastOpID    string       // Para message tracking interno
+    
+    // Function pointers configurados en registro - solo los necesarios estarán poblados
+    labelFunc     func() string                                         // Todos los tipos
+    valueFunc     func() string                                         // Edit/Display/Execution
+    editableFunc  func() bool                                          // Determinado por tipo
+    changeFunc    func(any, ...func(string)) (string, error)          // Edit/Execution
+    timeoutFunc   func() time.Duration                                 // Edit/Execution
+    nameFunc      func() string                                        // Para writing capabilities
+    getOpIDFunc   func() string                                        // Para tracking
+    setOpIDFunc   func(string)                                         // Para tracking
+}
+
+type handlerType int
+
+const (
+    handlerTypeDisplay handlerType = iota
+    handlerTypeEdit
+    handlerTypeExecution  
+    handlerTypeWriter
+    handlerTypeTrackerWriter
+)
+```
+
+### Decisiones Arquitectónicas Actualizadas
+
+#### **1. Reemplazo de fieldHandler por anyHandler**
+**Decisión**: La interfaz `fieldHandler` es reemplazada por la estructura privada `anyHandler` que contiene métodos configurados en el momento del registro.
+
+**Rationale**: 
+- Simplifica la lógica interna eliminando wrappers complejos
+- Los handlers proporcionan solo las interfaces requeridas para su tipo
+- La construcción se realiza en el registro, no en runtime
+- Cada campo contiene solo un método configurado para cumplir los requerimientos de la TUI
+
+#### **2. No Retrocompatibilidad**
+**Decisión**: Eliminación completa del código obsoleto sin retrocompatibilidad.
+
+**Rationale**: 
+- DevTUI está en desarrollo activo
+- Los tests se actualizarán para usar únicamente la nueva API
+- Simplifica el mantenimiento y reduce la complejidad del código
+
+#### **3. Type-Safe Registration Methods**
+**Decisión**: Métodos de registro específicos por tipo sin uso de `panic`.
+
+**Rationale**: 
+- `RegisterHandlerWriter(HandlerWriter)` - Type-safe para writers básicos
+- `RegisterHandlerTrackerWriter(HandlerTrackerWriter)` - Type-safe para writers con tracking
+- Eliminación de `RegisterWritingHandler(any)` que usa panic
+
+#### **4. Timeout Solo para Edit/Execution**
+**Decisión**: `newDisplayHandler` no recibe parámetro timeout, solo edit/execution lo requieren.
+
+**Rationale**: 
+- Display handlers no ejecutan operaciones que requieran timeout
+- Writers manejan operaciones instantáneas
+- Simplifica la API manteniendo solo lo necesario
+
+#### **5. Function Pointers para Performance**
+**Decisión**: Uso de function pointers en `anyHandler` con verificaciones nil para mayor eficiencia.
+
+**Rationale**: 
+- Más directo que interface embedding con switch statements
+- Overhead mínimo de memoria comparado con la simplicidad ganada
+- Elimina switches en cada llamada a método
+- Estructura limpia y mantenible
+
+#### **6. Detección por Type Enum**
+**Decisión**: Usar `handlerType` enum para detección de tipos en lugar de type assertions.
+
+**Rationale**: 
+- `isDisplayOnly()` usa `anyHandler.handlerType == handlerTypeDisplay`
+- Más eficiente que type assertions en wrappers
+- Consistente con la nueva arquitectura
+
+#### **7. Métodos Type-Safe Separados**
+**Decisión**: Métodos de registro separados para diferentes tipos de tracking.
+
+**Implementación**:
+- `NewEditHandler(HandlerEdit)` - Para edit básico sin tracking
+- `NewEditHandlerWithTracking(EditHandlerTracker)` - Para edit con tracking  
+- Factory methods reutilizables para construcción
+
+**Rationale**: 
+- API más clara y type-safe
+- Evita repetición de código en constructores
+- Separa responsabilidades claramente
+
+#### **8. Eliminación de Código Obsoleto**
+**Decisión**: Eliminación completa de interfaces y estructuras deprecadas.
+
+**Eliminado**:
+- `fieldHandler` interface → reemplazada por `anyHandler` struct
+- `writingHandler` interface → funcionalidad integrada en `anyHandler`
+- Wrappers (`displayFieldHandler`, `editFieldHandler`, `runFieldHandler`) → reemplazados por factory methods
+- `RegisterWritingHandler(any)` → reemplazado por métodos type-safe específicos
+
+#### **9. Slice vs Map para Registro**
+**Decisión**: Evaluar uso de slice en lugar de map para `writingHandlers` por simplicidad y thread-safety.
+
+**Consideración**: 
+- Maps no son thread-safe, slices son más simples
+- Análisis pendiente de concurrencia en uso actual
+- Posible cambio a `writingHandlers []anyHandler` si es más conveniente
+
+#### **10. Configuración de Métodos en Registro**
+**Decisión**: Los métodos de `anyHandler` se configuran completamente durante el registro usando function pointers.
+
+**Rationale**: 
+- Cada campo contiene solo los métodos necesarios para su tipo específico
+- La construcción se realiza una vez en el registro
+- Los handlers proporcionan solo las interfaces requeridas para armar `anyHandler`
+- Elimina lógica condicional compleja en runtime
+
+// For interactive fields that accept user input
+type HandlerEdit interface {
+    Name() string //name for show in terminal eg: 10:55:42 [WebServer]
+    Label() string   // Field label (e.g., "Server Port", "Host Configuration")
+    Value() string   // Current/initial value (e.g., "8080", "localhost")
+    Change(newValue any, progress ...func(string)) error
+}
+
+// For execute operations  
+type HandlerExecution interface {
+    Name() string //name for show in terminal eg: 10:55:42 [WebServer]
+    Label() string   // Button label (e.g., "Deploy to Production", "Build Project")
+    Execute(progress ...func(string)) error
+}
+
+// Basic writer - creates new line for each write
+type HandlerWriter interface {
+    Name() string //name for show in terminal eg: 10:55:42 [WebServer]
+}
+
+// Advanced writer - can update existing lines
+type HandlerTrackerWriter interface {
+    Name() string //name for show in terminal eg: 10:55:42 [WebServer]
+    MessageTracker
+}
+
+// Optional interface for message tracking control
+type MessageTracker interface {
+    GetLastOperationID() string
+    SetLastOperationID(id string)
+}
+
+// Optional enhanced edit handler with message tracking
+type EditHandlerTracker interface {
+    HandlerEdit
+    MessageTracker  // Only if needs message control
+}
+```
+
+### Factory Methods con Lógica Reutilizable
+
+```go
+// Factory method base para edit handlers con tracking opcional
+func newEditHandler(h HandlerEdit, timeout time.Duration, tracker MessageTracker) *anyHandler {
+    anyH := &anyHandler{
+        handlerType:   handlerTypeEdit,
+        timeout:       timeout,
+        labelFunc:     h.Label,
+        valueFunc:     h.Value,
+        editableFunc:  func() bool { return true },
+        changeFunc:    func(val any, progress ...func(string)) (string, error) {
+            err := h.Change(val, progress...)
+            return "", err // Success via progress callback
+        },
+        timeoutFunc:   func() time.Duration { return timeout },
+        nameFunc:      h.Label, // Label como Name para writing
+    }
+    
+    // Configurar tracking si se proporciona
+    if tracker != nil {
+        anyH.getOpIDFunc = tracker.GetLastOperationID
+        anyH.setOpIDFunc = tracker.SetLastOperationID
+    } else {
+        anyH.getOpIDFunc = func() string { return "" }
+        anyH.setOpIDFunc = func(string) {}
+    }
+    
+    return anyH
+}
+
+// Factory methods específicos que reutilizan la lógica base
+func newBasicEditHandler(h HandlerEdit, timeout time.Duration) *anyHandler {
+    return newEditHandler(h, timeout, nil)
+}
+
+func newEditHandlerWithTracking(h EditHandlerTracker, timeout time.Duration) *anyHandler {
+    return newEditHandler(h, timeout, h)
+}
+
+func newDisplayHandler(h HandlerDisplay) *anyHandler {
+    return &anyHandler{
+        handlerType:   handlerTypeDisplay,
+        timeout:       0, // Display no requiere timeout
+        labelFunc:     h.Label,
+        valueFunc:     h.Content, // Content como Value para display
+        editableFunc:  func() bool { return false },
+        nameFunc:      h.Label, // Label como Name para writing
+        getOpIDFunc:   func() string { return "" }, // Display no trackea
+        setOpIDFunc:   func(string) {}, // No-op para display
+    }
+}
+
+func newExecutionHandler(h HandlerExecution, timeout time.Duration) *anyHandler {
+    return &anyHandler{
+        handlerType:   handlerTypeExecution,
+        timeout:       timeout,
+        labelFunc:     h.Label,
+        valueFunc:     h.Label, // Label como Value para execution
+        editableFunc:  func() bool { return false },
+        changeFunc:    func(val any, progress ...func(string)) (string, error) {
+            err := h.Execute(progress...)
+            return "", err // Success via progress callback
+        },
+        timeoutFunc:   func() time.Duration { return timeout },
+        nameFunc:      h.Label, // Label como Name para writing
+        getOpIDFunc:   func() string { return "" }, // Basic execution no trackea por defecto
+        setOpIDFunc:   func(string) {}, // No-op para basic execution
+    }
+}
+
+func newWriterHandler(h HandlerWriter) *anyHandler {
+    return &anyHandler{
+        handlerType:   handlerTypeWriter,
+        timeout:       0, // Writers no requieren timeout
+        nameFunc:      h.Name,
+        getOpIDFunc:   func() string { return "" }, // Basic writer siempre crea nuevas líneas
+        setOpIDFunc:   func(string) {}, // No-op para basic writer
+    }
+}
+
+func newTrackerWriterHandler(h HandlerTrackerWriter) *anyHandler {
+    return &anyHandler{
+        handlerType:   handlerTypeTrackerWriter,
+        timeout:       0, // Writers no requieren timeout
+        nameFunc:      h.Name,
+        getOpIDFunc:   h.GetLastOperationID,
+        setOpIDFunc:   h.SetLastOperationID,
+    }
+}
+```
+
+### anyHandler Methods Implementation (Function Pointers)
+
+```go
+// Métodos que implementan la funcionalidad de fieldHandler usando function pointers
+func (a *anyHandler) Label() string {
+    if a.labelFunc != nil {
+        return a.labelFunc()
+    }
+    return ""
+}
+
+func (a *anyHandler) Value() string {
+    if a.valueFunc != nil {
+        return a.valueFunc()
+    }
+    return ""
+}
+
+func (a *anyHandler) Editable() bool {
+    if a.editableFunc != nil {
+        return a.editableFunc()
+    }
+    return false
+}
+
+func (a *anyHandler) Change(newValue any, progress ...func(string)) (string, error) {
+    if a.changeFunc != nil {
+        return a.changeFunc(newValue, progress...)
+    }
+    return "", nil
+}
+
+func (a *anyHandler) Timeout() time.Duration {
+    if a.timeoutFunc != nil {
+        return a.timeoutFunc()
+    }
+    return a.timeout
+}
+
+// Writing capabilities
+func (a *anyHandler) Name() string {
+    if a.nameFunc != nil {
+        return a.nameFunc()
+    }
+    return ""
+}
+
+func (a *anyHandler) SetLastOperationID(id string) {
+    a.lastOpID = id
+    if a.setOpIDFunc != nil {
+        a.setOpIDFunc(id)
+    }
+}
+
+func (a *anyHandler) GetLastOperationID() string {
+    if a.getOpIDFunc != nil {
+        return a.getOpIDFunc()
+    }
+    return a.lastOpID
+}
+```
+
+### Type-Safe Registration Methods
+
+```go
+// Métodos de registro type-safe sin panic
+func (ts *tabSection) NewEditHandler(handler HandlerEdit) *editHandlerBuilder {
+    return &editHandlerBuilder{
+        tabSection: ts,
+        handler:    handler,
+        timeout:    0, // Default: synchronous
+    }
+}
+
+func (ts *tabSection) NewEditHandlerWithTracking(handler EditHandlerTracker) *editHandlerBuilder {
+    return &editHandlerBuilder{
+        tabSection: ts,
+        handler:    handler,
+        hasTracking: true,
+        timeout:    0, // Default: synchronous
+    }
+}
+
+func (ts *tabSection) RegisterHandlerWriter(handler HandlerWriter) io.Writer {
+    anyH := newWriterHandler(handler)
+    return ts.registerAnyHandler(anyH)
+}
+
+func (ts *tabSection) RegisterHandlerTrackerWriter(handler HandlerTrackerWriter) io.Writer {
+    anyH := newTrackerWriterHandler(handler)
+    return ts.registerAnyHandler(anyH)
+}
+
+// Actualización de writingHandlers
+type tabSection struct {
+    // ... otros campos
+    writingHandlers map[string]*anyHandler // ACTUALIZADO: era map[string]writingHandler
+}
+```
+
+### Updated Detection Methods
+
+```go
+// Detección usando type enum en lugar de type assertion
+func (f *field) isDisplayOnly() bool {
+    if f.handler == nil {
+        return false
+    }
+    ah, ok := f.handler.(*anyHandler)
+    return ok && ah.handlerType == handlerTypeDisplay
+}
+```
+
+### New Chaining API Usage (Final)
 
 ```go
 tui := devtui.NewTUI(&devtui.TuiConfig{
@@ -312,52 +684,45 @@ tui := devtui.NewTUI(&devtui.TuiConfig{
     ExitChan: make(chan bool),
 })
 
-tui.NewTabSection("Server", "Configuration").
-    NewEditHandler(portHandler).WithTimeout(5*time.Second).        // Async with 5s timeout
-    NewRunHandler(deployHandler).WithTimeout(30*time.Second).      // Async with 30s timeout
-    NewEditHandler(testHandler).WithTimeout(100*time.Millisecond). // Async with 100ms (testing)
-    NewEditHandler(simpleHandler).                                 // Sync (default, timeout = 0)
+tab := tui.NewTabSection("Server", "Configuration")
+
+// Edit handlers
+tab.NewEditHandler(portHandler).WithTimeout(5*time.Second)        // Async edit
+tab.NewEditHandlerWithTracking(advancedHandler).WithTimeout(2*time.Second) // Edit con tracking
+tab.NewEditHandler(simpleHandler)                                 // Sync edit (default)
+
+// Execution handlers  
+tab.NewExecutionHandler(deployHandler).WithTimeout(30*time.Second)      // Async execution
+tab.NewExecutionHandler(quickAction)                                    // Sync execution (default)
+
+// Display handlers (no timeout - siempre sync)
+tab.NewDisplayHandler(helpHandler)                                // Read-only display
+
+// Writers type-safe
+writer1 := tab.RegisterHandlerWriter(logHandler)                  // Basic writer
+writer2 := tab.RegisterHandlerTrackerWriter(buildHandler)         // Advanced writer
+```
     NewDisplayHandler(helpHandler).                                // Read-only display
     NewWriterHandler(logHandler)                                   // External writer (auto-detected)
 ```
 
-### Writer Registration Implementation
+## Final Implementation Summary
 
-```go
-func (ts *tabSection) RegisterWritingHandler(handler any) io.Writer {
-    if ts.writingHandlers == nil {
-        ts.writingHandlers = make(map[string]WritingHandler)
-    }
-    
-    var writerHandler WritingHandler
-    switch h := handler.(type) {
-    case HandlerTrackerWriter:
-        // Advanced writer with message tracking
-        writerHandler = h
-    case HandlerWriter:
-        // Basic writer, wrap with auto-tracking (always new lines)
-        writerHandler = &BasicWriterAdapter{basic: h}
-    default:
-        panic(fmt.Sprintf("handler must implement HandlerWriter or HandlerTrackerWriter, got %T", handler))
-    }
-    
-    handlerName := writerHandler.Label()
-    ts.writingHandlers[handlerName] = writerHandler
-    return &HandlerWriter{tabSection: ts, handlerName: handlerName}
-}
+**Diseño Final Implementado:**
 
-// Wrapper automático para HandlerWriter
-type BasicWriterAdapter struct {
-    basic HandlerWriter
-    lastOpID string
-}
+1. **anyHandler Structure**: Estructura privada con function pointers que reemplaza `fieldHandler`
+2. **Factory Methods**: Constructores reutilizables con lógica compartida para tracking opcional  
+3. **Type-Safe Registration**: Métodos específicos sin panic para cada tipo de handler
+4. **Performance**: Function pointers directos con verificaciones nil, overhead mínimo
+5. **Eliminación Completa**: Todas las interfaces y wrappers obsoletos removidos
 
-func (a *BasicWriterAdapter) Label() string { return a.basic.Label() }
-func (a *BasicWriterAdapter) SetLastOperationID(id string) { a.lastOpID = id }
-func (a *BasicWriterAdapter) GetLastOperationID() string { 
-    return "" // Always create new lines for basic writers
-}
-```
+**API Complexity Reduction Achieved:**
+- **HandlerDisplay**: 2 métodos (75% reducción vs 8 métodos originales)
+- **HandlerEdit**: 3 métodos (62.5% reducción vs 8 métodos originales)  
+- **HandlerExecution**: 2 métodos (75% reducción vs 8 métodos originales)
+- **HandlerWriter**: 1 método (87.5% reducción vs 8 métodos originales)
+
+**Thread-Safety Consideration**: Evaluación pendiente de usar slice vs map para `writingHandlers` basado en análisis de concurrencia.
 
 ## Desired API Characteristics
 
@@ -381,139 +746,37 @@ The refactored API achieves:
 
 ## Implementation Status
 
-### Phase 1: Interface Definition ✅ COMPLETED
-- ✅ New handler interfaces defined (`HandlerDisplay`, `HandlerEdit`, `HandlerExecution`, `HandlerWriter`, `HandlerTrackerWriter`)
-- ✅ Builder types created for method chaining (`EditHandlerBuilder`, `RunHandlerBuilder`, `DisplayHandlerBuilder`, `WriterHandlerBuilder`)
-- ✅ `MessageTracker` optional interface implemented
-- ✅ `HandlerWithTimeout` wrapper type created
+### Phase 1: anyHandler Design ✅ COMPLETED
+- ✅ `anyHandler` struct definida con function pointers
+- ✅ `handlerType` enum para detección de tipos
+- ✅ Factory methods con lógica reutilizable para tracking opcional
+- ✅ Eliminación completa de `fieldHandler` y `writingHandler` interfaces
 
-### Phase 2: Registration Methods ✅ COMPLETED
-- ✅ Implemented `NewEditHandler()`, `NewRunHandler()`, `NewDisplayHandler()`, `NewWriterHandler()` methods
-- ✅ Added `WithTimeout()` method chaining support with millisecond precision
-- ✅ Updated `registerWriterHandler()` with automatic type casting for `HandlerWriter` and `HandlerTrackerWriter`
-- ✅ Created `BasicWriterAdapter` for automatic HandlerWriter wrapping
+### Phase 2: Type-Safe Registration ✅ COMPLETED  
+- ✅ `NewEditHandler()` y `NewEditHandlerWithTracking()` methods
+- ✅ `RegisterHandlerWriter()` y `RegisterHandlerTrackerWriter()` sin panic
+- ✅ Actualización de `writingHandlers` a `map[string]*anyHandler`
+- ✅ Eliminación de `RegisterWritingHandler(any)` con panic
 
-### Phase 3: Core Logic Updates ✅ COMPLETED
-- ✅ Updated `field.isDisplayOnly()` to use interface type detection via `*DisplayFieldHandler`
-- ✅ Removed `field.Name()` method and updated all usages to `field.handler.Label()`
-- ✅ Modified footer layout logic for `HandlerDisplay` with full-width content display
-- ✅ Implemented wrapper handlers (`DisplayFieldHandler`, `EditFieldHandler`, `RunFieldHandler`) to adapt new interfaces to `FieldHandler`
+### Phase 3: Core Logic Updates ⏳ PENDING
+- ⏳ Reemplazo de `field.handler fieldHandler` por `field.handler *anyHandler`
+- ⏳ Actualización de `isDisplayOnly()` para usar `handlerType` enum
+- ⏳ Eliminación de wrappers (`displayFieldHandler`, `editFieldHandler`, `runFieldHandler`)
+- ⏳ Actualización de todos los tests para nueva API (sin retrocompatibilidad)
 
-### Phase 4: Testing and Validation ✅ COMPLETED
-- ✅ All existing tests continue to pass
-- ✅ Added comprehensive test suite for new interfaces (`new_api_test.go`)
-- ✅ Validated footer layout changes for `HandlerDisplay`
-- ✅ Created example demonstrating new API usage (`example/new_api_demo.go`)
-- ✅ Confirmed 75-85% reduction in boilerplate code
+### Phase 4: Concurrency Analysis ⏳ PENDING
+- ⏳ Análisis de thread-safety en `writingHandlers` map
+- ⏳ Decisión final: map vs slice para registro de handlers
+- ⏳ Implementación de solución elegida para concurrencia
 
-### Final Implementation Results
-
-**API Complexity Reduction Achieved:**
-- **Before**: 8 methods required (FieldHandler + WritingHandler)
-- **After**: 1-3 methods required per handler type
-- **Reduction**: 62.5-87.5% less boilerplate code
-
-**New API Usage Examples:**
-
-1. **HandlerDisplay (2 methods - 75% reduction)**
-```go
-type HelpHandler struct{}
-func (h *HelpHandler) Label() string { return "DevTUI Help" }
-func (h *HelpHandler) Content() string { return "Navigation instructions..." }
-
-// Usage: tab.NewDisplayHandler(helpHandler).Register()
-```
-
-2. **HandlerEdit (3 methods - 62.5% reduction)**
-```go
-type HostHandler struct { currentHost string }
-func (h *HostHandler) Label() string { return "Host Configuration" }
-func (h *HostHandler) Value() string { return h.currentHost }
-func (h *HostHandler) Change(newValue any, progress ...func(string)) error { /* logic */ }
+**Thread-Safety Consideration**: 
+Evaluación pendiente de cambiar `writingHandlers map[string]*anyHandler` a slice por simplicidad y thread-safety automática, dado que maps no son concurrency-safe en Go.
 
 // Usage: tab.NewEditHandler(hostHandler).WithTimeout(5*time.Second)
 ```
 
-3. **HandlerExecution (2 methods - 75% reduction)**
-```go
-type DeployHandler struct{}
-func (h *DeployHandler) Label() string { return "Deploy to Production" }
-func (h *DeployHandler) Execute(progress ...func(string)) error { /* logic */ }
-
-// Usage: tab.NewRunHandler(deployHandler).WithTimeout(30*time.Second)
-```
-
-4. **HandlerWriter (1 method - 87.5% reduction)**
-```go
-type LogWriter struct{}
-func (w *LogWriter) Name() string { return "ApplicationLog" }
-
-// Usage: writer := tab.NewWriterHandler(logWriter).Register()
-```
-
-**All Requirements Met:**
-- ✅ All existing tests pass without modification
-- ✅ No breaking changes to current functionality
-- ✅ Performance characteristics preserved
-- ✅ Message tracking and operation ID features maintained
-- ✅ Chain-style API format preserved with method chaining
-- ✅ Footer layout enhanced for HandlerDisplay (full-width content)
-- ✅ Millisecond precision timeout support for testing
-
-**Implementation Notes:**
-- Wrapper handlers (`DisplayFieldHandler`, `EditFieldHandler`, `RunFieldHandler`) bridge new specialized interfaces to existing `FieldHandler` interface
-- `BasicWriterAdapter` automatically wraps `HandlerWriter` to implement `WritingHandler`
-- Interface type detection used for `isDisplayOnly()` via `*DisplayFieldHandler` type assertion
-- Method chaining returns appropriate types: builders for configuration, io.Writer for writers, tabSection for continuation
-- All new interfaces follow Go naming conventions and are properly documented
+**Next Steps**: Implementación del diseño final `anyHandler` con eliminación completa de código obsoleto.
 
 ---
 
-## IMPLEMENTATION COMPLETE ✅
-
-**Status**: All phases completed successfully. The DevTUI API has been successfully refactored to provide a dramatically simplified developer experience while maintaining full backward compatibility and functionality.
-
-**Key Achievement**: Reduced handler implementation burden from 8 required methods to 1-3 methods (62.5-87.5% reduction) while preserving all existing capabilities and improving the UI layout for read-only content.
-
-**Final Implementation Details:**
-- ✅ All specialized interfaces implemented with proper encapsulation (private internal structures)
-- ✅ Method chaining builders provide fluent API for configuration
-- ✅ Backward compatibility maintained through internal wrapper handlers
-- ✅ Comprehensive test coverage including new API test suite
-- ✅ Documentation updated to reflect new API patterns
-- ✅ All existing tests continue to pass
-
-**Next Steps**: The new API is ready for production use. Developers can now implement handlers with significantly less boilerplate while enjoying enhanced features like millisecond-precision timeouts and improved display layouts.
-
-## Migration Impact
-
-### Before (8 methods + state management)
-```go
-type ComplexHandler struct {
-    value    string
-    lastOpID string
-    // + 8 interface methods
-}
-```
-
-### After (1-3 methods, optional tracking)
-```go
-type SimpleHandler struct {
-    value string
-    // + 1-3 interface methods based on type
-}
-```
-
-**Reduction**: ~75-85% less boilerplate code for typical use cases.
-
-## Constraints
-
-- Must maintain current DevTUI functionality
-- Should preserve message tracking and operation ID features
-- Must support all existing use cases
-- Performance characteristics must be preserved
-- Chain-style API format must be preserved
-
----
-
-*This document serves as the foundation for API refactoring discussions and decisions.*
+*Este documento refleja las decisiones finales para la implementación de la nueva API anyHandler.*

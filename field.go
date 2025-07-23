@@ -8,24 +8,23 @@ import (
 	"github.com/cdvelop/messagetype"
 )
 
-// FieldHandler interface defines the contract for field handlers
-// This replaces the individual parameters approach with a unified interface
-// Internal fieldHandler interface for backward compatibility (DEPRECATED - Use specialized handlers)
-// Users should use HandlerDisplay, HandlerEdit, HandlerExecution instead
-type FieldHandler interface {
+// Internal fieldHandler interface - bridges new specialized interfaces to internal field system
+// This interface is used internally by wrapper handlers and should not be implemented directly by users
+// Users should implement HandlerDisplay, HandlerEdit, or HandlerExecution instead
+type fieldHandler interface {
 	Label() string                                                 // Field label (e.g., "Server Port")
 	Value() string                                                 // Current field value (e.g., "8080")
 	Editable() bool                                                // Whether field is editable or action button
 	Change(newValue any, progress ...func(string)) (string, error) // Handler with optional progress callback
 	Timeout() time.Duration                                        // Return 0 for no timeout, or specific duration
 
-	// NEW: WritingHandler methods (REQUIRED for all handlers)
-	WritingHandler
+	// Internal writing capabilities for message routing
+	writingHandler
 }
 
-// Internal writingHandler interface for message tracking (DEPRECATED)
-// Users should use HandlerWriter, HandlerTrackerWriter instead
-type WritingHandler interface {
+// Internal writingHandler interface for message tracking - used by wrapper handlers
+// Users should use HandlerWriter, HandlerTrackerWriter for external writers
+type writingHandler interface {
 	Name() string                       // Handler identifier (e.g., "TinyWasm", "MainServer")
 	SetLastOperationID(lastOpID string) // DevTUI calls this after processing each message
 	GetLastOperationID() string         // Handler returns ID for message updates, "" for new messages
@@ -44,7 +43,7 @@ type internalAsyncState struct {
 // field represents a field in the TUI with async capabilities
 type field struct {
 	// NEW: Handler-based approach (replaces name, value, editable, changeFunc)
-	handler   FieldHandler // Handles all field behavior
+	handler   fieldHandler // Handles all field behavior
 	parentTab *tabSection  // Direct reference to parent for message routing
 
 	// NEW: Internal async state
@@ -67,10 +66,11 @@ func (f *field) SetCursorForTest(cursor int) {
 }
 
 // NewField creates a new field with handler-based approach, adds it to the tabSection, and returns the tabSection for chaining.
+// DEPRECATED: Use NewEditHandler, NewExecutionHandler, or NewDisplayHandler instead
 // Example usage:
 //
 //	tab.NewField(&MyHandler{})
-func (ts *tabSection) NewField(handler FieldHandler) *tabSection {
+func (ts *tabSection) NewField(handler fieldHandler) *tabSection {
 	f := &field{
 		handler:    handler,
 		parentTab:  ts,
@@ -80,7 +80,7 @@ func (ts *tabSection) NewField(handler FieldHandler) *tabSection {
 	// AUTO-REGISTER: FieldHandlers are automatically registered for writing
 	// Initialize writingHandlers map if needed
 	if ts.writingHandlers == nil {
-		ts.writingHandlers = make(map[string]WritingHandler)
+		ts.writingHandlers = make(map[string]writingHandler)
 	}
 	// Register the handler for writing capability
 	ts.writingHandlers[handler.Name()] = handler
@@ -108,7 +108,7 @@ func (f *field) Value() string {
 }
 
 // GetHandlerForTest returns the handler for testing purposes
-func (f *field) GetHandlerForTest() FieldHandler {
+func (f *field) GetHandlerForTest() fieldHandler {
 	return f.handler
 }
 

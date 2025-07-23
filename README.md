@@ -73,7 +73,7 @@ func main() {
     // Method chaining with optional timeout configuration
     tab := tui.NewTabSection("Server", "Configuration")
     tab.NewEditHandler(&HostHandler{currentHost: "localhost"}).WithTimeout(5*time.Second)
-    tab.NewRunHandler(&DeployHandler{}).WithTimeout(30*time.Second)
+    tab.NewExecutionHandler(&DeployHandler{}).WithTimeout(30*time.Second)
     tab.NewDisplayHandler(&HelpHandler{}).Register()
     
     // Writer registration
@@ -145,7 +145,7 @@ tab.NewEditHandler(handler)                      // Auto-register, timeout = 0
 // Asynchronous execution with timeout
 tab.NewEditHandler(handler).WithTimeout(5*time.Second)        // 5 seconds
 tab.NewEditHandler(handler).WithTimeout(100*time.Millisecond) // 100ms (ideal for tests)
-tab.NewRunHandler(deployHandler).WithTimeout(30*time.Second)  // 30 seconds for deployment
+tab.NewExecutionHandler(deployHandler).WithTimeout(30*time.Second)  // 30 seconds for deployment
 ```
 
 ### Writer Registration
@@ -208,7 +208,7 @@ tui := devtui.NewTUI(&devtui.TuiConfig{AppName: "ServerManager", ExitChan: make(
 tab := tui.NewTabSection("Server", "Management")
 
 tab.NewEditHandler(&PortHandler{port: "8080"}).WithTimeout(2*time.Second)
-tab.NewRunHandler(&StartServerHandler{}).WithTimeout(10*time.Second) 
+tab.NewExecutionHandler(&StartServerHandler{}).WithTimeout(10*time.Second) 
 tab.NewDisplayHandler(&StatusHandler{}).Register()
 
 // Writer for logs

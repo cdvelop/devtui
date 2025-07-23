@@ -64,8 +64,8 @@ func TestNewAPIHandlers(t *testing.T) {
 	tab.NewEditHandler(&testEditHandler{value: "async"}).WithTimeout(5 * time.Second) // Async
 
 	// Test HandlerExecution registration with and without timeout
-	tab.NewRunHandler(&testRunHandler{}).Register()                    // Sync
-	tab.NewRunHandler(&testRunHandler{}).WithTimeout(10 * time.Second) // Async
+	tab.NewExecutionHandler(&testRunHandler{}).Register()                    // Sync
+	tab.NewExecutionHandler(&testRunHandler{}).WithTimeout(10 * time.Second) // Async
 
 	// Test Writer registration
 	basicWriter := tab.NewWriterHandler(&testWriterBasic{}).Register()

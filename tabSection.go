@@ -42,8 +42,8 @@ type tabSection struct {
 	tui                  *DevTUI
 	mu                   sync.RWMutex // Para proteger tabContents de race conditions
 
-	// NEW: Writing handler registry for external handlers
-	writingHandlers map[string]WritingHandler // handlerName -> WritingHandler instance
+	// Writing handler registry for external handlers using new interfaces
+	writingHandlers map[string]writingHandler // handlerName -> writingHandler instance
 	activeWriter    string                    // current active writer name for io.Writer calls
 }
 
@@ -75,10 +75,35 @@ func (ts *tabSection) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-// NEW: RegisterWritingHandler registers a writing handler and returns a dedicated writer
-func (ts *tabSection) RegisterWritingHandler(handler WritingHandler) io.Writer {
+// RegisterHandlerWriter registers a basic writer handler and returns a dedicated writer
+func (ts *tabSection) RegisterHandlerWriter(handler HandlerWriter) io.Writer {
 	if ts.writingHandlers == nil {
-		ts.writingHandlers = make(map[string]WritingHandler)
+		ts.writingHandlers = make(map[string]writingHandler)
+	}
+
+	// Basic writer, wrap with auto-tracking (always new lines)
+	writerHandler := &basicWriterAdapter{basic: handler}
+
+	handlerName := writerHandler.Name()
+	ts.writingHandlers[handlerName] = writerHandler
+	return &handlerWriter{tabSection: ts, handlerName: handlerName}
+}
+
+// RegisterHandlerTrackerWriter registers an advanced writer handler with message tracking and returns a dedicated writer
+func (ts *tabSection) RegisterHandlerTrackerWriter(handler HandlerTrackerWriter) io.Writer {
+	if ts.writingHandlers == nil {
+		ts.writingHandlers = make(map[string]writingHandler)
+	}
+
+	handlerName := handler.Name()
+	ts.writingHandlers[handlerName] = handler
+	return &handlerWriter{tabSection: ts, handlerName: handlerName}
+}
+
+// DEPRECATED: RegisterWritingHandler - Use RegisterHandlerWriter or RegisterHandlerTrackerWriter instead
+func (ts *tabSection) RegisterWritingHandler(handler writingHandler) io.Writer {
+	if ts.writingHandlers == nil {
+		ts.writingHandlers = make(map[string]writingHandler)
 	}
 
 	handlerName := handler.Name()

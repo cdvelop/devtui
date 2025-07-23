@@ -86,7 +86,7 @@ func main() {
 
 	// Operations tab with RunHandlers (action buttons)
 	ops := tui.NewTabSection("Operations", "System Operations")
-	ops.NewRunHandler(&BackupHandler{}).WithTimeout(15 * time.Second)
+	ops.NewExecutionHandler(&BackupHandler{}).WithTimeout(15 * time.Second)
 
 	// Logging tab with Writers
 	logs := tui.NewTabSection("Logs", "System Logs")

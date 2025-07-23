@@ -11,8 +11,8 @@ func (ts *tabSection) NewEditHandler(handler HandlerEdit) *editHandlerBuilder {
 	}
 }
 
-// NewRunHandler creates a new RunHandlerBuilder for method chaining
-func (ts *tabSection) NewRunHandler(handler HandlerExecution) *executionHandlerBuilder {
+// NewExecutionHandler creates a new RunHandlerBuilder for method chaining
+func (ts *tabSection) NewExecutionHandler(handler HandlerExecution) *executionHandlerBuilder {
 	return &executionHandlerBuilder{
 		tabSection: ts,
 		handler:    handler,

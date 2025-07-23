@@ -30,6 +30,7 @@ type tuiStyle struct {
 	fieldLineStyle     lipgloss.Style
 	fieldSelectedStyle lipgloss.Style
 	fieldEditingStyle  lipgloss.Style
+	fieldReadOnlyStyle lipgloss.Style // NEW: For readonly fields (empty label)
 
 	textContentStyle  lipgloss.Style
 	lineHeadFootStyle lipgloss.Style // header right and footer left line
@@ -95,6 +96,11 @@ func newTuiStyle(cs *ColorStyle) *tuiStyle {
 
 	t.fieldEditingStyle = t.fieldSelectedStyle.
 		Foreground(lipgloss.Color(t.Background))
+
+	// NEW: Readonly style - highlight background with clear text for readonly fields (empty label)
+	t.fieldReadOnlyStyle = t.fieldSelectedStyle.
+		Background(lipgloss.Color(t.Highlight)).
+		Foreground(lipgloss.Color(t.Foreground))
 
 	// Estilo para los mensajes - VISUAL UPGRADE: Padding interno para mejor legibilidad
 	t.textContentStyle = lipgloss.NewStyle().

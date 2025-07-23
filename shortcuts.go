@@ -38,8 +38,8 @@ Application:
 	return &ShortcutsHandler{shortcuts: shortcuts}
 }
 
-func (h *ShortcutsHandler) Label() string          { return "Keyboard Shortcuts" }
-func (h *ShortcutsHandler) Value() string          { return "Press Enter to view" }
+func (h *ShortcutsHandler) Label() string          { return "" } // EMPTY = readonly display
+func (h *ShortcutsHandler) Value() string          { return "Keyboard Navigation Commands" }
 func (h *ShortcutsHandler) Editable() bool         { return false }
 func (h *ShortcutsHandler) Timeout() time.Duration { return 0 }
 
@@ -50,4 +50,4 @@ func (h *ShortcutsHandler) Change(newValue any, progress ...func(string)) (strin
 // WritingHandler methods
 func (h *ShortcutsHandler) Name() string                       { return "Shortcuts" }
 func (h *ShortcutsHandler) SetLastOperationID(lastOpID string) { h.lastOpID = lastOpID }
-func (h *ShortcutsHandler) GetLastOperationID() string         { return "" } // Always create new messages
+func (h *ShortcutsHandler) GetLastOperationID() string         { return "" }

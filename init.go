@@ -113,8 +113,9 @@ func NewTUI(c *TuiConfig) *DevTUI {
 	shortcutsTab.NewField(shortcutsHandler)
 
 	// Automatically display shortcuts content when tab is created (unless in test mode)
+	// Use sendMessageWithHandler to respect readonly handler formatting
 	if !c.TestMode {
-		tui.sendMessage(shortcutsHandler.shortcuts, messagetype.Info, shortcutsTab)
+		tui.sendMessageWithHandler(shortcutsHandler.shortcuts, messagetype.Info, shortcutsTab, shortcutsHandler.Name(), "")
 	}
 
 	tui.tea = tea.NewProgram(tui,

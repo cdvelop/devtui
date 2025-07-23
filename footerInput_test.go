@@ -175,66 +175,6 @@ func TestRenderFooterInput(t *testing.T) {
 	})
 }
 
-// Nuevo test para verificar el modo automático de edición
-func TestAutoEditMode(t *testing.T) {
-	h := DefaultTUIForTest(func(messages ...any) {
-		// Test logger - do nothing
-	})
-
-	t.Run("Auto edit mode activates with single editable field", func(t *testing.T) {
-		// Configurar un solo campo editable
-		tab := h.tabSections[h.activeTab]
-		tab.setFieldHandlers([]*field{})
-		testHandler := NewTestFieldHandler("Test", "Value", true, nil)
-		tab.NewField(testHandler)
-		h.editModeActivated = false // Iniciar no en modo edición
-
-		// Llamar al método que verifica si debe activar modo edición automático
-		h.checkAutoEditMode()
-
-		// Verificar que se activó el modo edición
-		if !h.editModeActivated {
-			t.Error("El modo edición debería activarse automáticamente con un solo campo editable")
-		}
-	})
-
-	t.Run("Auto edit mode does not activate with multiple fields", func(t *testing.T) {
-		// Configurar múltiples campos
-		tab := h.tabSections[h.activeTab]
-		tab.setFieldHandlers([]*field{})
-		testHandler1 := NewTestFieldHandler("Test1", "Value1", true, nil)
-		testHandler2 := NewTestFieldHandler("Test2", "Value2", true, nil)
-		tab.NewField(testHandler1).
-			NewField(testHandler2)
-		h.editModeActivated = false // Iniciar no en modo edición
-
-		// Llamar al método que verifica si debe activar modo edición automático
-		h.checkAutoEditMode()
-
-		// Verificar que NO se activó el modo edición
-		if h.editModeActivated {
-			t.Error("El modo edición NO debería activarse automáticamente con múltiples campos")
-		}
-	})
-
-	t.Run("Auto edit mode does not activate with non-editable field", func(t *testing.T) {
-		// Configurar un solo campo NO editable
-		tab := h.tabSections[h.activeTab]
-		tab.setFieldHandlers([]*field{})
-		testHandler := NewTestFieldHandler("Test", "Value", false, nil)
-		tab.NewField(testHandler)
-		h.editModeActivated = false // Iniciar no en modo edición
-
-		// Llamar al método que verifica si debe activar modo edición automático
-		h.checkAutoEditMode()
-
-		// Verificar que NO se activó el modo edición
-		if h.editModeActivated {
-			t.Error("El modo edición NO debería activarse automáticamente con un campo no editable")
-		}
-	})
-}
-
 // Nuevos tests para la navegación y comportamiento de teclas
 func TestInputNavigation(t *testing.T) {
 	h := DefaultTUIForTest(func(messages ...any) {

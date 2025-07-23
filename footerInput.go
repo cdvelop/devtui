@@ -57,8 +57,8 @@ func (h *DevTUI) renderFooterInput() string {
 	// Obtener el padding utilizado en el header/footer para mantener consistencia
 	horizontalPadding := 1 // Este valor viene del Padding(0, 1) en headerTitleStyle
 
-	// Truncar la etiqueta si es necesario y añadir ":" al final
-	labelText := tinystring.Convert(field.Name()).Truncate(labelWidth-1, 0).String() + ":"
+	// Truncar la etiqueta si es necesario (sin agregar ":")
+	labelText := tinystring.Convert(field.Name()).Truncate(labelWidth-1, 0).String()
 
 	// Aplicar el estilo base para garantizar un ancho fijo
 	fixedWidthLabel := h.labelStyle.Render(labelText)
@@ -81,8 +81,11 @@ func (h *DevTUI) renderFooterInput() string {
 		valueText = field.tempEditValue
 	}
 
-	// Mostrar cursor solo si estamos en modo edición y el campo es editable
-	if h.editModeActivated && field.Editable() {
+	// Truncar el valor para que no afecte el diseño del footer
+	valueText = tinystring.Convert(valueText).Truncate(valueWidth, 0).String()
+
+	// Mostrar cursor solo si estamos en modo edición y el campo es editable y NO es readonly
+	if h.editModeActivated && field.Editable() && !field.isDisplayOnly() {
 		showCursor = true
 	}
 
@@ -92,13 +95,19 @@ func (h *DevTUI) renderFooterInput() string {
 		Padding(0, horizontalPadding) // Añadir padding consistente
 
 	// Aplicar estilos según el estado
-	if h.editModeActivated && field.Editable() {
+	if field.isDisplayOnly() { // NEW: Empty label detection (exactly "")
+		// Use fieldReadOnlyStyle - highlight background with clear text
+		inputValueStyle = inputValueStyle.
+			Background(lipgloss.Color(h.Highlight)).
+			Foreground(lipgloss.Color(h.Foreground)) // Clear text on highlight
+		// No cursor allowed, no interaction
+	} else if h.editModeActivated && field.Editable() {
 		// Estilo para edición activa
 		inputValueStyle = inputValueStyle.
 			Background(lipgloss.Color(h.Lowlight)).
 			Foreground(lipgloss.Color(h.Foreground))
 	} else if !field.Editable() {
-		// Estilo para campos no editables
+		// Estilo para campos no editables (action buttons)
 		inputValueStyle = inputValueStyle.
 			Background(lipgloss.Color(h.Foreground)).
 			Foreground(lipgloss.Color(h.Background))

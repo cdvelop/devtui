@@ -177,16 +177,10 @@ func (h *DevTUI) handleNormalModeKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 
 	case tea.KeyTab: // cambiar tabSection
 		h.activeTab = (h.activeTab + 1) % len(h.tabSections)
-
-		// Comprobar si debe entrar automáticamente en modo edición
-		h.checkAutoEditMode()
 		h.updateViewport()
 
 	case tea.KeyShiftTab: // cambiar tabSection
 		h.activeTab = (h.activeTab - 1 + len(h.tabSections)) % len(h.tabSections)
-
-		// Comprobar si debe entrar automáticamente en modo edición
-		h.checkAutoEditMode()
 		h.updateViewport()
 
 	case tea.KeyEnter: //Enter para entrar en modo edición, ejecuta la acción directamente si el campo no es editable
@@ -215,24 +209,4 @@ func (h *DevTUI) handleNormalModeKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 	}
 
 	return true, nil
-}
-
-// checkAutoEditMode verifica si debe entrar automáticamente en modo edición
-// cuando hay un solo campo y este es editable
-func (h *DevTUI) checkAutoEditMode() {
-	currentTab := h.tabSections[h.activeTab]
-
-	// Entrar automáticamente en modo edición si hay un solo campo editable
-	fieldHandlers := currentTab.FieldHandlers()
-	if len(fieldHandlers) == 1 && fieldHandlers[0].Editable() {
-		h.editModeActivated = true
-		currentTab.indexActiveEditField = 0
-		// Inicializar tempEditValue y cursor
-		field := fieldHandlers[0]
-		field.tempEditValue = field.Value()
-		field.cursor = 0
-	} else {
-		// Si hay múltiples campos, no entrar en modo edición automáticamente
-		h.editModeActivated = false
-	}
 }

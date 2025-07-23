@@ -55,6 +55,11 @@ func (d *DevTUI) sendMessageWithHandler(content string, mt messagetype.Type, tab
 
 // formatMessage formatea un mensaje según su tipo
 func (t *DevTUI) formatMessage(msg tabContent) string {
+	// Check if message comes from a readonly field handler
+	if msg.handlerName != "" && t.isReadOnlyHandler(msg.handlerName) {
+		// For readonly fields: no timestamp, cleaner visual content, no special coloring
+		return msg.Content
+	}
 
 	var timeStr string
 	if t.id != nil {
@@ -87,6 +92,20 @@ func (t *DevTUI) formatMessage(msg tabContent) string {
 	}
 
 	return fmt.Sprintf("%s %s%s", timeStr, handlerName, msg.Content)
+}
+
+// Helper to detect readonly handlers
+func (t *DevTUI) isReadOnlyHandler(handlerName string) bool {
+	// Check if handler has empty label (readonly convention)
+	for _, tab := range t.tabSections {
+		if handler, exists := tab.writingHandlers[handlerName]; exists {
+			// Cast to FieldHandler to check Label()
+			if fieldHandler, ok := handler.(FieldHandler); ok {
+				return fieldHandler.Label() == ""
+			}
+		}
+	}
+	return false
 }
 
 // createTabContent creates tabContent with unified logic (replaces newContent and newContentWithHandler)

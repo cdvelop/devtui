@@ -124,6 +124,16 @@ func (f *field) Editable() bool {
 	return false
 }
 
+// READONLY FIELD CONVENTION:
+// - FieldHandler with Label() == "" (exactly empty string) indicates readonly/info display
+// - Uses fieldReadOnlyStyle (highlight background + clear text)
+// - No keyboard interaction allowed (no cursor, no Enter response)
+// - Message content displayed without timestamp for cleaner visual
+// - Navigation between fields works, but no interaction within readonly content
+func (f *field) isDisplayOnly() bool {
+	return f.handler != nil && f.handler.Label() == ""
+}
+
 func (f *field) SetCursorAtEnd() {
 	// Calculate cursor position based on rune count, not byte count
 	if f.handler != nil {
@@ -347,6 +357,11 @@ func (f *field) executeChangeSyncWithValue(valueToSave any) {
 // handleEnter triggers async operation when user presses Enter
 func (f *field) handleEnter() {
 	if f.handler == nil {
+		return
+	}
+
+	// NEW: Readonly fields don't respond to any keys
+	if f.isDisplayOnly() {
 		return
 	}
 

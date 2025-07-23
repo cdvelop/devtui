@@ -5,10 +5,10 @@ import (
 	"time"
 )
 
-// editHandlerBuilder provides method chaining for EditHandler registration with optional timeout.
+// editHandlerBuilder provides method chaining for HandlerEdit registration with optional timeout.
 type editHandlerBuilder struct {
 	tabSection *tabSection
-	handler    EditHandler
+	handler    HandlerEdit
 	timeout    time.Duration
 }
 
@@ -31,10 +31,10 @@ func (b *editHandlerBuilder) Register() *tabSection {
 	return b.WithTimeout(0)
 }
 
-// executionHandlerBuilder provides method chaining for ExecutionHandler registration with optional timeout.
+// executionHandlerBuilder provides method chaining for HandlerExecution registration with optional timeout.
 type executionHandlerBuilder struct {
 	tabSection *tabSection
-	handler    ExecutionHandler
+	handler    HandlerExecution
 	timeout    time.Duration
 }
 
@@ -57,14 +57,14 @@ func (b *executionHandlerBuilder) Register() *tabSection {
 	return b.WithTimeout(0)
 }
 
-// displayHandlerBuilder provides method chaining for DisplayHandler registration.
+// displayHandlerBuilder provides method chaining for HandlerDisplay registration.
 // DisplayHandlers are always synchronous and don't support timeout configuration.
 type displayHandlerBuilder struct {
 	tabSection *tabSection
-	handler    DisplayHandler
+	handler    HandlerDisplay
 }
 
-// Register finalizes the DisplayHandler registration.
+// Register finalizes the HandlerDisplay registration.
 func (b *displayHandlerBuilder) Register() *tabSection {
 	b.tabSection.registerHandler(b.handler)
 	return b.tabSection
@@ -73,7 +73,7 @@ func (b *displayHandlerBuilder) Register() *tabSection {
 // writerHandlerBuilder provides method chaining for Writer registration.
 type writerHandlerBuilder struct {
 	tabSection *tabSection
-	handler    any // WriterBasic or WriterTracker
+	handler    any // HandlerWriter or HandlerTrackerWriter
 }
 
 // Register finalizes the Writer registration and returns the io.Writer.

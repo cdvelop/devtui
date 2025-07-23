@@ -56,14 +56,14 @@ func TestNewAPIHandlers(t *testing.T) {
 	// Create tab section
 	tab := tui.NewTabSection("Test", "Testing new API")
 
-	// Test DisplayHandler registration
+	// Test HandlerDisplay registration
 	tab.NewDisplayHandler(&testDisplayHandler{}).Register()
 
-	// Test EditHandler registration with and without timeout
+	// Test HandlerEdit registration with and without timeout
 	tab.NewEditHandler(&testEditHandler{value: "initial"}).Register()                 // Sync
 	tab.NewEditHandler(&testEditHandler{value: "async"}).WithTimeout(5 * time.Second) // Async
 
-	// Test ExecutionHandler registration with and without timeout
+	// Test HandlerExecution registration with and without timeout
 	tab.NewRunHandler(&testRunHandler{}).Register()                    // Sync
 	tab.NewRunHandler(&testRunHandler{}).WithTimeout(10 * time.Second) // Async
 
@@ -79,12 +79,12 @@ func TestNewAPIHandlers(t *testing.T) {
 	// Test field types
 	fields := tab.fieldHandlers
 
-	// First field should be DisplayHandler (read-only)
+	// First field should be HandlerDisplay (read-only)
 	if !fields[0].isDisplayOnly() {
 		t.Error("First field should be display-only")
 	}
 
-	// Second and third fields should be EditHandler (editable)
+	// Second and third fields should be HandlerEdit (editable)
 	if !fields[1].Editable() {
 		t.Error("Second field should be editable")
 	}
@@ -92,7 +92,7 @@ func TestNewAPIHandlers(t *testing.T) {
 		t.Error("Third field should be editable")
 	}
 
-	// Fourth and fifth fields should be ExecutionHandler (not editable, but not display-only)
+	// Fourth and fifth fields should be HandlerExecution (not editable, but not display-only)
 	if fields[3].Editable() {
 		t.Error("Fourth field should not be editable")
 	}

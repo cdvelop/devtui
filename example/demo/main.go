@@ -9,7 +9,7 @@ import (
 
 // Example showcasing all new handler types with minimal implementation
 
-// 1. DisplayHandler - Read-only information display (2 methods - 75% reduction)
+// 1. HandlerDisplay - Read-only information display (2 methods - 75% reduction)
 type StatusHandler struct{}
 
 func (h *StatusHandler) Label() string { return "System Status" }
@@ -17,7 +17,7 @@ func (h *StatusHandler) Content() string {
 	return "Status: Running\nPID: 12345\nUptime: 2h 30m\nMemory: 45MB\nCPU: 12%"
 }
 
-// 2. EditHandler - Interactive input fields (3 methods - 62.5% reduction)
+// 2. HandlerEdit - Interactive input fields (3 methods - 62.5% reduction)
 type DatabaseHandler struct {
 	connectionString string
 }
@@ -36,7 +36,7 @@ func (h *DatabaseHandler) Change(newValue any, progress ...func(string)) error {
 	return nil
 }
 
-// 3. ExecutionHandler - Action buttons (2 methods - 75% reduction)
+// 3. HandlerExecution - Action buttons (2 methods - 75% reduction)
 type BackupHandler struct{}
 
 func (h *BackupHandler) Label() string { return "Create System Backup" }
@@ -53,12 +53,12 @@ func (h *BackupHandler) Execute(progress ...func(string)) error {
 	return nil
 }
 
-// 4. WriterBasic - Simple logging (1 method - 87.5% reduction)
+// 4. HandlerWriter - Simple logging (1 method - 87.5% reduction)
 type SystemLogWriter struct{}
 
 func (w *SystemLogWriter) Name() string { return "SystemLog" }
 
-// 5. WriterTracker - Advanced logging with message tracking (3 methods)
+// 5. HandlerTrackerWriter - Advanced logging with message tracking (3 methods)
 type OperationLogWriter struct {
 	lastOpID string
 }

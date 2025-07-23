@@ -51,13 +51,13 @@ func (h *DevTUI) renderFooterInput() string {
 
 	field := fieldHandlers[tabSection.indexActiveEditField]
 
-	// Check if this is a DisplayHandler for special layout
+	// Check if this is a HandlerDisplay for special layout
 	if field.isDisplayOnly() {
-		// Special layout for DisplayHandler: full width label, no separate value section
+		// Special layout for HandlerDisplay: full width label, no separate value section
 		horizontalPadding := 1
 		info := h.renderScrollInfo()
 
-		// Use full width for label content (field content from DisplayHandler.Content())
+		// Use full width for label content (field content from HandlerDisplay.Content())
 		fullWidth := h.viewport.Width - lipgloss.Width(info) - horizontalPadding*2
 		labelText := tinystring.Convert(field.handler.Value()).Truncate(fullWidth-1, 0).String()
 

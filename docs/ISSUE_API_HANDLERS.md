@@ -68,7 +68,7 @@ type HostHandler struct {
     currentHost string
 }
 
-// EditHandler implementation (3 methods)
+// HandlerEdit implementation (3 methods)
 func (h *HostHandler) Label() string { return "Host Configuration" }
 func (h *HostHandler) Value() string { return h.currentHost }
 func (h *HostHandler) Change(newValue any, progress ...func(string)) error {
@@ -262,31 +262,31 @@ Even standalone writers (non-fields) require:
 
 ```go
 // Base interface for read-only information display
-type DisplayHandler interface {
+type HandlerDisplay interface {
     Label() string   // Display label (e.g., "Help", "Status")
     Content() string // Display content (e.g., "help\n1-..\n2-...", "executing deploy wait...")
 }
 
 // For interactive fields that accept user input
-type EditHandler interface {
+type HandlerEdit interface {
     Label() string   // Field label (e.g., "Server Port", "Host Configuration")
     Value() string   // Current/initial value (e.g., "8080", "localhost")
     Change(newValue any, progress ...func(string)) error
 }
 
-// For action buttons that execute operations  
-type ExecutionHandler interface {
+// For execute operations  
+type HandlerExecution interface {
     Label() string   // Button label (e.g., "Deploy to Production", "Build Project")
     Execute(progress ...func(string)) error
 }
 
 // Basic writer - creates new line for each write
-type WriterBasic interface {
+type HandlerWriter interface {
     Label() string // Writer identifier (e.g., "webBuilder", "ApplicationLog")
 }
 
 // Advanced writer - can update existing lines
-type WriterTracker interface {
+type HandlerTrackerWriter interface {
     Label() string
     MessageTracker
 }
@@ -299,7 +299,7 @@ type MessageTracker interface {
 
 // Optional enhanced edit handler with message tracking
 type EditHandlerTracker interface {
-    EditHandler
+    HandlerEdit
     MessageTracker  // Only if needs message control
 }
 ```
@@ -331,14 +331,14 @@ func (ts *tabSection) RegisterWritingHandler(handler any) io.Writer {
     
     var writerHandler WritingHandler
     switch h := handler.(type) {
-    case WriterTracker:
+    case HandlerTrackerWriter:
         // Advanced writer with message tracking
         writerHandler = h
-    case WriterBasic:
+    case HandlerWriter:
         // Basic writer, wrap with auto-tracking (always new lines)
         writerHandler = &BasicWriterAdapter{basic: h}
     default:
-        panic(fmt.Sprintf("handler must implement WriterBasic or WriterTracker, got %T", handler))
+        panic(fmt.Sprintf("handler must implement HandlerWriter or HandlerTrackerWriter, got %T", handler))
     }
     
     handlerName := writerHandler.Label()
@@ -346,9 +346,9 @@ func (ts *tabSection) RegisterWritingHandler(handler any) io.Writer {
     return &HandlerWriter{tabSection: ts, handlerName: handlerName}
 }
 
-// Wrapper automático para WriterBasic
+// Wrapper automático para HandlerWriter
 type BasicWriterAdapter struct {
-    basic WriterBasic
+    basic HandlerWriter
     lastOpID string
 }
 
@@ -382,7 +382,7 @@ The refactored API achieves:
 ## Implementation Status
 
 ### Phase 1: Interface Definition ✅ COMPLETED
-- ✅ New handler interfaces defined (`DisplayHandler`, `EditHandler`, `ExecutionHandler`, `WriterBasic`, `WriterTracker`)
+- ✅ New handler interfaces defined (`HandlerDisplay`, `HandlerEdit`, `HandlerExecution`, `HandlerWriter`, `HandlerTrackerWriter`)
 - ✅ Builder types created for method chaining (`EditHandlerBuilder`, `RunHandlerBuilder`, `DisplayHandlerBuilder`, `WriterHandlerBuilder`)
 - ✅ `MessageTracker` optional interface implemented
 - ✅ `HandlerWithTimeout` wrapper type created
@@ -390,19 +390,19 @@ The refactored API achieves:
 ### Phase 2: Registration Methods ✅ COMPLETED
 - ✅ Implemented `NewEditHandler()`, `NewRunHandler()`, `NewDisplayHandler()`, `NewWriterHandler()` methods
 - ✅ Added `WithTimeout()` method chaining support with millisecond precision
-- ✅ Updated `registerWriterHandler()` with automatic type casting for `WriterBasic` and `WriterTracker`
-- ✅ Created `BasicWriterAdapter` for automatic WriterBasic wrapping
+- ✅ Updated `registerWriterHandler()` with automatic type casting for `HandlerWriter` and `HandlerTrackerWriter`
+- ✅ Created `BasicWriterAdapter` for automatic HandlerWriter wrapping
 
 ### Phase 3: Core Logic Updates ✅ COMPLETED
 - ✅ Updated `field.isDisplayOnly()` to use interface type detection via `*DisplayFieldHandler`
 - ✅ Removed `field.Name()` method and updated all usages to `field.handler.Label()`
-- ✅ Modified footer layout logic for `DisplayHandler` with full-width content display
+- ✅ Modified footer layout logic for `HandlerDisplay` with full-width content display
 - ✅ Implemented wrapper handlers (`DisplayFieldHandler`, `EditFieldHandler`, `RunFieldHandler`) to adapt new interfaces to `FieldHandler`
 
 ### Phase 4: Testing and Validation ✅ COMPLETED
 - ✅ All existing tests continue to pass
 - ✅ Added comprehensive test suite for new interfaces (`new_api_test.go`)
-- ✅ Validated footer layout changes for `DisplayHandler`
+- ✅ Validated footer layout changes for `HandlerDisplay`
 - ✅ Created example demonstrating new API usage (`example/new_api_demo.go`)
 - ✅ Confirmed 75-85% reduction in boilerplate code
 
@@ -415,7 +415,7 @@ The refactored API achieves:
 
 **New API Usage Examples:**
 
-1. **DisplayHandler (2 methods - 75% reduction)**
+1. **HandlerDisplay (2 methods - 75% reduction)**
 ```go
 type HelpHandler struct{}
 func (h *HelpHandler) Label() string { return "DevTUI Help" }
@@ -424,7 +424,7 @@ func (h *HelpHandler) Content() string { return "Navigation instructions..." }
 // Usage: tab.NewDisplayHandler(helpHandler).Register()
 ```
 
-2. **EditHandler (3 methods - 62.5% reduction)**
+2. **HandlerEdit (3 methods - 62.5% reduction)**
 ```go
 type HostHandler struct { currentHost string }
 func (h *HostHandler) Label() string { return "Host Configuration" }
@@ -434,7 +434,7 @@ func (h *HostHandler) Change(newValue any, progress ...func(string)) error { /* 
 // Usage: tab.NewEditHandler(hostHandler).WithTimeout(5*time.Second)
 ```
 
-3. **ExecutionHandler (2 methods - 75% reduction)**
+3. **HandlerExecution (2 methods - 75% reduction)**
 ```go
 type DeployHandler struct{}
 func (h *DeployHandler) Label() string { return "Deploy to Production" }
@@ -443,7 +443,7 @@ func (h *DeployHandler) Execute(progress ...func(string)) error { /* logic */ }
 // Usage: tab.NewRunHandler(deployHandler).WithTimeout(30*time.Second)
 ```
 
-4. **WriterBasic (1 method - 87.5% reduction)**
+4. **HandlerWriter (1 method - 87.5% reduction)**
 ```go
 type LogWriter struct{}
 func (w *LogWriter) Name() string { return "ApplicationLog" }
@@ -457,12 +457,12 @@ func (w *LogWriter) Name() string { return "ApplicationLog" }
 - ✅ Performance characteristics preserved
 - ✅ Message tracking and operation ID features maintained
 - ✅ Chain-style API format preserved with method chaining
-- ✅ Footer layout enhanced for DisplayHandler (full-width content)
+- ✅ Footer layout enhanced for HandlerDisplay (full-width content)
 - ✅ Millisecond precision timeout support for testing
 
 **Implementation Notes:**
 - Wrapper handlers (`DisplayFieldHandler`, `EditFieldHandler`, `RunFieldHandler`) bridge new specialized interfaces to existing `FieldHandler` interface
-- `BasicWriterAdapter` automatically wraps `WriterBasic` to implement `WritingHandler`
+- `BasicWriterAdapter` automatically wraps `HandlerWriter` to implement `WritingHandler`
 - Interface type detection used for `isDisplayOnly()` via `*DisplayFieldHandler` type assertion
 - Method chaining returns appropriate types: builders for configuration, io.Writer for writers, tabSection for continuation
 - All new interfaces follow Go naming conventions and are properly documented

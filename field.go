@@ -11,7 +11,7 @@ import (
 // FieldHandler interface defines the contract for field handlers
 // This replaces the individual parameters approach with a unified interface
 // Internal fieldHandler interface for backward compatibility (DEPRECATED - Use specialized handlers)
-// Users should use DisplayHandler, EditHandler, ExecutionHandler instead
+// Users should use HandlerDisplay, HandlerEdit, HandlerExecution instead
 type FieldHandler interface {
 	Label() string                                                 // Field label (e.g., "Server Port")
 	Value() string                                                 // Current field value (e.g., "8080")
@@ -24,7 +24,7 @@ type FieldHandler interface {
 }
 
 // Internal writingHandler interface for message tracking (DEPRECATED)
-// Users should use WriterBasic, WriterTracker instead
+// Users should use HandlerWriter, HandlerTrackerWriter instead
 type WritingHandler interface {
 	Name() string                       // Handler identifier (e.g., "TinyWasm", "MainServer")
 	SetLastOperationID(lastOpID string) // DevTUI calls this after processing each message
@@ -129,7 +129,7 @@ func (f *field) isDisplayOnly() bool {
 	if f.handler == nil {
 		return false
 	}
-	// Check if handler implements DisplayHandler interface (via wrapper)
+	// Check if handler implements HandlerDisplay interface (via wrapper)
 	_, isDisplayHandler := f.handler.(*displayFieldHandler)
 	return isDisplayHandler
 }

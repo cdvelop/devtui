@@ -283,12 +283,12 @@ func (t *DevTUI) GetTotalTabSections() int {
 
 // NEW: Registration methods for specialized handler interfaces
 
-// registerHandler registers a handler (DisplayHandler) as a field
+// registerHandler registers a handler (HandlerDisplay) as a field
 func (ts *tabSection) registerHandler(handler any) {
 	var fieldHandler FieldHandler
 
 	switch h := handler.(type) {
-	case DisplayHandler:
+	case HandlerDisplay:
 		fieldHandler = &displayFieldHandler{display: h, timeout: 0}
 	default:
 		panic(fmt.Sprintf("unsupported handler type: %T", handler))
@@ -307,9 +307,9 @@ func (ts *tabSection) registerHandlerWithTimeout(wrapper *handlerWithTimeout) {
 	var fieldHandler FieldHandler
 
 	switch h := wrapper.Handler.(type) {
-	case EditHandler:
+	case HandlerEdit:
 		fieldHandler = &editFieldHandler{edit: h, timeout: wrapper.Timeout}
-	case ExecutionHandler:
+	case HandlerExecution:
 		fieldHandler = &runFieldHandler{run: h, timeout: wrapper.Timeout}
 	default:
 		panic(fmt.Sprintf("unsupported handler type: %T", wrapper.Handler))
@@ -323,7 +323,7 @@ func (ts *tabSection) registerHandlerWithTimeout(wrapper *handlerWithTimeout) {
 	ts.addFields(f)
 }
 
-// registerWriterHandler registers a writer handler (WriterBasic or WriterTracker)
+// registerWriterHandler registers a writer handler (HandlerWriter or HandlerTrackerWriter)
 func (ts *tabSection) registerWriterHandler(handler any) io.Writer {
 	if ts.writingHandlers == nil {
 		ts.writingHandlers = make(map[string]WritingHandler)
@@ -331,14 +331,14 @@ func (ts *tabSection) registerWriterHandler(handler any) io.Writer {
 
 	var writerHandler WritingHandler
 	switch h := handler.(type) {
-	case WriterTracker:
+	case HandlerTrackerWriter:
 		// Advanced writer with message tracking
 		writerHandler = h
-	case WriterBasic:
+	case HandlerWriter:
 		// Basic writer, wrap with auto-tracking (always new lines)
 		writerHandler = &basicWriterAdapter{basic: h}
 	default:
-		panic(fmt.Sprintf("handler must implement WriterBasic or WriterTracker, got %T", handler))
+		panic(fmt.Sprintf("handler must implement HandlerWriter or HandlerTrackerWriter, got %T", handler))
 	}
 
 	handlerName := writerHandler.Name()
@@ -346,9 +346,9 @@ func (ts *tabSection) registerWriterHandler(handler any) io.Writer {
 	return &handlerWriter{tabSection: ts, handlerName: handlerName}
 }
 
-// basicWriterAdapter wraps WriterBasic to implement WritingHandler
+// basicWriterAdapter wraps HandlerWriter to implement WritingHandler
 type basicWriterAdapter struct {
-	basic    WriterBasic
+	basic    HandlerWriter
 	lastOpID string
 }
 

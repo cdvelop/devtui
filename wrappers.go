@@ -4,9 +4,9 @@ import "time"
 
 // Wrapper handlers that adapt new interfaces to FieldHandler
 
-// displayFieldHandler wraps DisplayHandler to implement FieldHandler
+// displayFieldHandler wraps HandlerDisplay to implement FieldHandler
 type displayFieldHandler struct {
-	display DisplayHandler
+	display HandlerDisplay
 	timeout time.Duration
 }
 
@@ -21,9 +21,9 @@ func (d *displayFieldHandler) Name() string                       { return d.dis
 func (d *displayFieldHandler) SetLastOperationID(lastOpID string) {}
 func (d *displayFieldHandler) GetLastOperationID() string         { return "" }
 
-// editFieldHandler wraps EditHandler to implement FieldHandler
+// editFieldHandler wraps HandlerEdit to implement FieldHandler
 type editFieldHandler struct {
-	edit     EditHandler
+	edit     HandlerEdit
 	timeout  time.Duration
 	lastOpID string
 }
@@ -43,9 +43,9 @@ func (e *editFieldHandler) Name() string                       { return e.edit.L
 func (e *editFieldHandler) SetLastOperationID(lastOpID string) { e.lastOpID = lastOpID }
 func (e *editFieldHandler) GetLastOperationID() string         { return e.lastOpID }
 
-// runFieldHandler wraps ExecutionHandler to implement FieldHandler
+// runFieldHandler wraps HandlerExecution to implement FieldHandler
 type runFieldHandler struct {
-	run      ExecutionHandler
+	run      HandlerExecution
 	timeout  time.Duration
 	lastOpID string
 }

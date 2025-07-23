@@ -21,7 +21,7 @@ import (
     "github.com/cdvelop/devtui"
 )
 
-// EditHandler - For interactive input fields (3 methods)
+// HandlerEdit - For interactive input fields (3 methods)
 type HostHandler struct {
     currentHost string
 }
@@ -38,7 +38,7 @@ func (h *HostHandler) Change(newValue any, progress ...func(string)) error {
     return nil
 }
 
-// ExecutionHandler - For action buttons (2 methods)
+// HandlerExecution - For action buttons (2 methods)
 type DeployHandler struct{}
 
 func (d *DeployHandler) Label() string { return "Deploy to Production" }
@@ -51,7 +51,7 @@ func (d *DeployHandler) Execute(progress ...func(string)) error {
     return nil
 }
 
-// DisplayHandler - For read-only information (2 methods)
+// HandlerDisplay - For read-only information (2 methods)
 type HelpHandler struct{}
 
 func (h *HelpHandler) Label() string { return "DevTUI Help" }
@@ -59,7 +59,7 @@ func (h *HelpHandler) Content() string {
     return "Navigation:\n• Tab/Shift+Tab: Switch tabs\n• Left/Right: Navigate fields\n• Enter: Edit/Execute" 
 }
 
-// WriterBasic - For simple logging (1 method)
+// HandlerWriter - For simple logging (1 method)
 type LogWriter struct{}
 
 func (w *LogWriter) Name() string { return "ApplicationLog" }
@@ -89,41 +89,41 @@ func main() {
 
 ## New Specialized Interfaces
 
-### EditHandler - Interactive Input Fields
+### HandlerEdit - Interactive Input Fields
 ```go
-type EditHandler interface {
+type HandlerEdit interface {
     Label() string // Field label (e.g., "Server Port", "Host Configuration") 
     Value() string // Current/initial value (e.g., "8080", "localhost")
     Change(newValue any, progress ...func(string)) error
 }
 ```
 
-### ExecutionHandler - Action Buttons  
+### HandlerExecution - Action Buttons  
 ```go
-type ExecutionHandler interface {
+type HandlerExecution interface {
     Label() string // Button label (e.g., "Deploy to Production", "Build Project")
     Execute(progress ...func(string)) error
 }
 ```
 
-### DisplayHandler - Read-only Information
+### HandlerDisplay - Read-only Information
 ```go
-type DisplayHandler interface {
+type HandlerDisplay interface {
     Label() string   // Display label (e.g., "Help", "Status")
     Content() string // Display content (e.g., "help\n1-..\n2-...", "executing deploy wait...")
 }
 ```
 
-### WriterBasic - Simple Logging
+### HandlerWriter - Simple Logging
 ```go
-type WriterBasic interface {
+type HandlerWriter interface {
     Name() string // Writer identifier (e.g., "webBuilder", "ApplicationLog")
 }
 ```
 
-### WriterTracker - Advanced Logging with Message Updates
+### HandlerTrackerWriter - Advanced Logging with Message Updates
 ```go
-type WriterTracker interface {
+type HandlerTrackerWriter interface {
     Name() string
     MessageTracker
 }

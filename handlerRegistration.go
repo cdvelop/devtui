@@ -3,7 +3,7 @@ package devtui
 // NEW: Handler registration methods using builder pattern
 
 // NewEditHandler creates a new EditHandlerBuilder for method chaining
-func (ts *tabSection) NewEditHandler(handler EditHandler) *editHandlerBuilder {
+func (ts *tabSection) NewEditHandler(handler HandlerEdit) *editHandlerBuilder {
 	return &editHandlerBuilder{
 		tabSection: ts,
 		handler:    handler,
@@ -12,7 +12,7 @@ func (ts *tabSection) NewEditHandler(handler EditHandler) *editHandlerBuilder {
 }
 
 // NewRunHandler creates a new RunHandlerBuilder for method chaining
-func (ts *tabSection) NewRunHandler(handler ExecutionHandler) *executionHandlerBuilder {
+func (ts *tabSection) NewRunHandler(handler HandlerExecution) *executionHandlerBuilder {
 	return &executionHandlerBuilder{
 		tabSection: ts,
 		handler:    handler,
@@ -21,7 +21,7 @@ func (ts *tabSection) NewRunHandler(handler ExecutionHandler) *executionHandlerB
 }
 
 // NewDisplayHandler creates a new DisplayHandlerBuilder for method chaining
-func (ts *tabSection) NewDisplayHandler(handler DisplayHandler) *displayHandlerBuilder {
+func (ts *tabSection) NewDisplayHandler(handler HandlerDisplay) *displayHandlerBuilder {
 	return &displayHandlerBuilder{
 		tabSection: ts,
 		handler:    handler,

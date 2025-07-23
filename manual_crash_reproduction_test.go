@@ -2,6 +2,7 @@ package devtui
 
 import (
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -112,7 +113,7 @@ func TestManualCrashReproduction(t *testing.T) {
 		}
 
 		// Check handler execution
-		if !backupHandler.wasExecuted {
+		if !backupHandler.WasExecuted() {
 			t.Error("Backup handler was not executed")
 		}
 
@@ -177,7 +178,7 @@ func TestManualCrashReproduction(t *testing.T) {
 		time.Sleep(1 * time.Second)
 
 		// Verify that the application continued to work despite nil unixid
-		if !backupHandler.wasExecuted {
+		if !backupHandler.WasExecuted() {
 			t.Error("Handler should have been executed despite nil unixid")
 		}
 
@@ -298,12 +299,21 @@ func (h *RealDatabaseHandler) Change(newValue any, progress ...func(string)) err
 
 type RealBackupHandler struct {
 	wasExecuted bool
+	mu          sync.RWMutex
 }
 
 func (h *RealBackupHandler) Name() string  { return "SystemBackup" }
 func (h *RealBackupHandler) Label() string { return "Create System Backup" }
+func (h *RealBackupHandler) WasExecuted() bool {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	return h.wasExecuted
+}
 func (h *RealBackupHandler) Execute(progress ...func(string)) error {
+	h.mu.Lock()
 	h.wasExecuted = true
+	h.mu.Unlock()
+
 	// ALWAYS call progress to trigger the crash
 	if len(progress) > 0 {
 		progress[0]("Preparing backup...")
@@ -322,12 +332,21 @@ func (h *RealBackupHandler) Execute(progress ...func(string)) error {
 
 type RealLongBackupHandler struct {
 	wasExecuted bool
+	mu          sync.RWMutex
 }
 
 func (h *RealLongBackupHandler) Name() string  { return "LongBackup" }
 func (h *RealLongBackupHandler) Label() string { return "Long System Backup" }
+func (h *RealLongBackupHandler) WasExecuted() bool {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	return h.wasExecuted
+}
 func (h *RealLongBackupHandler) Execute(progress ...func(string)) error {
+	h.mu.Lock()
 	h.wasExecuted = true
+	h.mu.Unlock()
+
 	if len(progress) > 0 {
 		progress[0]("Starting very long backup...")
 		time.Sleep(10 * time.Millisecond)

@@ -3,6 +3,7 @@ package devtui
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/cdvelop/messagetype"
@@ -27,6 +28,7 @@ type anyHandler struct {
 	handlerType handlerType
 	timeout     time.Duration // Solo edit/execution
 	lastOpID    string        // Tracking interno
+	mu          sync.RWMutex  // Protección para lastOpID
 
 	// Function pointers - solo los necesarios poblados
 	nameFunc     func() string                    // Todos
@@ -88,6 +90,9 @@ func (a *anyHandler) Timeout() time.Duration {
 }
 
 func (a *anyHandler) SetLastOperationID(id string) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
 	a.lastOpID = id
 	if a.setOpIDFunc != nil {
 		a.setOpIDFunc(id)
@@ -95,6 +100,9 @@ func (a *anyHandler) SetLastOperationID(id string) {
 }
 
 func (a *anyHandler) GetLastOperationID() string {
+	a.mu.RLock()
+	defer a.mu.RUnlock()
+
 	if a.getOpIDFunc != nil {
 		return a.getOpIDFunc()
 	}

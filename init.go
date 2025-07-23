@@ -42,8 +42,8 @@ type TuiConfig struct {
 	AppName       string    // app name eg: "MyApp"
 	TabIndexStart int       // is the index of the tab section to start default 0
 	ExitChan      chan bool //  global chan to close app eg: make(chan bool)
-	/* *ColorStyle style for the TUI
-	 if nil it will use default style:
+	/*// *ColorStyle style for the TUI
+	  // if nil it will use default style:
 	type ColorStyle struct {
 	 Foreground string // eg: #F4F4F4
 	 Background string // eg: #000000

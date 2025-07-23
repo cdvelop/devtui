@@ -10,6 +10,8 @@ import (
 
 // FieldHandler interface defines the contract for field handlers
 // This replaces the individual parameters approach with a unified interface
+// Internal fieldHandler interface for backward compatibility (DEPRECATED - Use specialized handlers)
+// Users should use DisplayHandler, EditHandler, ExecutionHandler instead
 type FieldHandler interface {
 	Label() string                                                 // Field label (e.g., "Server Port")
 	Value() string                                                 // Current field value (e.g., "8080")
@@ -21,8 +23,8 @@ type FieldHandler interface {
 	WritingHandler
 }
 
-// WritingHandler interface provides message source identification and operation ID management
-// ALL handlers must implement this interface for message source control
+// Internal writingHandler interface for message tracking (DEPRECATED)
+// Users should use WriterBasic, WriterTracker instead
 type WritingHandler interface {
 	Name() string                       // Handler identifier (e.g., "TinyWasm", "MainServer")
 	SetLastOperationID(lastOpID string) // DevTUI calls this after processing each message
@@ -98,13 +100,6 @@ func (ts *tabSection) addFields(fields ...*field) {
 	ts.fieldHandlers = append(ts.fieldHandlers, fields...)
 }
 
-func (f *field) Name() string {
-	if f.handler != nil {
-		return f.handler.Label()
-	}
-	return ""
-}
-
 func (f *field) Value() string {
 	if f.handler != nil {
 		return f.handler.Value()
@@ -131,7 +126,12 @@ func (f *field) Editable() bool {
 // - Message content displayed without timestamp for cleaner visual
 // - Navigation between fields works, but no interaction within readonly content
 func (f *field) isDisplayOnly() bool {
-	return f.handler != nil && f.handler.Label() == ""
+	if f.handler == nil {
+		return false
+	}
+	// Check if handler implements DisplayHandler interface (via wrapper)
+	_, isDisplayHandler := f.handler.(*displayFieldHandler)
+	return isDisplayHandler
 }
 
 func (f *field) SetCursorAtEnd() {

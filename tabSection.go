@@ -1,6 +1,7 @@
 package devtui
 
 import (
+	"fmt"
 	"io"
 	"strings"
 	"sync"
@@ -84,7 +85,7 @@ func (ts *tabSection) RegisterWritingHandler(handler WritingHandler) io.Writer {
 	ts.writingHandlers[handlerName] = handler
 
 	// Return handler-specific writer
-	return &HandlerWriter{
+	return &handlerWriter{
 		tabSection:  ts,
 		handlerName: handlerName,
 	}
@@ -95,13 +96,13 @@ func (ts *tabSection) SetActiveWriter(handlerName string) {
 	ts.activeWriter = handlerName
 }
 
-// NEW: HandlerWriter wraps tabSection with handler identification
-type HandlerWriter struct {
+// HandlerWriter wraps tabSection with handler identification
+type handlerWriter struct {
 	tabSection  *tabSection
 	handlerName string
 }
 
-func (hw *HandlerWriter) Write(p []byte) (n int, err error) {
+func (hw *handlerWriter) Write(p []byte) (n int, err error) {
 	msg := strings.TrimSpace(string(p))
 	if msg != "" {
 		msgType := messagetype.DetectMessageType(msg)
@@ -278,4 +279,81 @@ func (t *DevTUI) addNewTabSections(sections ...*tabSection) {
 // GetTotalTabSections returns the total number of tab sections
 func (t *DevTUI) GetTotalTabSections() int {
 	return len(t.tabSections)
+}
+
+// NEW: Registration methods for specialized handler interfaces
+
+// registerHandler registers a handler (DisplayHandler) as a field
+func (ts *tabSection) registerHandler(handler any) {
+	var fieldHandler FieldHandler
+
+	switch h := handler.(type) {
+	case DisplayHandler:
+		fieldHandler = &displayFieldHandler{display: h, timeout: 0}
+	default:
+		panic(fmt.Sprintf("unsupported handler type: %T", handler))
+	}
+
+	f := &field{
+		handler:    fieldHandler,
+		parentTab:  ts,
+		asyncState: &internalAsyncState{},
+	}
+	ts.addFields(f)
+}
+
+// registerHandlerWithTimeout registers a handler with timeout configuration
+func (ts *tabSection) registerHandlerWithTimeout(wrapper *handlerWithTimeout) {
+	var fieldHandler FieldHandler
+
+	switch h := wrapper.Handler.(type) {
+	case EditHandler:
+		fieldHandler = &editFieldHandler{edit: h, timeout: wrapper.Timeout}
+	case ExecutionHandler:
+		fieldHandler = &runFieldHandler{run: h, timeout: wrapper.Timeout}
+	default:
+		panic(fmt.Sprintf("unsupported handler type: %T", wrapper.Handler))
+	}
+
+	f := &field{
+		handler:    fieldHandler,
+		parentTab:  ts,
+		asyncState: &internalAsyncState{},
+	}
+	ts.addFields(f)
+}
+
+// registerWriterHandler registers a writer handler (WriterBasic or WriterTracker)
+func (ts *tabSection) registerWriterHandler(handler any) io.Writer {
+	if ts.writingHandlers == nil {
+		ts.writingHandlers = make(map[string]WritingHandler)
+	}
+
+	var writerHandler WritingHandler
+	switch h := handler.(type) {
+	case WriterTracker:
+		// Advanced writer with message tracking
+		writerHandler = h
+	case WriterBasic:
+		// Basic writer, wrap with auto-tracking (always new lines)
+		writerHandler = &basicWriterAdapter{basic: h}
+	default:
+		panic(fmt.Sprintf("handler must implement WriterBasic or WriterTracker, got %T", handler))
+	}
+
+	handlerName := writerHandler.Name()
+	ts.writingHandlers[handlerName] = writerHandler
+	return &handlerWriter{tabSection: ts, handlerName: handlerName}
+}
+
+// basicWriterAdapter wraps WriterBasic to implement WritingHandler
+type basicWriterAdapter struct {
+	basic    WriterBasic
+	lastOpID string
+}
+
+func (a *basicWriterAdapter) Name() string                 { return a.basic.Name() }
+func (a *basicWriterAdapter) SetLastOperationID(id string) { a.lastOpID = id }
+func (a *basicWriterAdapter) GetLastOperationID() string {
+	return "" // Always create new lines for basic writers
 }

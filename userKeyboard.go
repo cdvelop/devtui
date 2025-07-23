@@ -25,7 +25,7 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 	if currentField.Editable() { // Si el campo es editable, permitir la edición
 		// Calcular el ancho máximo disponible para el texto
 		// Esto sigue la misma lógica que en footerInput.go
-		_, availableTextWidth := h.calculateInputWidths(currentField.Name())
+		_, availableTextWidth := h.calculateInputWidths(currentField.handler.Label())
 
 		switch msg.Type {
 		case tea.KeyEnter: // Guardar cambios o ejecutar acción

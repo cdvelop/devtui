@@ -51,6 +51,24 @@ func (h *DevTUI) renderFooterInput() string {
 
 	field := fieldHandlers[tabSection.indexActiveEditField]
 
+	// Check if this is a DisplayHandler for special layout
+	if field.isDisplayOnly() {
+		// Special layout for DisplayHandler: full width label, no separate value section
+		horizontalPadding := 1
+		info := h.renderScrollInfo()
+
+		// Use full width for label content (field content from DisplayHandler.Content())
+		fullWidth := h.viewport.Width - lipgloss.Width(info) - horizontalPadding*2
+		labelText := tinystring.Convert(field.handler.Value()).Truncate(fullWidth-1, 0).String()
+
+		// Layout: [Full Width Label Content] [ScrollInfo]
+		styledLabel := h.headerTitleStyle.Render(labelText)
+		spacerStyle := lipgloss.NewStyle().Width(horizontalPadding).Render("")
+
+		return lipgloss.JoinHorizontal(lipgloss.Left, styledLabel, spacerStyle, info)
+	}
+
+	// Normal layout for Edit/Run handlers: [Label] [Value] [ScrollInfo]
 	// Usar el ancho estándar de etiquetas definido en el estilo
 	labelWidth := h.labelWidth
 
@@ -58,7 +76,7 @@ func (h *DevTUI) renderFooterInput() string {
 	horizontalPadding := 1 // Este valor viene del Padding(0, 1) en headerTitleStyle
 
 	// Truncar la etiqueta si es necesario (sin agregar ":")
-	labelText := tinystring.Convert(field.Name()).Truncate(labelWidth-1, 0).String()
+	labelText := tinystring.Convert(field.handler.Label()).Truncate(labelWidth-1, 0).String()
 
 	// Aplicar el estilo base para garantizar un ancho fijo
 	fixedWidthLabel := h.labelStyle.Render(labelText)
@@ -70,7 +88,7 @@ func (h *DevTUI) renderFooterInput() string {
 	info := h.renderScrollInfo()
 
 	// OR if you need truncation:
-	labelText = tinystring.Convert(field.Name()).Truncate(labelWidth-1, 0).String()
+	labelText = tinystring.Convert(field.handler.Label()).Truncate(labelWidth-1, 0).String()
 	valueWidth, _ := h.calculateInputWidths(labelText)
 
 	var showCursor bool

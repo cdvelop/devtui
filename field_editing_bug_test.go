@@ -38,7 +38,7 @@ func TestFieldEditingBugReplication(t *testing.T) {
 			field.Value(), field.tempEditValue, field.cursor)
 
 		// Check the available text width to understand why text isn't being inserted
-		_, availableTextWidth := h.calculateInputWidths(field.Name())
+		_, availableTextWidth := h.calculateInputWidths(field.handler.Label())
 		t.Logf("Available text width: %d", availableTextWidth)
 
 		// Step 1: User selects all content and deletes it (simulating Ctrl+A + Delete)

@@ -38,8 +38,10 @@ func (h *DatabaseHandler) Change(newValue any, progress ...func(string)) error {
 	return nil
 }
 
-// 3. HandlerExecution - Action buttons (3 methods)
-type BackupHandler struct{}
+// 3. HandlerExecution - Action buttons (3 methods) with tracking
+type BackupHandler struct {
+	lastOpID string
+}
 
 func (h *BackupHandler) Name() string  { return "SystemBackup" }
 func (h *BackupHandler) Label() string { return "Create System Backup" }
@@ -55,6 +57,10 @@ func (h *BackupHandler) Execute(progress ...func(string)) error {
 	}
 	return nil
 }
+
+// MessageTracker implementation for operation tracking
+func (h *BackupHandler) GetLastOperationID() string   { return h.lastOpID }
+func (h *BackupHandler) SetLastOperationID(id string) { h.lastOpID = id }
 
 // 4. HandlerWriter - Simple logging (1 method)
 type SystemLogWriter struct{}
@@ -89,7 +95,7 @@ func main() {
 
 	// Operations tab with ExecutionHandlers (action buttons)
 	ops := tui.NewTabSection("Operations", "System Operations")
-	ops.NewExecutionHandler(&BackupHandler{}).WithTimeout(5 * time.Second)
+	ops.NewExecutionHandlerTracking(&BackupHandler{}).WithTimeout(5 * time.Second)
 
 	// Logging tab with Writers
 	logs := tui.NewTabSection("Logs", "System Logs")

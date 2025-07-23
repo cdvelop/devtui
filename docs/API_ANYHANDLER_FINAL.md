@@ -51,6 +51,12 @@ type EditHandlerTracker interface {
     HandlerEdit
     MessageTracker
 }
+
+// Execution avanzado con tracking
+type ExecutionHandlerTracker interface {
+    HandlerExecution
+    MessageTracker
+}
 ```
 
 ## Estructura anyHandler (Privada)
@@ -349,7 +355,7 @@ func (f *field) getExpandedFooterLabel() string {
 ## Registro Type-Safe (Final)
 
 ```go
-// Builders actualizados
+// Builders actualizados - API completa con tracking
 func (ts *tabSection) NewEditHandler(handler HandlerEdit) *editHandlerBuilder {
     return &editHandlerBuilder{
         tabSection: ts,
@@ -360,10 +366,25 @@ func (ts *tabSection) NewEditHandler(handler HandlerEdit) *editHandlerBuilder {
 
 func (ts *tabSection) NewEditHandlerWithTracking(handler EditHandlerTracker) *editHandlerBuilder {
     return &editHandlerBuilder{
-        tabSection:  ts,
-        handler:     handler,
-        hasTracking: true,
-        timeout:     0,
+        tabSection: ts,
+        handler:    handler, // EditHandlerTracker extends HandlerEdit
+        timeout:    0,
+    }
+}
+
+func (ts *tabSection) NewExecutionHandler(handler HandlerExecution) *executionHandlerBuilder {
+    return &executionHandlerBuilder{
+        tabSection: ts,
+        handler:    handler,
+        timeout:    0,
+    }
+}
+
+func (ts *tabSection) NewExecutionHandlerTracking(handler ExecutionHandlerTracker) *executionHandlerBuilder {
+    return &executionHandlerBuilder{
+        tabSection: ts,
+        handler:    handler,
+        timeout:    0,
     }
 }
 
@@ -374,14 +395,28 @@ func (ts *tabSection) NewDisplayHandler(handler HandlerDisplay) *displayHandlerB
     }
 }
 
-func (ts *tabSection) RegisterHandlerWriter(handler HandlerWriter) io.Writer {
-    anyH := newWriterHandler(handler)
-    return ts.registerAnyHandler(anyH)
+func (ts *tabSection) NewWriterHandler(handler any) *writerHandlerBuilder {
+    return &writerHandlerBuilder{
+        tabSection: ts,
+        handler:    handler,
+    }
 }
 
+func (ts *tabSection) NewWriterHandlerTracking(handler HandlerTrackerWriter) *writerHandlerBuilder {
+    return &writerHandlerBuilder{
+        tabSection: ts,
+        handler:    handler,
+    }
+}
+
+// Métodos de registro directo (con auto-detección de tracking)
+func (ts *tabSection) RegisterHandlerWriter(handler HandlerWriter) io.Writer {
+    // Auto-detecta HandlerTrackerWriter y configura tracking automáticamente
+}
+
+// DEPRECATED: Usar RegisterHandlerWriter - detecta tracking automáticamente
 func (ts *tabSection) RegisterHandlerTrackerWriter(handler HandlerTrackerWriter) io.Writer {
-    anyH := newTrackerWriterHandler(handler)
-    return ts.registerAnyHandler(anyH)
+    return ts.RegisterHandlerWriter(handler)
 }
 ```
 

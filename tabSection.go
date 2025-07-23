@@ -95,7 +95,8 @@ func (ts *tabSection) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-// RegisterHandlerWriter registers a basic writer handler and returns a dedicated writer
+// RegisterHandlerWriter registers a writer handler (basic or tracker) and returns a dedicated writer
+// Automatically detects if handler implements HandlerTrackerWriter interface for tracking capabilities
 func (ts *tabSection) RegisterHandlerWriter(handler HandlerWriter) io.Writer {
 	ts.mu.Lock()
 	defer ts.mu.Unlock()
@@ -114,13 +115,14 @@ func (ts *tabSection) RegisterHandlerWriter(handler HandlerWriter) io.Writer {
 }
 
 // RegisterHandlerTrackerWriter registers an advanced writer handler with message tracking and returns a dedicated writer
+// DEPRECATED: Use RegisterHandlerWriter instead - it automatically detects tracker capabilities
 func (ts *tabSection) RegisterHandlerTrackerWriter(handler HandlerTrackerWriter) io.Writer {
-	ts.mu.Lock()
-	defer ts.mu.Unlock()
+	// Log deprecation warning
+	if ts.tui != nil && ts.tui.LogToFile != nil {
+		ts.tui.LogToFile("WARNING: RegisterHandlerTrackerWriter is deprecated. Use RegisterHandlerWriter instead - it auto-detects tracker capabilities")
+	}
 
-	anyH := newTrackerWriterHandler(handler)
-	ts.writingHandlers = append(ts.writingHandlers, anyH)
-	return &handlerWriter{tabSection: ts, handlerName: anyH.Name()}
+	return ts.RegisterHandlerWriter(handler)
 }
 
 // NEW: SetActiveWriter sets the current active writer for general io.Writer calls

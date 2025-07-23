@@ -155,8 +155,15 @@ func newExecutionHandler(h HandlerExecution, timeout time.Duration) *anyHandler 
 			return h.Execute(progress...) // Wrapper para compatibilidad
 		},
 		timeoutFunc: func() time.Duration { return timeout },
-		getOpIDFunc: func() string { return "" },
-		setOpIDFunc: func(string) {},
+	}
+
+	// Check if handler implements MessageTracker interface for operation tracking
+	if tracker, ok := h.(MessageTracker); ok {
+		anyH.getOpIDFunc = tracker.GetLastOperationID
+		anyH.setOpIDFunc = tracker.SetLastOperationID
+	} else {
+		anyH.getOpIDFunc = func() string { return "" }
+		anyH.setOpIDFunc = func(string) {}
 	}
 
 	// Check if handler also implements Value() method (like TestNonEditableHandler)
@@ -224,10 +231,18 @@ func (f *field) SetCursorForTest(cursor int) {
 
 // NewField creates a new field with handler-based approach, adds it to the tabSection, and returns the tabSection for chaining.
 // DEPRECATED: Use NewEditHandler, NewExecutionHandler, or NewDisplayHandler instead
-// Example usage:
+// This method will be removed in future versions. Use the type-safe builder methods instead.
 //
-//	tab.NewField(&MyHandler{})
+// Example migration:
+//
+//	OLD: tab.NewField(handler)
+//	NEW: tab.NewEditHandler(handler).Register()
 func (ts *tabSection) NewField(handler *anyHandler) *tabSection {
+	// Log deprecation warning
+	if ts.tui != nil && ts.tui.LogToFile != nil {
+		ts.tui.LogToFile("WARNING: NewField is deprecated. Use NewEditHandler/NewExecutionHandler/NewDisplayHandler instead")
+	}
+
 	f := &field{
 		handler:    handler,
 		parentTab:  ts,

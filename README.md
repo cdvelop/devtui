@@ -9,76 +9,42 @@ Interactive Terminal User Interface library for Go applications development (pri
 
 ## Quick Start
 
-DevTUI uses specialized handler interfaces that require minimal implementation (1-3 methods vs 8 in previous versions). Choose the handler type that matches your use case:
+DevTUI uses specialized handler interfaces that require minimal implementation. Here's a complete example with message tracking:
 
 ```go
-package main
-
-import (
-    "fmt"
-    "time"
-    "sync"
-    "github.com/cdvelop/devtui"
-)
-
-// HandlerEdit - For interactive input fields (3 methods)
-type HostHandler struct {
-    currentHost string
+// HandlerExecution with MessageTracker - Action buttons with progress tracking
+type BackupHandler struct {
+    lastOpID string
 }
 
-func (h *HostHandler) Label() string { return "Host Configuration" }
-func (h *HostHandler) Value() string { return h.currentHost }
-func (h *HostHandler) Change(newValue any, progress ...func(string)) error {
-    h.currentHost = newValue.(string)
-    
-    // Success message via progress callback
+func (h *BackupHandler) Name() string  { return "SystemBackup" }
+func (h *BackupHandler) Label() string { return "Create System Backup" }
+func (h *BackupHandler) Execute(progress ...func(string)) error {
     if len(progress) > 0 {
-        progress[0]("Host configured successfully: " + h.currentHost)
+        progress[0]("Preparing backup...")
+        time.Sleep(200 * time.Millisecond)
+        progress[0]("Backing up database...")
+        time.Sleep(500 * time.Millisecond)
+        progress[0]("Backing up files...")
+        time.Sleep(300 * time.Millisecond)
+        progress[0]("Backup completed successfully")
     }
     return nil
 }
 
-// HandlerExecution - For action buttons (2 methods)
-type DeployHandler struct{}
-
-func (d *DeployHandler) Label() string { return "Deploy to Production" }
-func (d *DeployHandler) Execute(progress ...func(string)) error {
-    if len(progress) > 0 {
-        progress[0]("Starting deployment...")
-        // Deployment logic here
-        progress[0]("Deployment completed successfully")
-    }
-    return nil
-}
-
-// HandlerDisplay - For read-only information (2 methods)
-type HelpHandler struct{}
-
-func (h *HelpHandler) Label() string { return "DevTUI Help" }
-func (h *HelpHandler) Content() string { 
-    return "Navigation:\n• Tab/Shift+Tab: Switch tabs\n• Left/Right: Navigate fields\n• Enter: Edit/Execute" 
-}
-
-// HandlerWriter - For simple logging (1 method)
-type LogWriter struct{}
-
-func (w *LogWriter) Name() string { return "ApplicationLog" }
+// MessageTracker implementation for operation tracking
+func (h *BackupHandler) GetLastOperationID() string   { return h.lastOpID }
+func (h *BackupHandler) SetLastOperationID(id string) { h.lastOpID = id }
 
 func main() {
     tui := devtui.NewTUI(&devtui.TuiConfig{
-        AppName: "MyApp",
+        AppName:  "Backup Demo",
         ExitChan: make(chan bool),
     })
-    
-    // Method chaining with optional timeout configuration
-    tab := tui.NewTabSection("Server", "Configuration")
-    tab.NewEditHandler(&HostHandler{currentHost: "localhost"}).WithTimeout(5*time.Second)
-    tab.NewExecutionHandler(&DeployHandler{}).WithTimeout(30*time.Second)
-    tab.NewDisplayHandler(&HelpHandler{}).Register()
-    
-    // Writer registration
-    writer := tab.NewWriterHandler(&LogWriter{}).Register()
-    writer.Write([]byte("Application started"))
+
+    // Operations tab with ExecutionHandlers (action buttons)
+    ops := tui.NewTabSection("Operations", "System Operations")
+    ops.NewExecutionHandlerTracking(&BackupHandler{}).WithTimeout(5 * time.Second)
 
     var wg sync.WaitGroup
     wg.Add(1)
@@ -87,41 +53,48 @@ func main() {
 }
 ```
 
-## New Specialized Interfaces
+👉 **[See complete example with all handler types](example/demo/main.go)**
 
-### HandlerEdit - Interactive Input Fields
+## Handler Interfaces
+
+DevTUI provides 5 specialized handler types, each requiring minimal implementation:
+
+### 1. HandlerDisplay - Read-only Information (3 methods)
+```go
+type HandlerDisplay interface {
+    Name() string    // Unique identifier for logging
+    Label() string   // Display label in footer
+    Content() string // Content shown immediately
+}
+```
+
+### 2. HandlerEdit - Interactive Input Fields (4 methods)  
 ```go
 type HandlerEdit interface {
-    Label() string // Field label (e.g., "Server Port", "Host Configuration") 
-    Value() string // Current/initial value (e.g., "8080", "localhost")
+    Name() string    // Unique identifier for logging
+    Label() string   // Field label
+    Value() string   // Current/initial value
     Change(newValue any, progress ...func(string)) error
 }
 ```
 
-### HandlerExecution - Action Buttons  
+### 3. HandlerExecution - Action Buttons (3 methods)
 ```go
 type HandlerExecution interface {
-    Label() string // Button label (e.g., "Deploy to Production", "Build Project")
+    Name() string  // Unique identifier for logging
+    Label() string // Button label
     Execute(progress ...func(string)) error
 }
 ```
 
-### HandlerDisplay - Read-only Information
-```go
-type HandlerDisplay interface {
-    Label() string   // Display label (e.g., "Help", "Status")
-    Content() string // Display content (e.g., "help\n1-..\n2-...", "executing deploy wait...")
-}
-```
-
-### HandlerWriter - Simple Logging
+### 4. HandlerWriter - Simple Logging (1 method)
 ```go
 type HandlerWriter interface {
-    Name() string // Writer identifier (e.g., "webBuilder", "ApplicationLog")
+    Name() string // Writer identifier
 }
 ```
 
-### HandlerTrackerWriter - Advanced Logging with Message Updates
+### 5. HandlerTrackerWriter - Advanced Logging (3 methods)
 ```go
 type HandlerTrackerWriter interface {
     Name() string
@@ -134,114 +107,35 @@ type MessageTracker interface {
 }
 ```
 
-## Method Chaining API
-
-### Timeout Configuration
-```go
-// Synchronous execution (default)
-tab.NewEditHandler(handler).Register()           // timeout = 0
-tab.NewEditHandler(handler)                      // Auto-register, timeout = 0
-
-// Asynchronous execution with timeout
-tab.NewEditHandler(handler).WithTimeout(5*time.Second)        // 5 seconds
-tab.NewEditHandler(handler).WithTimeout(100*time.Millisecond) // 100ms (ideal for tests)
-tab.NewExecutionHandler(deployHandler).WithTimeout(30*time.Second)  // 30 seconds for deployment
-```
-
-### Writer Registration
-```go
-// Basic writer (always creates new lines)
-writer := tab.NewWriterHandler(&LogWriter{}).Register()
-writer.Write([]byte("Log message"))
-
-// Advanced writer with message tracking
-writer := tab.NewWriterHandler(&BuildLogWriter{}).Register()
-writer.Write([]byte("Build started"))      // Creates new message
-writer.Write([]byte("Build completed"))    // Updates existing message
-```
-
-## Key Improvements Over Previous Version
-
-| Feature | Old API | New API | Improvement |
-|---------|---------|---------|-------------|
-| **Methods Required** | 8 methods (FieldHandler + WritingHandler) | 1-3 methods | 60-85% reduction |
-| **Interface Complexity** | Single complex interface | Specialized interfaces | Much more intuitive |
-| **Boilerplate Code** | High (7-8 methods for simple use cases) | Minimal (1-3 methods) | ~75% less code |
-| **API Clarity** | Mixed responsibilities | Clear separation by purpose | Self-documenting |
-| **Timeout Config** | Manual in each handler | Method chaining | Cleaner configuration |
-
-## Usage Examples
-
-### Complete Server Management Example
-```go
-// Edit handlers for configuration
-type PortHandler struct{ port string }
-func (p *PortHandler) Label() string { return "Server Port" }
-func (p *PortHandler) Value() string { return p.port }
-func (p *PortHandler) Change(newValue any, progress ...func(string)) error {
-    p.port = newValue.(string)
-    if len(progress) > 0 {
-        progress[0]("Port updated: " + p.port)
-    }
-    return nil
-}
-
-// Action handlers
-type StartServerHandler struct{}
-func (s *StartServerHandler) Label() string { return "Start Server" }
-func (s *StartServerHandler) Execute(progress ...func(string)) error {
-    if len(progress) > 0 {
-        progress[0]("Starting server...")
-        time.Sleep(2*time.Second)
-        progress[0]("Server started successfully")
-    }
-    return nil
-}
-
-// Display handlers for status
-type StatusHandler struct{}
-func (s *StatusHandler) Label() string { return "Server Status" }
-func (s *StatusHandler) Content() string { return "Status: Running\nPID: 12345\nUptime: 2h 30m" }
-
-// Usage
-tui := devtui.NewTUI(&devtui.TuiConfig{AppName: "ServerManager", ExitChan: make(chan bool)})
-tab := tui.NewTabSection("Server", "Management")
-
-tab.NewEditHandler(&PortHandler{port: "8080"}).WithTimeout(2*time.Second)
-tab.NewExecutionHandler(&StartServerHandler{}).WithTimeout(10*time.Second) 
-tab.NewDisplayHandler(&StatusHandler{}).Register()
-
-// Writer for logs
-logWriter := tab.NewWriterHandler(&ServerLogWriter{}).Register()
-logWriter.Write([]byte("Server management initialized"))
-```
-
-## Progress Callback Usage
-
-All handlers receive optional progress callbacks for real-time feedback:
+## Registration Methods
 
 ```go
-func (h *DeployHandler) Execute(progress ...func(string)) error {
-    if len(progress) > 0 {
-        progressCallback := progress[0]
-        
-        progressCallback("Initiating deployment...")
-        time.Sleep(500 * time.Millisecond)
-        
-        progressCallback("Uploading files...")
-        time.Sleep(1 * time.Second)
-        
-        progressCallback("Restarting services...")
-        time.Sleep(500 * time.Millisecond)
-        
-        progressCallback("Deployment completed successfully")
-    }
-    
-    return nil
-}
+// Basic handlers
+tab.NewDisplayHandler(handler).Register()
+tab.NewEditHandler(handler).WithTimeout(5*time.Second)
+tab.NewExecutionHandler(handler).WithTimeout(10*time.Second)
+
+// Handlers with tracking (can update existing messages)
+tab.NewEditHandlerWithTracking(handlerWithTracker).WithTimeout(5*time.Second)
+tab.NewExecutionHandlerTracking(handlerWithTracker).WithTimeout(10*time.Second)
+
+// Writers
+tab.NewWriterHandler(handler).Register()
+tab.NewWriterHandlerTracking(handlerWithTracker).Register()
+
+// Direct writer registration (auto-detects tracking)
+writer := tab.RegisterHandlerWriter(basicWriter)
+writer := tab.RegisterHandlerTrackerWriter(trackerWriter)
 ```
 
-Each progress call updates the same message line, providing smooth real-time feedback.
+## Key Features
+
+- **Minimal Implementation**: 1-4 methods per handler (vs 8 in previous versions)
+- **Specialized Interfaces**: Clear separation by purpose (Display, Edit, Execution, Writing)
+- **Progress Callbacks**: Real-time feedback for long-running operations
+- **Message Tracking**: Update existing messages instead of creating new ones
+- **Method Chaining**: Clean timeout configuration with `.WithTimeout(duration)`
+- **Thread-Safe**: Concurrent handler registration and execution
 
 ## Navigation
 - **Tab/Shift+Tab**: Switch between tabs
@@ -250,10 +144,8 @@ Each progress call updates the same message line, providing smooth real-time fee
 - **Esc**: Cancel edit
 - **Ctrl+C**: Exit
 
-## Migration from v1.x
-
-The new API is a complete redesign. See [Migration Guide](docs/MIGRATION_GUIDE.md) for upgrading existing code.
-
 ## Documentation
-- [API Reference](docs/ISSUE_API_HANDLERS.md) - Complete interface specifications
-- [Migration Guide](docs/MIGRATION_GUIDE.md) - Update existing handlers
+
+- **[Complete API Specification](docs/API_ANYHANDLER_FINAL.md)** - Final API design and interfaces
+
+## [Contributing](docs/CONTRIBUTING.md)

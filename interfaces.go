@@ -1,7 +1,5 @@
 package devtui
 
-import "time"
-
 // HandlerDisplay defines the interface for read-only information display handlers.
 // These handlers show static or dynamic content without user interaction.
 type HandlerDisplay interface {
@@ -54,8 +52,9 @@ type EditHandlerTracker interface {
 	MessageTracker
 }
 
-// handlerWithTimeout represents a handler with an associated timeout configuration.
-type handlerWithTimeout struct {
-	Handler any
-	Timeout time.Duration
+// ExecutionHandlerTracker combines HandlerExecution with MessageTracker for advanced execution handlers
+// that need message tracking capabilities.
+type ExecutionHandlerTracker interface {
+	HandlerExecution
+	MessageTracker
 }

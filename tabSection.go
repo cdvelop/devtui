@@ -1,10 +1,10 @@
 package devtui
 
 import (
-	"fmt"
 	"io"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/cdvelop/messagetype"
 )
@@ -40,11 +40,31 @@ type tabSection struct {
 	tabContents          []tabContent // message contents
 	indexActiveEditField int          // Índice del campo de configuración seleccionado
 	tui                  *DevTUI
-	mu                   sync.RWMutex // Para proteger tabContents de race conditions
+	mu                   sync.RWMutex // Para proteger tabContents y writingHandlers de race conditions
 
 	// Writing handler registry for external handlers using new interfaces
-	writingHandlers map[string]writingHandler // handlerName -> writingHandler instance
-	activeWriter    string                    // current active writer name for io.Writer calls
+	writingHandlers []*anyHandler // CAMBIO: slice en lugar de map para thread-safety
+	activeWriter    string        // current active writer name for io.Writer calls
+}
+
+// getWritingHandler busca un handler por nombre en el slice thread-safe
+func (ts *tabSection) getWritingHandler(name string) *anyHandler {
+	ts.mu.RLock()
+	defer ts.mu.RUnlock()
+
+	for _, h := range ts.writingHandlers {
+		if h.Name() == name {
+			return h
+		}
+	}
+	return nil
+}
+
+// registerAnyHandler registers an anyHandler in the thread-safe slice
+func (ts *tabSection) registerAnyHandler(handler *anyHandler) {
+	ts.mu.Lock()
+	defer ts.mu.Unlock()
+	ts.writingHandlers = append(ts.writingHandlers, handler)
 }
 
 // Write implementa io.Writer para capturar la salida de otros procesos
@@ -58,8 +78,8 @@ func (ts *tabSection) Write(p []byte) (n int, err error) {
 		var handlerName string
 		var operationID string
 
-		if ts.activeWriter != "" && ts.writingHandlers != nil {
-			if handler, exists := ts.writingHandlers[ts.activeWriter]; exists {
+		if ts.activeWriter != "" {
+			if handler := ts.getWritingHandler(ts.activeWriter); handler != nil {
 				handlerName = handler.Name()
 				operationID = handler.GetLastOperationID()
 			}
@@ -77,43 +97,30 @@ func (ts *tabSection) Write(p []byte) (n int, err error) {
 
 // RegisterHandlerWriter registers a basic writer handler and returns a dedicated writer
 func (ts *tabSection) RegisterHandlerWriter(handler HandlerWriter) io.Writer {
-	if ts.writingHandlers == nil {
-		ts.writingHandlers = make(map[string]writingHandler)
+	ts.mu.Lock()
+	defer ts.mu.Unlock()
+
+	var anyH *anyHandler
+
+	// Check if handler also implements HandlerTrackerWriter interface
+	if trackerHandler, ok := handler.(HandlerTrackerWriter); ok {
+		anyH = newTrackerWriterHandler(trackerHandler)
+	} else {
+		anyH = newWriterHandler(handler)
 	}
 
-	// Basic writer, wrap with auto-tracking (always new lines)
-	writerHandler := &basicWriterAdapter{basic: handler}
-
-	handlerName := writerHandler.Name()
-	ts.writingHandlers[handlerName] = writerHandler
-	return &handlerWriter{tabSection: ts, handlerName: handlerName}
+	ts.writingHandlers = append(ts.writingHandlers, anyH)
+	return &handlerWriter{tabSection: ts, handlerName: anyH.Name()}
 }
 
 // RegisterHandlerTrackerWriter registers an advanced writer handler with message tracking and returns a dedicated writer
 func (ts *tabSection) RegisterHandlerTrackerWriter(handler HandlerTrackerWriter) io.Writer {
-	if ts.writingHandlers == nil {
-		ts.writingHandlers = make(map[string]writingHandler)
-	}
+	ts.mu.Lock()
+	defer ts.mu.Unlock()
 
-	handlerName := handler.Name()
-	ts.writingHandlers[handlerName] = handler
-	return &handlerWriter{tabSection: ts, handlerName: handlerName}
-}
-
-// DEPRECATED: RegisterWritingHandler - Use RegisterHandlerWriter or RegisterHandlerTrackerWriter instead
-func (ts *tabSection) RegisterWritingHandler(handler writingHandler) io.Writer {
-	if ts.writingHandlers == nil {
-		ts.writingHandlers = make(map[string]writingHandler)
-	}
-
-	handlerName := handler.Name()
-	ts.writingHandlers[handlerName] = handler
-
-	// Return handler-specific writer
-	return &handlerWriter{
-		tabSection:  ts,
-		handlerName: handlerName,
-	}
+	anyH := newTrackerWriterHandler(handler)
+	ts.writingHandlers = append(ts.writingHandlers, anyH)
+	return &handlerWriter{tabSection: ts, handlerName: anyH.Name()}
 }
 
 // NEW: SetActiveWriter sets the current active writer for general io.Writer calls
@@ -133,10 +140,8 @@ func (hw *handlerWriter) Write(p []byte) (n int, err error) {
 		msgType := messagetype.DetectMessageType(msg)
 
 		var operationID string
-		if hw.tabSection.writingHandlers != nil {
-			if handler, exists := hw.tabSection.writingHandlers[hw.handlerName]; exists {
-				operationID = handler.GetLastOperationID()
-			}
+		if handler := hw.tabSection.getWritingHandler(hw.handlerName); handler != nil {
+			operationID = handler.GetLastOperationID()
 		}
 
 		hw.tabSection.tui.sendMessageWithHandler(msg, msgType, hw.tabSection, hw.handlerName, operationID)
@@ -174,7 +179,12 @@ func (t *tabSection) updateOrAddContentWithHandler(msgType messagetype.Type, con
 				if t.tui.id != nil {
 					t.tabContents[i].Timestamp = t.tui.id.GetNewID()
 				} else {
-					panic("DevTUI: unixid not initialized - cannot generate timestamp")
+					// Log the issue before using fallback
+					if t.tui.LogToFile != nil {
+						t.tui.LogToFile("Warning: unixid not initialized, using fallback timestamp for content update:", content)
+					}
+					// Graceful fallback when unixid initialization failed
+					t.tabContents[i].Timestamp = time.Now().Format("15:04:05")
 				}
 				return true, t.tabContents[i]
 			}
@@ -304,81 +314,4 @@ func (t *DevTUI) addNewTabSections(sections ...*tabSection) {
 // GetTotalTabSections returns the total number of tab sections
 func (t *DevTUI) GetTotalTabSections() int {
 	return len(t.tabSections)
-}
-
-// NEW: Registration methods for specialized handler interfaces
-
-// registerHandler registers a handler (HandlerDisplay) as a field
-func (ts *tabSection) registerHandler(handler any) {
-	var fieldHandler FieldHandler
-
-	switch h := handler.(type) {
-	case HandlerDisplay:
-		fieldHandler = &displayFieldHandler{display: h, timeout: 0}
-	default:
-		panic(fmt.Sprintf("unsupported handler type: %T", handler))
-	}
-
-	f := &field{
-		handler:    fieldHandler,
-		parentTab:  ts,
-		asyncState: &internalAsyncState{},
-	}
-	ts.addFields(f)
-}
-
-// registerHandlerWithTimeout registers a handler with timeout configuration
-func (ts *tabSection) registerHandlerWithTimeout(wrapper *handlerWithTimeout) {
-	var fieldHandler FieldHandler
-
-	switch h := wrapper.Handler.(type) {
-	case HandlerEdit:
-		fieldHandler = &editFieldHandler{edit: h, timeout: wrapper.Timeout}
-	case HandlerExecution:
-		fieldHandler = &runFieldHandler{run: h, timeout: wrapper.Timeout}
-	default:
-		panic(fmt.Sprintf("unsupported handler type: %T", wrapper.Handler))
-	}
-
-	f := &field{
-		handler:    fieldHandler,
-		parentTab:  ts,
-		asyncState: &internalAsyncState{},
-	}
-	ts.addFields(f)
-}
-
-// registerWriterHandler registers a writer handler (HandlerWriter or HandlerTrackerWriter)
-func (ts *tabSection) registerWriterHandler(handler any) io.Writer {
-	if ts.writingHandlers == nil {
-		ts.writingHandlers = make(map[string]WritingHandler)
-	}
-
-	var writerHandler WritingHandler
-	switch h := handler.(type) {
-	case HandlerTrackerWriter:
-		// Advanced writer with message tracking
-		writerHandler = h
-	case HandlerWriter:
-		// Basic writer, wrap with auto-tracking (always new lines)
-		writerHandler = &basicWriterAdapter{basic: h}
-	default:
-		panic(fmt.Sprintf("handler must implement HandlerWriter or HandlerTrackerWriter, got %T", handler))
-	}
-
-	handlerName := writerHandler.Name()
-	ts.writingHandlers[handlerName] = writerHandler
-	return &handlerWriter{tabSection: ts, handlerName: handlerName}
-}
-
-// basicWriterAdapter wraps HandlerWriter to implement WritingHandler
-type basicWriterAdapter struct {
-	basic    HandlerWriter
-	lastOpID string
-}
-
-func (a *basicWriterAdapter) Name() string                 { return a.basic.Name() }
-func (a *basicWriterAdapter) SetLastOperationID(id string) { a.lastOpID = id }
-func (a *basicWriterAdapter) GetLastOperationID() string {
-	return "" // Always create new lines for basic writers
 }

@@ -19,21 +19,19 @@ func TestWriterHandlerRegistration(t *testing.T) {
 	handler := NewTestWriterHandler("TestWriter")
 
 	// Register the handler and get its writer
-	writer := tab.RegisterWritingHandler(handler)
+	writer := tab.RegisterHandlerWriter(handler)
 
 	if writer == nil {
-		t.Fatal("RegisterWritingHandler should return a non-nil writer")
+		t.Fatal("RegisterHandlerWriter should return a non-nil writer")
 	}
 
 	// Verify the handler was registered
 	if tab.writingHandlers == nil {
-		t.Fatal("writingHandlers map should be initialized")
+		t.Fatal("writingHandlers slice should be initialized")
 	}
 
-	if registeredHandler, exists := tab.writingHandlers["TestWriter"]; !exists {
-		t.Fatal("Handler should be registered in writingHandlers map")
-	} else if registeredHandler != handler {
-		t.Error("Registered handler should be the same instance")
+	if registeredHandler := tab.getWritingHandler("TestWriter"); registeredHandler == nil {
+		t.Fatal("Handler should be registered in writingHandlers slice")
 	}
 }
 
@@ -48,7 +46,7 @@ func TestHandlerWriterFunctionality(t *testing.T) {
 	handler := NewTestWriterHandler("TestWriter")
 
 	// Register the handler and get its writer
-	writer := tab.RegisterWritingHandler(handler)
+	writer := tab.RegisterHandlerWriter(handler)
 
 	// Write a test message
 	testMessage := "Test message from handler"
@@ -81,7 +79,7 @@ func TestHandlerNameInMessages(t *testing.T) {
 	}
 
 	// Register the handler and get its writer
-	writer := tab.RegisterWritingHandler(handler)
+	writer := tab.RegisterHandlerWriter(handler)
 
 	// Write a test message
 	testMessage := "Test message with handler name"
@@ -109,29 +107,27 @@ func TestHandlerNameInMessages(t *testing.T) {
 	}
 }
 
-// TestFieldHandlerAutoRegistration tests that FieldHandlers are automatically registered for writing
-func TestFieldHandlerAutoRegistration(t *testing.T) {
+// TestHandlerAutoRegistration tests that handlers are automatically registered for writing
+func TestHandlerAutoRegistration(t *testing.T) {
 	h := DefaultTUIForTest()
 
 	// Create a new tab for testing
-	tab := h.NewTabSection("WritingTest", "Test FieldHandler auto-registration")
+	tab := h.NewTabSection("WritingTest", "Test handler auto-registration")
 
 	// Create a test field handler using centralized handler
 	fieldHandler := NewTestEditableHandler("TestField", "test")
 
-	// Add field (should auto-register for writing)
-	tab.NewField(fieldHandler)
+	// Add field using new API (auto-registers for writing)
+	tab.NewEditHandler(fieldHandler).Register()
 
 	// Verify the field handler was auto-registered for writing
 	if tab.writingHandlers == nil {
-		t.Fatal("writingHandlers map should be initialized")
+		t.Fatal("writingHandlers slice should be initialized")
 	}
 
 	handlerName := fieldHandler.Name()
-	if registeredHandler, exists := tab.writingHandlers[handlerName]; !exists {
-		t.Fatalf("FieldHandler should be auto-registered in writingHandlers map with name '%s'", handlerName)
-	} else if registeredHandler != fieldHandler {
-		t.Error("Auto-registered handler should be the same instance")
+	if registeredHandler := tab.getWritingHandler(handlerName); registeredHandler == nil {
+		t.Fatalf("Handler should be auto-registered in writingHandlers slice with name '%s'", handlerName)
 	}
 }
 
@@ -148,7 +144,7 @@ func TestOperationIDControl(t *testing.T) {
 	}
 
 	// Register the handler and get its writer
-	writer := tab.RegisterWritingHandler(handler)
+	writer := tab.RegisterHandlerWriter(handler)
 
 	// First write - should create new message
 	writer.Write([]byte("First message"))
@@ -194,8 +190,8 @@ func TestMultipleHandlersInSameTab(t *testing.T) {
 	handler2 := &TestWriterHandler{name: "Writer2"}
 
 	// Register both handlers
-	writer1 := tab.RegisterWritingHandler(handler1)
-	writer2 := tab.RegisterWritingHandler(handler2)
+	writer1 := tab.RegisterHandlerWriter(handler1)
+	writer2 := tab.RegisterHandlerWriter(handler2)
 
 	// Write messages from both handlers
 	writer1.Write([]byte("Message from Writer1"))
@@ -239,7 +235,7 @@ func TestMessageTypeDetection(t *testing.T) {
 
 	// Create a test writing handler
 	handler := &TestWriterHandler{name: "TestWriter"}
-	writer := tab.RegisterWritingHandler(handler)
+	writer := tab.RegisterHandlerWriter(handler)
 
 	// Test different message types
 	testCases := []struct {

@@ -26,11 +26,15 @@ func prepareFieldForEditing(t *testing.T, h *DevTUI) *field {
 }
 
 func TestHandleKeyboard(t *testing.T) {
-	// Usar la función de inicialización por defecto para tests con handler
+	// Create test handler and TUI using new API
 	testHandler := NewTestEditableHandler("Test Field", "initial value")
-	h := DefaultTUIForTest(testHandler, func(messages ...any) {
+	h := DefaultTUIForTest(func(messages ...any) {
 		// Test logger - do nothing
 	})
+
+	// Create test tab and register handler
+	tab := h.NewTabSection("Test Tab", "Test description")
+	tab.NewEditHandler(testHandler).Register()
 
 	// Test case: Normal mode, changing tabs with tab key
 	t.Run("Normal mode - Tab key", func(t *testing.T) {
@@ -77,9 +81,13 @@ func TestHandleKeyboard(t *testing.T) {
 	t.Run("Editing mode - Text input", func(t *testing.T) {
 		// Reset para esta prueba con test handler
 		testHandler := NewTestEditableHandler("Test Field", "initial test value")
-		h := DefaultTUIForTest(testHandler, func(messages ...any) {
+		h := DefaultTUIForTest(func(messages ...any) {
 			// Test logger - do nothing
 		})
+
+		// Create test tab and register handler
+		tab := h.NewTabSection("Test Tab", "Test description")
+		tab.NewEditHandler(testHandler).Register()
 
 		// Configurar viewport para tener espacio suficiente para el texto
 		h.viewport.Width = 80
@@ -155,9 +163,13 @@ func TestHandleKeyboard(t *testing.T) {
 	t.Run("Editing mode - Backspace", func(t *testing.T) {
 		// Reset para esta prueba con test handler
 		testHandler := NewTestEditableHandler("Test Field", "initial value")
-		h := DefaultTUIForTest(testHandler, func(messages ...any) {
+		h := DefaultTUIForTest(func(messages ...any) {
 			// Test logger - do nothing
 		})
+
+		// Create test tab and register handler
+		tab := h.NewTabSection("Test Tab", "Test description")
+		tab.NewEditHandler(testHandler).Register()
 
 		// Setup: Enter editing mode
 		field := prepareFieldForEditing(t, h)
@@ -213,9 +225,13 @@ func TestHandleKeyboard(t *testing.T) {
 	t.Run("Editing mode - Enter on editable field", func(t *testing.T) {
 		// Reset para esta prueba con test handler
 		testHandler := NewTestEditableHandler("Test Field", "initial value")
-		h := DefaultTUIForTest(testHandler, func(messages ...any) {
+		h := DefaultTUIForTest(func(messages ...any) {
 			// Test logger - do nothing
 		})
+
+		// Create test tab and register handler
+		tab := h.NewTabSection("Test Tab", "Test description")
+		tab.NewEditHandler(testHandler).Register()
 
 		// Use centralized function to get correct tab index
 		testTabIndex := GetFirstTestTabIndex()
@@ -253,9 +269,14 @@ func TestHandleKeyboard(t *testing.T) {
 	t.Run("Normal mode - Ctrl+C", func(t *testing.T) {
 		// Reset para esta prueba con test handler
 		testHandler := NewTestEditableHandler("Test Field", "initial value")
-		h := DefaultTUIForTest(testHandler, func(messages ...any) {
+		h := DefaultTUIForTest(func(messages ...any) {
 			// Test logger - do nothing
-		}) // Reset para esta prueba
+		})
+
+		// Create test tab and register handler
+		tab := h.NewTabSection("Test Tab", "Test description")
+		tab.NewEditHandler(testHandler).Register()
+
 		h.editModeActivated = false
 
 		// Asegurarnos de que ExitChan está correctamente inicializado para esta prueba
@@ -281,17 +302,25 @@ func setTempEditValueForTest(f *field, value string) {
 // TestAdditionalKeyboardFeatures prueba características adicionales del teclado
 func TestAdditionalKeyboardFeatures(t *testing.T) {
 	testHandler := NewTestEditableHandler("Test Field", "Initial value")
-	h := DefaultTUIForTest(testHandler, func(messages ...any) {
+	h := DefaultTUIForTest(func(messages ...any) {
 		// Test logger - do nothing
 	})
+
+	// Create test tab and register handler
+	tab := h.NewTabSection("Test Tab", "Test description")
+	tab.NewEditHandler(testHandler).Register()
 
 	// Test: Cancelación de edición con ESC debe restaurar el valor original
 	t.Run("Editing mode - Cancel with ESC discards changes", func(t *testing.T) {
 		// Reset para esta prueba con handler editable
 		testHandler := NewTestEditableHandler("Test Field", "Original value")
-		h := DefaultTUIForTest(testHandler, func(messages ...any) {
+		h := DefaultTUIForTest(func(messages ...any) {
 			// Test logger - do nothing
 		})
+
+		// Create test tab and register handler
+		tab := h.NewTabSection("Test Tab", "Test description")
+		tab.NewEditHandler(testHandler).Register()
 
 		// Use the correct tab (index 1, not 0 which is SHORTCUTS)
 		testTabIndex := 1
@@ -367,9 +396,13 @@ func TestAdditionalKeyboardFeatures(t *testing.T) {
 	t.Run("Cursor movement in edit mode", func(t *testing.T) {
 		// Reset para esta prueba con test handler
 		testHandler := NewTestEditableHandler("Test Field", "test value")
-		h := DefaultTUIForTest(testHandler, func(messages ...any) {
+		h := DefaultTUIForTest(func(messages ...any) {
 			// Test logger - do nothing
 		})
+
+		// Create test tab and register handler
+		tab := h.NewTabSection("Test Tab", "Test description")
+		tab.NewEditHandler(testHandler).Register()
 
 		// Use centralized function to get correct tab index
 		testTabIndex := 1

@@ -47,15 +47,20 @@ func (h *TestEditableHandler) Value() string {
 func (h *TestEditableHandler) Editable() bool         { return true }
 func (h *TestEditableHandler) Timeout() time.Duration { return 0 }
 
-func (h *TestEditableHandler) Change(newValue any, progress ...func(string)) (string, error) {
+func (h *TestEditableHandler) Change(newValue any, progress ...func(string)) error {
 	strValue := newValue.(string)
 	h.mu.Lock()
 	h.currentValue = strValue
 	h.mu.Unlock()
-	return "Saved: " + strValue, nil
+
+	// Simular progress callback si se proporciona
+	if len(progress) > 0 {
+		progress[0]("Saved: " + strValue)
+	}
+	return nil
 }
 
-// WritingHandler methods
+// MessageTracker methods
 func (h *TestEditableHandler) Name() string { return h.label + "Handler" }
 
 func (h *TestEditableHandler) SetLastOperationID(lastOpID string) {
@@ -107,14 +112,24 @@ func (h *TestNonEditableHandler) Value() string {
 func (h *TestNonEditableHandler) Editable() bool         { return false }
 func (h *TestNonEditableHandler) Timeout() time.Duration { return 0 }
 
-func (h *TestNonEditableHandler) Change(newValue any, progress ...func(string)) (string, error) {
-	h.mu.RLock()
-	actionText := h.actionText
-	h.mu.RUnlock()
-	return "Action executed: " + actionText, nil
+func (h *TestNonEditableHandler) Change(newValue any, progress ...func(string)) error {
+	// Simulate action execution with progress
+	if len(progress) > 0 {
+		progress[0]("Action executed: " + h.actionText)
+	}
+	return nil
 }
 
-// WritingHandler methods
+// HandlerExecution interface
+func (h *TestNonEditableHandler) Execute(progress ...func(string)) error {
+	// Simulate action execution
+	if len(progress) > 0 {
+		progress[0]("Action executed: " + h.actionText)
+	}
+	return nil
+}
+
+// MessageTracker methods
 func (h *TestNonEditableHandler) Name() string { return h.label + "Handler" }
 
 func (h *TestNonEditableHandler) SetLastOperationID(lastOpID string) {
@@ -150,7 +165,7 @@ func NewTestWriterHandler(name string) *TestWriterHandler {
 	return &TestWriterHandler{name: name}
 }
 
-// Solo implementa WritingHandler (no FieldHandler)
+// Solo implementa MessageTracker
 func (h *TestWriterHandler) Name() string { return h.name }
 
 func (h *TestWriterHandler) SetLastOperationID(lastOpID string) {
@@ -173,17 +188,6 @@ func (h *TestWriterHandler) SetUpdateMode(update bool) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	h.updateMode = update
-}
-
-// NewTestFieldHandler creates a basic test handler - compatibility function
-func NewTestFieldHandler(label, value string, editable bool, changeFunc func(newValue any) (string, error)) FieldHandler {
-	if editable {
-		handler := NewTestEditableHandler(label, value)
-		return handler
-	} else {
-		handler := NewTestNonEditableHandler(label, value)
-		return handler
-	}
 }
 
 // PortTestHandler - Handler específico para tests de puerto con validación
@@ -209,28 +213,31 @@ func (h *PortTestHandler) Value() string {
 func (h *PortTestHandler) Editable() bool         { return true }
 func (h *PortTestHandler) Timeout() time.Duration { return 3 * time.Second }
 
-func (h *PortTestHandler) Change(newValue any, progress ...func(string)) (string, error) {
+func (h *PortTestHandler) Change(newValue any, progress ...func(string)) error {
 	portStr := strings.TrimSpace(newValue.(string))
 	if portStr == "" {
-		return "", fmt.Errorf("port cannot be empty")
+		return fmt.Errorf("port cannot be empty")
 	}
 
 	port, err := strconv.Atoi(portStr)
 	if err != nil {
-		return "", fmt.Errorf("port must be a number")
+		return fmt.Errorf("port must be a number")
 	}
 	if port < 1 || port > 65535 {
-		return "", fmt.Errorf("port must be between 1 and 65535")
+		return fmt.Errorf("port must be between 1 and 65535")
 	}
 
 	h.mu.Lock()
 	h.currentPort = portStr
 	h.mu.Unlock()
 
-	return fmt.Sprintf("Port configured: %d", port), nil
+	if len(progress) > 0 {
+		progress[0](fmt.Sprintf("Port configured: %d", port))
+	}
+	return nil
 }
 
-// WritingHandler methods
+// MessageTracker methods
 func (h *PortTestHandler) Name() string { return "PortHandler" }
 
 func (h *PortTestHandler) SetLastOperationID(lastOpID string) {
@@ -275,11 +282,11 @@ func (h *TestErrorHandler) Value() string          { return h.value }
 func (h *TestErrorHandler) Editable() bool         { return true }
 func (h *TestErrorHandler) Timeout() time.Duration { return 0 }
 
-func (h *TestErrorHandler) Change(newValue any, progress ...func(string)) (string, error) {
-	return "", fmt.Errorf("simulated error occurred")
+func (h *TestErrorHandler) Change(newValue any, progress ...func(string)) error {
+	return fmt.Errorf("simulated error occurred")
 }
 
-// WritingHandler methods
+// MessageTracker methods
 func (h *TestErrorHandler) Name() string                       { return h.label + "ErrorHandler" }
 func (h *TestErrorHandler) SetLastOperationID(lastOpID string) { h.lastOpID = lastOpID }
 func (h *TestErrorHandler) GetLastOperationID() string {
@@ -314,16 +321,19 @@ func (h *TestRequiredFieldHandler) Value() string          { return h.currentVal
 func (h *TestRequiredFieldHandler) Editable() bool         { return true }
 func (h *TestRequiredFieldHandler) Timeout() time.Duration { return 0 }
 
-func (h *TestRequiredFieldHandler) Change(newValue any, progress ...func(string)) (string, error) {
+func (h *TestRequiredFieldHandler) Change(newValue any, progress ...func(string)) error {
 	strValue := newValue.(string)
 	if strValue == "" {
-		return "", fmt.Errorf("Field cannot be empty")
+		return fmt.Errorf("Field cannot be empty")
 	}
 	h.currentValue = strValue
-	return "Accepted: " + strValue, nil
+	if len(progress) > 0 {
+		progress[0]("Accepted: " + strValue)
+	}
+	return nil
 }
 
-// WritingHandler methods
+// MessageTracker methods
 func (h *TestRequiredFieldHandler) Name() string                       { return h.label + "RequiredHandler" }
 func (h *TestRequiredFieldHandler) SetLastOperationID(lastOpID string) { h.lastOpID = lastOpID }
 func (h *TestRequiredFieldHandler) GetLastOperationID() string {
@@ -358,17 +368,23 @@ func (h *TestOptionalFieldHandler) Value() string          { return h.currentVal
 func (h *TestOptionalFieldHandler) Editable() bool         { return true }
 func (h *TestOptionalFieldHandler) Timeout() time.Duration { return 0 }
 
-func (h *TestOptionalFieldHandler) Change(newValue any, progress ...func(string)) (string, error) {
+func (h *TestOptionalFieldHandler) Change(newValue any, progress ...func(string)) error {
 	strValue := newValue.(string)
 	h.currentValue = strValue
 	if strValue == "" {
 		h.currentValue = "Default Value" // Para el test que espera esta transformación
-		return "Default Value", nil
+		if len(progress) > 0 {
+			progress[0]("Default Value")
+		}
+	} else {
+		if len(progress) > 0 {
+			progress[0]("Updated: " + strValue)
+		}
 	}
-	return "Updated: " + strValue, nil
+	return nil
 }
 
-// WritingHandler methods
+// MessageTracker methods
 func (h *TestOptionalFieldHandler) Name() string                       { return h.label + "OptionalHandler" }
 func (h *TestOptionalFieldHandler) SetLastOperationID(lastOpID string) { h.lastOpID = lastOpID }
 func (h *TestOptionalFieldHandler) GetLastOperationID() string {
@@ -403,13 +419,16 @@ func (h *TestClearableFieldHandler) Value() string          { return h.currentVa
 func (h *TestClearableFieldHandler) Editable() bool         { return true }
 func (h *TestClearableFieldHandler) Timeout() time.Duration { return 0 }
 
-func (h *TestClearableFieldHandler) Change(newValue any, progress ...func(string)) (string, error) {
+func (h *TestClearableFieldHandler) Change(newValue any, progress ...func(string)) error {
 	strValue := newValue.(string)
 	h.currentValue = strValue
-	return strValue, nil // Return exactly what was input, including empty string
+	if len(progress) > 0 {
+		progress[0](strValue) // Return exactly what was input, including empty string
+	}
+	return nil
 }
 
-// WritingHandler methods
+// MessageTracker methods
 func (h *TestClearableFieldHandler) Name() string                       { return h.label + "ClearableHandler" }
 func (h *TestClearableFieldHandler) SetLastOperationID(lastOpID string) { h.lastOpID = lastOpID }
 func (h *TestClearableFieldHandler) GetLastOperationID() string {
@@ -446,20 +465,20 @@ func (h *TestCapturingHandler) Value() string          { return h.currentValue }
 func (h *TestCapturingHandler) Editable() bool         { return true }
 func (h *TestCapturingHandler) Timeout() time.Duration { return 0 }
 
-func (h *TestCapturingHandler) Change(newValue any, progress ...func(string)) (string, error) {
+func (h *TestCapturingHandler) Change(newValue any, progress ...func(string)) error {
 	strValue := newValue.(string)
 	if h.capturedValue != nil {
 		*h.capturedValue = strValue // Captura el valor para el test
 	}
 	if strValue == "" {
 		h.currentValue = "Field was cleared" // Actualizar el valor interno también
-		return "Field was cleared", nil
+		return nil
 	}
 	h.currentValue = strValue
-	return "Field value: " + strValue, nil
+	return nil
 }
 
-// WritingHandler methods
+// MessageTracker methods
 func (h *TestCapturingHandler) Name() string                       { return h.label + "CapturingHandler" }
 func (h *TestCapturingHandler) SetLastOperationID(lastOpID string) { h.lastOpID = lastOpID }
 func (h *TestCapturingHandler) GetLastOperationID() string {
@@ -481,15 +500,14 @@ func (h *TestCapturingHandler) SetUpdateMode(update bool) {
 //   - DefaultTUIForTest(handler1, func(messages...any){}) // TUI with handlers + logger
 func DefaultTUIForTest(handlersAndLogger ...any) *DevTUI {
 	var logFunc func(messages ...any)
-	var handlers []FieldHandler
+	// UPDATED: Removed FieldHandler support - use specific handler types
 
-	// Parse variadic arguments: handlers (FieldHandler) and optional logger (func)
+	// Parse variadic arguments: handlers and optional logger (func)
 	for _, arg := range handlersAndLogger {
 		switch v := arg.(type) {
 		case func(messages ...any):
 			logFunc = v
-		case FieldHandler:
-			handlers = append(handlers, v)
+			// NOTE: Specific handler types should be added via tab.NewEditHandler, etc.
 		}
 	}
 
@@ -509,18 +527,11 @@ func DefaultTUIForTest(handlersAndLogger ...any) *DevTUI {
 		LogToFile:     logFunc,
 	})
 
-	// Create test tab only if handlers are provided
-	if len(handlers) > 0 {
-		tab := h.NewTabSection("Test Tab", "Tab with test handlers")
-
-		// Add all provided handlers to the tab
-		for _, handler := range handlers {
-			tab.NewField(handler)
-		}
-
-		tab.SetIndex(GetFirstTestTabIndex()) // Index 1 (SHORTCUTS is 0)
-		tab.SetActiveEditField(0)
-	}
+	// NOTE: For test tabs with handlers, use:
+	// tab := h.NewTabSection("Test Tab", "Tab description")
+	// tab.NewEditHandler(yourHandler).WithTimeout(timeout)
+	// tab.NewDisplayHandler(yourDisplayHandler)
+	// etc.
 
 	return h
 }

@@ -2,6 +2,7 @@ package devtui
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/cdvelop/messagetype"
 )
@@ -46,9 +47,31 @@ func (d *DevTUI) sendMessageWithHandler(content string, mt messagetype.Type, tab
 	d.tabContentsChan <- newContent
 
 	// Call SetLastOperationID on the handler after processing
-	if tabSection.writingHandlers != nil {
-		if handler, exists := tabSection.writingHandlers[handlerName]; exists {
-			handler.SetLastOperationID(newContent.Id)
+	// First try writing handlers, then field handlers
+	var targetHandler *anyHandler
+	if handler := tabSection.getWritingHandler(handlerName); handler != nil {
+		targetHandler = handler
+	} else {
+		// Search in field handlers
+		for _, field := range tabSection.FieldHandlers() {
+			if field.handler != nil && field.handler.Name() == handlerName {
+				targetHandler = field.handler
+				break
+			}
+		}
+	}
+
+	if targetHandler != nil {
+		targetHandler.SetLastOperationID(newContent.Id)
+	} else {
+		// DEBUG: Log when handler is not found (temporary for debugging)
+		if tabSection.tui != nil && tabSection.tui.LogToFile != nil {
+			tabSection.tui.LogToFile(fmt.Sprintf("DEBUG: Handler not found for '%s'. Available field handlers:", handlerName))
+			for i, field := range tabSection.FieldHandlers() {
+				if field.handler != nil {
+					tabSection.tui.LogToFile(fmt.Sprintf("  [%d] %s", i, field.handler.Name()))
+				}
+			}
 		}
 	}
 }
@@ -98,11 +121,9 @@ func (t *DevTUI) formatMessage(msg tabContent) string {
 func (t *DevTUI) isReadOnlyHandler(handlerName string) bool {
 	// Check if handler has empty label (readonly convention)
 	for _, tab := range t.tabSections {
-		if handler, exists := tab.writingHandlers[handlerName]; exists {
-			// Cast to FieldHandler to check Label()
-			if fieldHandler, ok := handler.(FieldHandler); ok {
-				return fieldHandler.Label() == ""
-			}
+		if handler := tab.getWritingHandler(handlerName); handler != nil {
+			// Check if it's a display handler (readonly)
+			return handler.handlerType == handlerTypeDisplay
 		}
 	}
 	return false
@@ -110,12 +131,17 @@ func (t *DevTUI) isReadOnlyHandler(handlerName string) bool {
 
 // createTabContent creates tabContent with unified logic (replaces newContent and newContentWithHandler)
 func (h *DevTUI) createTabContent(content string, mt messagetype.Type, tabSection *tabSection, handlerName string, operationID string) tabContent {
-	// Timestamp SIEMPRE nuevo usando GetNewID - PANIC si no hay unixid
+	// Timestamp SIEMPRE nuevo usando GetNewID - Handle gracefully if unixid failed to initialize
 	var timestamp string
 	if h.id != nil {
 		timestamp = h.id.GetNewID()
 	} else {
-		panic("DevTUI: unixid not initialized - cannot generate timestamp")
+		// Log the issue before using fallback
+		if h.LogToFile != nil {
+			h.LogToFile("Warning: unixid not initialized, using fallback timestamp for content:", content)
+		}
+		// Graceful fallback when unixid initialization failed
+		timestamp = time.Now().Format("15:04:05")
 	}
 
 	var id string

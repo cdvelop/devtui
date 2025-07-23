@@ -87,12 +87,12 @@ func NewTUI(c *TuiConfig) *DevTUI {
 	id, err := unixid.NewUnixID()
 	if err != nil {
 		if c.LogToFile != nil {
-			c.LogToFile("Error initializing unixid:", err)
+			c.LogToFile("Critical: Error initializing unixid:", err, "- timestamp generation will use fallback")
 		}
-		// id will remain nil, but newContent method will handle this
+		// id will remain nil, but createTabContent method will handle this gracefully now
 	} else {
 		if c.LogToFile != nil {
-			c.LogToFile("UnixID initialized successfully")
+			c.LogToFile("Success: UnixID initialized correctly")
 		}
 	}
 
@@ -110,7 +110,7 @@ func NewTUI(c *TuiConfig) *DevTUI {
 	// Always add SHORTCUTS tab first
 	shortcutsTab := tui.NewTabSection("SHORTCUTS", "Keyboard navigation instructions")
 	shortcutsHandler := NewShortcutsHandler()
-	shortcutsTab.NewField(shortcutsHandler)
+	shortcutsTab.NewDisplayHandler(shortcutsHandler).Register()
 
 	// Automatically display shortcuts content when tab is created (unless in test mode)
 	// Use sendMessageWithHandler to respect readonly handler formatting

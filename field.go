@@ -8,26 +8,183 @@ import (
 	"github.com/cdvelop/messagetype"
 )
 
-// Internal fieldHandler interface - bridges new specialized interfaces to internal field system
-// This interface is used internally by wrapper handlers and should not be implemented directly by users
-// Users should implement HandlerDisplay, HandlerEdit, or HandlerExecution instead
-type fieldHandler interface {
-	Label() string                                                 // Field label (e.g., "Server Port")
-	Value() string                                                 // Current field value (e.g., "8080")
-	Editable() bool                                                // Whether field is editable or action button
-	Change(newValue any, progress ...func(string)) (string, error) // Handler with optional progress callback
-	Timeout() time.Duration                                        // Return 0 for no timeout, or specific duration
+// ============================================================================
+// PRIVATE IMPLEMENTATION - anyHandler Structure
+// ============================================================================
 
-	// Internal writing capabilities for message routing
-	writingHandler
+type handlerType int
+
+const (
+	handlerTypeDisplay handlerType = iota
+	handlerTypeEdit
+	handlerTypeExecution
+	handlerTypeWriter
+	handlerTypeTrackerWriter
+)
+
+// anyHandler - Estructura privada que unifica todos los handlers
+type anyHandler struct {
+	handlerType handlerType
+	timeout     time.Duration // Solo edit/execution
+	lastOpID    string        // Tracking interno
+
+	// Function pointers - solo los necesarios poblados
+	nameFunc     func() string                    // Todos
+	labelFunc    func() string                    // Display/Edit/Execution
+	valueFunc    func() string                    // Edit/Display
+	contentFunc  func() string                    // Display únicamente
+	editableFunc func() bool                      // Por tipo
+	changeFunc   func(any, ...func(string)) error // Edit/Execution (solo error)
+	executeFunc  func(...func(string)) error      // Execution únicamente
+	timeoutFunc  func() time.Duration             // Edit/Execution
+	getOpIDFunc  func() string                    // Tracking
+	setOpIDFunc  func(string)                     // Tracking
 }
 
-// Internal writingHandler interface for message tracking - used by wrapper handlers
-// Users should use HandlerWriter, HandlerTrackerWriter for external writers
-type writingHandler interface {
-	Name() string                       // Handler identifier (e.g., "TinyWasm", "MainServer")
-	SetLastOperationID(lastOpID string) // DevTUI calls this after processing each message
-	GetLastOperationID() string         // Handler returns ID for message updates, "" for new messages
+// ============================================================================
+// anyHandler Methods - Replaces fieldHandler interface
+// ============================================================================
+
+func (a *anyHandler) Name() string {
+	if a.nameFunc != nil {
+		return a.nameFunc()
+	}
+	return ""
+}
+
+func (a *anyHandler) Label() string {
+	if a.labelFunc != nil {
+		return a.labelFunc()
+	}
+	return ""
+}
+
+func (a *anyHandler) Value() string {
+	if a.valueFunc != nil {
+		return a.valueFunc()
+	}
+	return ""
+}
+
+func (a *anyHandler) Editable() bool {
+	if a.editableFunc != nil {
+		return a.editableFunc()
+	}
+	return false
+}
+
+func (a *anyHandler) Change(newValue any, progress ...func(string)) error {
+	if a.changeFunc != nil {
+		return a.changeFunc(newValue, progress...)
+	}
+	return nil
+}
+
+func (a *anyHandler) Timeout() time.Duration {
+	if a.timeoutFunc != nil {
+		return a.timeoutFunc()
+	}
+	return a.timeout
+}
+
+func (a *anyHandler) SetLastOperationID(id string) {
+	a.lastOpID = id
+	if a.setOpIDFunc != nil {
+		a.setOpIDFunc(id)
+	}
+}
+
+func (a *anyHandler) GetLastOperationID() string {
+	if a.getOpIDFunc != nil {
+		return a.getOpIDFunc()
+	}
+	return a.lastOpID
+}
+
+// ============================================================================
+// Factory Methods
+// ============================================================================
+
+func newEditHandler(h HandlerEdit, timeout time.Duration, tracker MessageTracker) *anyHandler {
+	anyH := &anyHandler{
+		handlerType:  handlerTypeEdit,
+		timeout:      timeout,
+		nameFunc:     h.Name,
+		labelFunc:    h.Label,
+		valueFunc:    h.Value,
+		editableFunc: func() bool { return true },
+		changeFunc:   h.Change,
+		timeoutFunc:  func() time.Duration { return timeout },
+	}
+
+	// Configurar tracking opcional
+	if tracker != nil {
+		anyH.getOpIDFunc = tracker.GetLastOperationID
+		anyH.setOpIDFunc = tracker.SetLastOperationID
+	} else {
+		anyH.getOpIDFunc = func() string { return "" }
+		anyH.setOpIDFunc = func(string) {}
+	}
+
+	return anyH
+}
+
+func newDisplayHandler(h HandlerDisplay) *anyHandler {
+	return &anyHandler{
+		handlerType:  handlerTypeDisplay,
+		timeout:      0, // Display no requiere timeout
+		nameFunc:     h.Name,
+		labelFunc:    h.Label,
+		valueFunc:    h.Content, // Content como Value para compatibilidad
+		contentFunc:  h.Content, // Content específico para display
+		editableFunc: func() bool { return false },
+		getOpIDFunc:  func() string { return "" },
+		setOpIDFunc:  func(string) {},
+	}
+}
+
+func newExecutionHandler(h HandlerExecution, timeout time.Duration) *anyHandler {
+	anyH := &anyHandler{
+		handlerType:  handlerTypeExecution,
+		timeout:      timeout,
+		nameFunc:     h.Name,
+		labelFunc:    h.Label,
+		editableFunc: func() bool { return false },
+		executeFunc:  h.Execute,
+		changeFunc: func(val any, progress ...func(string)) error {
+			return h.Execute(progress...) // Wrapper para compatibilidad
+		},
+		timeoutFunc: func() time.Duration { return timeout },
+		getOpIDFunc: func() string { return "" },
+		setOpIDFunc: func(string) {},
+	}
+
+	// Check if handler also implements Value() method (like TestNonEditableHandler)
+	if valuer, ok := h.(interface{ Value() string }); ok {
+		anyH.valueFunc = valuer.Value
+	} else {
+		anyH.valueFunc = h.Label // Fallback to Label
+	}
+
+	return anyH
+}
+
+func newWriterHandler(h HandlerWriter) *anyHandler {
+	return &anyHandler{
+		handlerType: handlerTypeWriter,
+		nameFunc:    h.Name,
+		getOpIDFunc: func() string { return "" }, // Siempre nuevas líneas
+		setOpIDFunc: func(string) {},
+	}
+}
+
+func newTrackerWriterHandler(h HandlerTrackerWriter) *anyHandler {
+	return &anyHandler{
+		handlerType: handlerTypeTrackerWriter,
+		nameFunc:    h.Name,
+		getOpIDFunc: h.GetLastOperationID,
+		setOpIDFunc: h.SetLastOperationID,
+	}
 }
 
 // Internal async state management (not exported)
@@ -42,9 +199,9 @@ type internalAsyncState struct {
 // Field represents a field in the TUI with a handler-based approach
 // field represents a field in the TUI with async capabilities
 type field struct {
-	// NEW: Handler-based approach (replaces name, value, editable, changeFunc)
-	handler   fieldHandler // Handles all field behavior
-	parentTab *tabSection  // Direct reference to parent for message routing
+	// NEW: Handler-based approach with anyHandler (replaces fieldHandler)
+	handler   *anyHandler // Handles all field behavior
+	parentTab *tabSection // Direct reference to parent for message routing
 
 	// NEW: Internal async state
 	asyncState *internalAsyncState
@@ -70,7 +227,7 @@ func (f *field) SetCursorForTest(cursor int) {
 // Example usage:
 //
 //	tab.NewField(&MyHandler{})
-func (ts *tabSection) NewField(handler fieldHandler) *tabSection {
+func (ts *tabSection) NewField(handler *anyHandler) *tabSection {
 	f := &field{
 		handler:    handler,
 		parentTab:  ts,
@@ -78,12 +235,7 @@ func (ts *tabSection) NewField(handler fieldHandler) *tabSection {
 	}
 
 	// AUTO-REGISTER: FieldHandlers are automatically registered for writing
-	// Initialize writingHandlers map if needed
-	if ts.writingHandlers == nil {
-		ts.writingHandlers = make(map[string]writingHandler)
-	}
-	// Register the handler for writing capability
-	ts.writingHandlers[handler.Name()] = handler
+	ts.registerAnyHandler(handler)
 
 	ts.addFields(f)
 	return ts
@@ -108,7 +260,7 @@ func (f *field) Value() string {
 }
 
 // GetHandlerForTest returns the handler for testing purposes
-func (f *field) GetHandlerForTest() fieldHandler {
+func (f *field) GetHandlerForTest() *anyHandler {
 	return f.handler
 }
 
@@ -129,9 +281,44 @@ func (f *field) isDisplayOnly() bool {
 	if f.handler == nil {
 		return false
 	}
-	// Check if handler implements HandlerDisplay interface (via wrapper)
-	_, isDisplayHandler := f.handler.(*displayFieldHandler)
-	return isDisplayHandler
+	return f.handler.handlerType == handlerTypeDisplay
+}
+
+// NUEVO: Detección para execution con footer expandido
+func (f *field) isExecutionHandler() bool {
+	if f.handler == nil {
+		return false
+	}
+	return f.handler.handlerType == handlerTypeExecution
+}
+
+// NUEVO: Detección para handlers que usan footer expandido (Display + Execution)
+func (f *field) usesExpandedFooter() bool {
+	return f.isDisplayOnly() || f.isExecutionHandler()
+}
+
+// NUEVO: Método para mostrar contenido en la sección principal
+func (f *field) getDisplayContent() string {
+	if f.isDisplayOnly() && f.handler != nil {
+		if f.handler.contentFunc != nil {
+			return f.handler.contentFunc() // Content() se muestra en la sección principal
+		}
+	}
+	return ""
+}
+
+// NUEVO: Método para footer expandido - Label() usa espacio de label + value
+func (f *field) getExpandedFooterLabel() string {
+	if f.usesExpandedFooter() && f.handler != nil {
+		if f.isDisplayOnly() && f.handler.labelFunc != nil {
+			// Display handlers show Label() in footer
+			return f.handler.labelFunc()
+		} else if f.isExecutionHandler() && f.handler.valueFunc != nil {
+			// Execution handlers show Value() in footer for better UX
+			return f.handler.valueFunc()
+		}
+	}
+	return ""
 }
 
 func (f *field) SetCursorAtEnd() {
@@ -243,6 +430,11 @@ func (f *field) executeAsyncChange(valueToSave any) {
 			// Generate new ID for new operations
 			f.asyncState.operationID = f.parentTab.tui.id.GetNewID()
 		}
+	} else {
+		// Log when id is nil for debugging
+		if f.parentTab != nil && f.parentTab.tui != nil && f.parentTab.tui.LogToFile != nil {
+			f.parentTab.tui.LogToFile("Warning: Cannot generate operation ID, unixid not initialized")
+		}
 	}
 	f.asyncState.startTime = time.Now()
 
@@ -261,7 +453,11 @@ func (f *field) executeAsyncChange(valueToSave any) {
 	}, 1)
 
 	go func() {
-		result, err := f.handler.Change(currentValue, progressCallback)
+		err := f.handler.Change(currentValue, progressCallback)
+		var result string
+		if err == nil {
+			result = f.handler.Value() // Obtener valor actualizado si no hay error
+		}
 		resultChan <- struct {
 			result string
 			err    error
@@ -305,24 +501,35 @@ func (f *field) executeChangeSync() {
 	// Generate operation ID for message routing (same as async version)
 	if f.asyncState != nil && f.parentTab != nil && f.parentTab.tui != nil && f.parentTab.tui.id != nil {
 		// Check if handler has existing operationID to reuse (for updates)
-		if existingID := f.handler.GetLastOperationID(); existingID != "" {
+		existingID := f.handler.GetLastOperationID()
+		if existingID != "" {
 			f.asyncState.operationID = existingID
 		} else {
 			// Generate new ID for new operations
-			f.asyncState.operationID = f.parentTab.tui.id.GetNewID()
+			newID := f.parentTab.tui.id.GetNewID()
+			f.asyncState.operationID = newID
+			// Store the new ID in the handler
+			f.handler.SetLastOperationID(newID)
 		}
 	}
 
 	// Get current value based on field type
 	currentValue := f.getCurrentValue()
 
-	// Create empty progress callback for sync execution
+	// Create progress callback for sync execution
 	progressCallback := func(message string) {
-		// In sync mode, we could log progress but not send to UI to avoid race conditions
+		// In sync mode, send progress messages via LogToFile to avoid UI interference
+		if f.parentTab != nil && f.parentTab.tui != nil && f.parentTab.tui.LogToFile != nil {
+			f.parentTab.tui.LogToFile("Progress:", message)
+		}
 	}
 
 	// Execute user's Change method synchronously
-	result, err := f.handler.Change(currentValue, progressCallback)
+	err := f.handler.Change(currentValue, progressCallback)
+	var result string
+	if err == nil {
+		result = f.handler.Value() // Obtener valor actualizado si no hay error
+	}
 
 	if err != nil {
 		// Handler decides error message content
@@ -347,7 +554,7 @@ func (f *field) executeChangeSyncWithValue(valueToSave any) {
 		// In sync test mode, we don't send messages to avoid race conditions
 	}
 
-	_, err := f.handler.Change(valueToSave, progressCallback)
+	err := f.handler.Change(valueToSave, progressCallback)
 
 	// In test mode, we don't send messages to UI to avoid race conditions
 	// The test can verify the handler's internal state directly

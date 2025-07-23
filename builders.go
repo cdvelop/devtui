@@ -17,12 +17,30 @@ type editHandlerBuilder struct {
 // timeout > 0 means asynchronous execution with the specified timeout.
 func (b *editHandlerBuilder) WithTimeout(timeout time.Duration) *tabSection {
 	b.timeout = timeout
-	// Create a temporary wrapper to hold timeout info
-	wrapper := &handlerWithTimeout{
-		Handler: b.handler,
-		Timeout: b.timeout,
+
+	// Check if handler implements MessageTracker interface
+	var tracker MessageTracker
+	if t, ok := b.handler.(MessageTracker); ok {
+		tracker = t
 	}
-	b.tabSection.registerHandlerWithTimeout(wrapper)
+
+	anyH := newEditHandler(b.handler, b.timeout, tracker)
+
+	f := &field{
+		handler:    anyH,
+		parentTab:  b.tabSection,
+		asyncState: &internalAsyncState{},
+	}
+
+	b.tabSection.addFields(f)
+
+	// Auto-register handler for writing if it implements HandlerTrackerWriter interface (both HandlerWriter and MessageTracker)
+	if _, ok := b.handler.(HandlerTrackerWriter); ok {
+		if writerHandler, ok := b.handler.(HandlerWriter); ok {
+			b.tabSection.RegisterHandlerWriter(writerHandler)
+		}
+	}
+
 	return b.tabSection
 }
 
@@ -43,12 +61,15 @@ type executionHandlerBuilder struct {
 // timeout > 0 means asynchronous execution with the specified timeout.
 func (b *executionHandlerBuilder) WithTimeout(timeout time.Duration) *tabSection {
 	b.timeout = timeout
-	// Create a temporary wrapper to hold timeout info
-	wrapper := &handlerWithTimeout{
-		Handler: b.handler,
-		Timeout: b.timeout,
+	anyH := newExecutionHandler(b.handler, b.timeout)
+
+	f := &field{
+		handler:    anyH,
+		parentTab:  b.tabSection,
+		asyncState: &internalAsyncState{},
 	}
-	b.tabSection.registerHandlerWithTimeout(wrapper)
+
+	b.tabSection.addFields(f)
 	return b.tabSection
 }
 
@@ -66,7 +87,15 @@ type displayHandlerBuilder struct {
 
 // Register finalizes the HandlerDisplay registration.
 func (b *displayHandlerBuilder) Register() *tabSection {
-	b.tabSection.registerHandler(b.handler)
+	anyH := newDisplayHandler(b.handler)
+
+	f := &field{
+		handler:    anyH,
+		parentTab:  b.tabSection,
+		asyncState: &internalAsyncState{},
+	}
+
+	b.tabSection.addFields(f)
 	return b.tabSection
 }
 
@@ -78,5 +107,22 @@ type writerHandlerBuilder struct {
 
 // Register finalizes the Writer registration and returns the io.Writer.
 func (b *writerHandlerBuilder) Register() io.Writer {
-	return b.tabSection.registerWriterHandler(b.handler)
+	var anyH *anyHandler
+
+	switch h := b.handler.(type) {
+	case HandlerTrackerWriter:
+		anyH = newTrackerWriterHandler(h)
+	case HandlerWriter:
+		anyH = newWriterHandler(h)
+	default:
+		panic("unsupported writer handler type")
+	}
+
+	b.tabSection.registerAnyHandler(anyH)
+
+	// Return a handlerWriter for io.Writer interface
+	return &handlerWriter{
+		tabSection:  b.tabSection,
+		handlerName: anyH.Name(),
+	}
 }

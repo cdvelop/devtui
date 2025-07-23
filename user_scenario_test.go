@@ -14,9 +14,13 @@ func TestUserScenarioExactReplication(t *testing.T) {
 	t.Run("Exact user scenario: clear field then type should not show old value", func(t *testing.T) {
 		// Setup: Create TUI with test handler
 		testHandler := NewTestEditableHandler("Test Field", "initial test value")
-		h := DefaultTUIForTest(testHandler, func(messages ...any) {
+		h := DefaultTUIForTest(func(messages ...any) {
 			// Test logger - do nothing
 		})
+
+		// Create test tab and register handler
+		tab := h.NewTabSection("Test Tab", "Test description")
+		tab.NewEditHandler(testHandler).Register()
 
 		// Initialize viewport with a reasonable size for testing
 		h.viewport.Width = 80
@@ -113,7 +117,12 @@ func TestBackspaceAfterClear(t *testing.T) {
 	t.Run("Backspace should work correctly when field is cleared", func(t *testing.T) {
 		// Setup with test handler
 		testHandler := NewTestEditableHandler("Test Field", "test value")
-		h := DefaultTUIForTest(testHandler, func(messages ...any) {})
+		h := DefaultTUIForTest(func(messages ...any) {})
+
+		// Create test tab and register handler
+		tab := h.NewTabSection("Test Tab", "Test description")
+		tab.NewEditHandler(testHandler).Register()
+
 		h.viewport.Width = 80
 		h.viewport.Height = 24
 

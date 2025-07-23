@@ -33,12 +33,9 @@ func TestCustomTabs(t *testing.T) { // Create a custom configuration with custom
 	customSection := NewTUI(&TuiConfig{}).NewTabSection("CUSTOM1", "custom footer")
 
 	// Create handler for testing
-	testHandler := NewTestFieldHandler("Test Field", "test value", true, func(newValue any) (string, error) {
-		strValue := newValue.(string)
-		return "Value updated to " + strValue, nil
-	})
+	testHandler := NewTestEditableHandler("Test Field", "test value")
 
-	customSection.NewField(testHandler)
+	customSection.NewEditHandler(testHandler).Register()
 
 	config := &TuiConfig{
 		TabIndexStart: 0,

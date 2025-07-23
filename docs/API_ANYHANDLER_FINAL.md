@@ -274,13 +274,30 @@ func (ts *tabSection) getWritingHandler(name string) *anyHandler {
 
 1. **Mostrar contenido inmediatamente** al posicionarse en el campo
 2. **En la sección principal**: Mostrar lo que retorne `Content()`
-3. **En el footer**: Mostrar `Label()` usando el espacio de label + value (pero respetando el ScrollInfo)
+3. **En el footer**: Layout expandido `[Label expandido ________] [Scroll%]`
+   - El `Label()` usa todo el espacio disponible restante
+   - Scroll % siempre a la derecha
+   - Estilo visual normal (mismo que header)
 
 ## Comportamiento Execution Handlers
 
 **NUEVO REQUISITO**: Los handlers de tipo `Execution` deben:
 
-1. **En el footer**: Mostrar `Label()` usando el espacio de label + value (mismo estilo que Display)
+1. **En el footer**: Layout normal `[Label] [Value] [Scroll%]` (igual que Edit)
+   - Label con ancho fijo (labelWidth) 
+   - Value con ancho calculado
+   - Scroll % siempre a la derecha
+   - **Estilo visual del botón**: Fondo blanco con letras grises (indica que es ejecutable)
+
+## Comportamiento Edit Handlers
+
+**COMPORTAMIENTO ESTÁNDAR**: Los handlers de tipo `Edit` mantienen:
+
+1. **En el footer**: Layout normal `[Label] [Value] [Scroll%]`
+   - Label con ancho fijo (labelWidth)
+   - Value con ancho calculado
+   - Scroll % siempre a la derecha
+   - Estilos según estado (edición activa, inactiva, etc.)
 
 ```go
 // Detección actualizada para display

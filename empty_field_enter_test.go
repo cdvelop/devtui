@@ -11,7 +11,11 @@ func TestEmptyFieldEnterBehavior(t *testing.T) {
 	t.Run("Empty field should call changeFunc with empty string when Enter is pressed", func(t *testing.T) {
 		// Setup with test handler
 		testHandler := NewTestEditableHandler("Test Field", "initial test value")
-		h := DefaultTUIForTest(testHandler)
+		h := DefaultTUIForTest()
+
+		// Create test tab and register handler
+		tab := h.NewTabSection("Test Tab", "Test description")
+		tab.NewEditHandler(testHandler).Register()
 
 		// Initialize viewport
 		h.viewport.Width = 80
@@ -68,15 +72,20 @@ func TestEmptyFieldEnterBehavior(t *testing.T) {
 		customHandler := NewTestCapturingHandler("Test Field", "original value", &receivedValue)
 
 		// Create TUI with custom field
-		h := DefaultTUIForTest(customHandler)
+		h := DefaultTUIForTest()
+
+		// Create test tab and register handler
+		tab := h.NewTabSection("Test Tab", "Test description")
+		tab.NewEditHandler(customHandler).Register()
+
 		h.viewport.Width = 80
 		h.viewport.Height = 24
 
 		// Get the field from the test tab
 		testTabIndex := GetFirstTestTabIndex()
-		tab := h.tabSections[testTabIndex]
+		tabSection := h.tabSections[testTabIndex]
 
-		field := tab.FieldHandlers()[0]
+		field := tabSection.FieldHandlers()[0]
 
 		// Switch to test tab and enter editing mode
 		h.activeTab = testTabIndex

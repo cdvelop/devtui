@@ -16,10 +16,13 @@ func TestOperationIDReuse(t *testing.T) {
 			operationID: "test-op-123", // Fixed operationID
 		}
 
-		h := DefaultTUIForTest(handler)
+		h := DefaultTUIForTest()
 		h.TestMode = true // Enable test mode
 
-		testTab := h.tabSections[GetFirstTestTabIndex()]
+		// Create a test tab since DefaultTUIForTest only creates SHORTCUTS tab
+		testTab := h.NewTabSection("Test Tab", "Test description")
+		testTab.NewEditHandler(handler).Register()
+
 		field := testTab.FieldHandlers()[0]
 
 		// First execution - should create new message with the fixed operationID
@@ -66,10 +69,14 @@ func TestOperationIDReuse(t *testing.T) {
 		handler1.handlerName = "TestHandler1"
 		handler2.handlerName = "TestHandler2"
 
-		h := DefaultTUIForTest(handler1, handler2)
+		h := DefaultTUIForTest()
 		h.TestMode = true
 
-		testTab := h.tabSections[GetFirstTestTabIndex()]
+		// Register handlers using the new API
+		testTab := h.NewTabSection("Test Tab 2", "Test description for multiple handlers")
+		testTab.NewEditHandler(handler1).Register()
+		testTab.NewEditHandler(handler2).Register()
+
 		field1 := testTab.FieldHandlers()[0]
 		field2 := testTab.FieldHandlers()[1]
 
@@ -99,10 +106,13 @@ func TestOperationIDReuse(t *testing.T) {
 			value: "initial",
 		}
 
-		h := DefaultTUIForTest(handler)
+		h := DefaultTUIForTest()
 		h.TestMode = true
 
-		testTab := h.tabSections[GetFirstTestTabIndex()]
+		// Register handler using the new API
+		testTab := h.NewTabSection("Test Tab 3", "Test description for new operation ID")
+		testTab.NewEditHandler(handler).Register()
+
 		field := testTab.FieldHandlers()[0]
 
 		// First execution
@@ -142,8 +152,11 @@ func (h *TestOperationIDHandler) Value() string          { return h.value }
 func (h *TestOperationIDHandler) Editable() bool         { return true }
 func (h *TestOperationIDHandler) Timeout() time.Duration { return 0 }
 
-func (h *TestOperationIDHandler) Change(newValue any, progress ...func(string)) (string, error) {
-	return "Operation completed", nil
+func (h *TestOperationIDHandler) Change(newValue any, progress ...func(string)) error {
+	if len(progress) > 0 {
+		progress[0]("Operation completed")
+	}
+	return nil
 }
 
 func (h *TestOperationIDHandler) SetLastOperationID(id string) {
@@ -168,8 +181,11 @@ func (h *TestNewOperationHandler) Value() string          { return h.value }
 func (h *TestNewOperationHandler) Editable() bool         { return true }
 func (h *TestNewOperationHandler) Timeout() time.Duration { return 0 }
 
-func (h *TestNewOperationHandler) Change(newValue any, progress ...func(string)) (string, error) {
-	return "New operation completed", nil
+func (h *TestNewOperationHandler) Change(newValue any, progress ...func(string)) error {
+	if len(progress) > 0 {
+		progress[0]("New operation completed")
+	}
+	return nil
 }
 
 func (h *TestNewOperationHandler) SetLastOperationID(id string) {

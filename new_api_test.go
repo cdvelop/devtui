@@ -9,6 +9,7 @@ import (
 
 type testDisplayHandler struct{}
 
+func (h *testDisplayHandler) Name() string    { return "TestDisplay" }
 func (h *testDisplayHandler) Label() string   { return "Test Display" }
 func (h *testDisplayHandler) Content() string { return "This is display content" }
 
@@ -16,6 +17,7 @@ type testEditHandler struct {
 	value string
 }
 
+func (h *testEditHandler) Name() string  { return "TestEdit" }
 func (h *testEditHandler) Label() string { return "Test Edit" }
 func (h *testEditHandler) Value() string { return h.value }
 func (h *testEditHandler) Change(newValue any, progress ...func(string)) error {
@@ -25,6 +27,7 @@ func (h *testEditHandler) Change(newValue any, progress ...func(string)) error {
 
 type testRunHandler struct{}
 
+func (h *testRunHandler) Name() string  { return "TestRun" }
 func (h *testRunHandler) Label() string { return "Test Run" }
 func (h *testRunHandler) Execute(progress ...func(string)) error {
 	if len(progress) > 0 {
@@ -132,69 +135,4 @@ func TestNewAPIHandlers(t *testing.T) {
 	}
 
 	close(exitChan)
-}
-
-func TestFieldWrappers(t *testing.T) {
-	// Test displayFieldHandler wrapper (private type, tested through public API)
-	display := &testDisplayHandler{}
-	wrapper := &displayFieldHandler{display: display, timeout: 0}
-
-	if wrapper.Label() != "Test Display" {
-		t.Error("displayFieldHandler.Label() mismatch")
-	}
-	if wrapper.Value() != "This is display content" {
-		t.Error("displayFieldHandler.Value() mismatch")
-	}
-	if wrapper.Editable() {
-		t.Error("displayFieldHandler should not be editable")
-	}
-
-	// Test editFieldHandler wrapper (private type, tested through public API)
-	edit := &testEditHandler{value: "test"}
-	editWrapper := &editFieldHandler{edit: edit, timeout: 5 * time.Second}
-
-	if editWrapper.Label() != "Test Edit" {
-		t.Error("editFieldHandler.Label() mismatch")
-	}
-	if editWrapper.Value() != "test" {
-		t.Error("editFieldHandler.Value() mismatch")
-	}
-	if !editWrapper.Editable() {
-		t.Error("editFieldHandler should be editable")
-	}
-	if editWrapper.Timeout() != 5*time.Second {
-		t.Error("editFieldHandler.Timeout() mismatch")
-	}
-
-	// Test runFieldHandler wrapper (private type, tested through public API)
-	run := &testRunHandler{}
-	runWrapper := &runFieldHandler{run: run, timeout: 10 * time.Second}
-
-	if runWrapper.Label() != "Test Run" {
-		t.Error("runFieldHandler.Label() mismatch")
-	}
-	if runWrapper.Value() != "Execute" {
-		t.Error("runFieldHandler.Value() should be 'Execute'")
-	}
-	if runWrapper.Editable() {
-		t.Error("runFieldHandler should not be editable")
-	}
-	if runWrapper.Timeout() != 10*time.Second {
-		t.Error("runFieldHandler.Timeout() mismatch")
-	}
-}
-
-func TestBasicWriterAdapter(t *testing.T) {
-	basic := &testWriterBasic{}
-	adapter := &basicWriterAdapter{basic: basic}
-
-	if adapter.Name() != "TestWriter" {
-		t.Error("basicWriterAdapter.Name() mismatch")
-	}
-
-	// Test operation ID behavior (always returns empty for basic writers)
-	adapter.SetLastOperationID("test-id")
-	if adapter.GetLastOperationID() != "" {
-		t.Error("basicWriterAdapter should always return empty operation ID")
-	}
 }

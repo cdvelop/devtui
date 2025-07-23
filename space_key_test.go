@@ -10,9 +10,13 @@ import (
 func setupTestWithEditableField(t *testing.T) (*DevTUI, *field) {
 	// Create test handler and TUI
 	testHandler := NewTestEditableHandler("Test Field", "initial value")
-	h := DefaultTUIForTest(testHandler, func(messages ...any) {
+	h := DefaultTUIForTest(func(messages ...any) {
 		// Test logger - do nothing
 	})
+
+	// Create test tab and register handler
+	tab := h.NewTabSection("Test Tab", "Test description")
+	tab.NewEditHandler(testHandler).Register()
 
 	// Initialize viewport with a reasonable size for testing FIRST
 	h.viewport.Width = 80

@@ -1,11 +1,8 @@
 package devtui
 
-import "time"
-
 // ShortcutsHandler - Shows keyboard navigation instructions
 type ShortcutsHandler struct {
 	shortcuts string
-	lastOpID  string
 }
 
 func NewShortcutsHandler() *ShortcutsHandler {
@@ -38,16 +35,6 @@ Application:
 	return &ShortcutsHandler{shortcuts: shortcuts}
 }
 
-func (h *ShortcutsHandler) Label() string          { return "" } // EMPTY = readonly display
-func (h *ShortcutsHandler) Value() string          { return "Keyboard Navigation Commands" }
-func (h *ShortcutsHandler) Editable() bool         { return false }
-func (h *ShortcutsHandler) Timeout() time.Duration { return 0 }
-
-func (h *ShortcutsHandler) Change(newValue any, progress ...func(string)) (string, error) {
-	return h.shortcuts, nil
-}
-
-// WritingHandler methods
-func (h *ShortcutsHandler) Name() string                       { return "Shortcuts" }
-func (h *ShortcutsHandler) SetLastOperationID(lastOpID string) { h.lastOpID = lastOpID }
-func (h *ShortcutsHandler) GetLastOperationID() string         { return "" }
+func (h *ShortcutsHandler) Name() string    { return "Shortcuts" }
+func (h *ShortcutsHandler) Label() string   { return "Help" }
+func (h *ShortcutsHandler) Content() string { return h.shortcuts }

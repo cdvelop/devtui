@@ -14,20 +14,21 @@ func TestChangeFuncControlsEmptyFieldBehavior(t *testing.T) {
 		customHandler := NewTestRequiredFieldHandler("Required Field", "initial value")
 
 		// Create TUI with custom field
-		h := DefaultTUIForTest(customHandler)
+		h := DefaultTUIForTest()
+		// Create a test tab and add the handler using new API
+		tab := h.NewTabSection("Test Tab", "Test description")
+		tab.NewEditHandler(customHandler).Register()
+
 		h.viewport.Width = 80
 		h.viewport.Height = 24
 
 		// Get the field from the test tab
-		testTabIndex := GetFirstTestTabIndex()
-		tab := h.tabSections[testTabIndex]
-
 		field := tab.FieldHandlers()[0]
 
 		// Switch to test tab and enter editing mode
-		h.activeTab = testTabIndex
+		h.activeTab = len(h.tabSections) - 1 // Use the last added tab
 		h.editModeActivated = true
-		h.tabSections[testTabIndex].indexActiveEditField = 0
+		h.tabSections[h.activeTab].indexActiveEditField = 0
 
 		// Initialize editing
 		field.tempEditValue = field.Value()
@@ -57,20 +58,21 @@ func TestChangeFuncControlsEmptyFieldBehavior(t *testing.T) {
 		customHandler := NewTestOptionalFieldHandler("Optional Field", "original value")
 
 		// Create TUI with custom field
-		h := DefaultTUIForTest(customHandler, func(messages ...any) {})
+		h := DefaultTUIForTest(func(messages ...any) {})
+		// Create a test tab and add the handler using new API
+		tab := h.NewTabSection("Test Tab", "Test description")
+		tab.NewEditHandler(customHandler).Register()
+
 		h.viewport.Width = 80
 		h.viewport.Height = 24
 
 		// Get the field from the test tab
-		testTabIndex := GetFirstTestTabIndex()
-		tab := h.tabSections[testTabIndex]
-
 		field := tab.FieldHandlers()[0]
 
 		// Switch to test tab and enter editing mode
-		h.activeTab = testTabIndex
+		h.activeTab = len(h.tabSections) - 1 // Use the last added tab
 		h.editModeActivated = true
-		h.tabSections[testTabIndex].indexActiveEditField = 0
+		h.tabSections[h.activeTab].indexActiveEditField = 0
 
 		// Initialize editing
 		field.tempEditValue = field.Value()
@@ -95,20 +97,21 @@ func TestChangeFuncControlsEmptyFieldBehavior(t *testing.T) {
 		customHandler := NewTestClearableFieldHandler("Clearable Field", "some value")
 
 		// Create TUI with custom field
-		h := DefaultTUIForTest(customHandler, func(messages ...any) {})
+		h := DefaultTUIForTest(func(messages ...any) {})
+		// Create a test tab and add the handler using new API
+		tab := h.NewTabSection("Test Tab", "Test description")
+		tab.NewEditHandler(customHandler).Register()
+
 		h.viewport.Width = 80
 		h.viewport.Height = 24
 
 		// Get the field from the test tab
-		testTabIndex := GetFirstTestTabIndex()
-		tab := h.tabSections[testTabIndex]
-
 		field := tab.FieldHandlers()[0]
 
 		// Switch to test tab and enter editing mode
-		h.activeTab = testTabIndex
+		h.activeTab = len(h.tabSections) - 1 // Use the last added tab
 		h.editModeActivated = true
-		h.tabSections[testTabIndex].indexActiveEditField = 0
+		h.tabSections[h.activeTab].indexActiveEditField = 0
 
 		// Initialize editing
 		field.tempEditValue = field.Value()

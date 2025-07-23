@@ -12,9 +12,13 @@ func TestFieldEditingBugReplication(t *testing.T) {
 	t.Run("Bug replication: After clearing field and typing, old value gets concatenated", func(t *testing.T) {
 		// Setup: Create TUI with test handler
 		testHandler := NewTestEditableHandler("Test Field", "initial test value")
-		h := DefaultTUIForTest(testHandler, func(messages ...any) {
+		h := DefaultTUIForTest(func(messages ...any) {
 			// Test logger - do nothing
 		})
+
+		// Create test tab and register handler
+		tab := h.NewTabSection("Test Tab", "Test description")
+		tab.NewEditHandler(testHandler).Register()
 
 		// Initialize viewport with a reasonable size for testing
 		h.viewport.Width = 80
@@ -77,9 +81,13 @@ func TestFieldEditingCorrectBehavior(t *testing.T) {
 	t.Run("Field editing should work correctly when tempEditValue is empty", func(t *testing.T) {
 		// Setup with test handler
 		testHandler := NewTestEditableHandler("Test Field", "initial test value")
-		h := DefaultTUIForTest(testHandler, func(messages ...any) {
+		h := DefaultTUIForTest(func(messages ...any) {
 			// Test logger - do nothing
 		})
+
+		// Create test tab and register handler
+		tab := h.NewTabSection("Test Tab", "Test description")
+		tab.NewEditHandler(testHandler).Register()
 
 		// Initialize viewport with a reasonable size for testing
 		h.viewport.Width = 80

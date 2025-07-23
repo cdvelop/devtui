@@ -33,6 +33,25 @@ func (h *DevTUI) ContentView() string {
 	section.mu.RUnlock()
 
 	var contentLines []string
+
+	// NEW: Add display handler content if active field is a Display handler
+	fieldHandlers := section.FieldHandlers()
+	if len(fieldHandlers) > 0 && section.indexActiveEditField < len(fieldHandlers) {
+		activeField := fieldHandlers[section.indexActiveEditField]
+		if activeField.isDisplayOnly() {
+			displayContent := activeField.getDisplayContent()
+			if displayContent != "" {
+				// Add display content at the top of the content view
+				contentLines = append(contentLines, h.textContentStyle.Render(displayContent))
+				// Add separator line if there are also tab messages
+				if len(tabContent) > 0 {
+					contentLines = append(contentLines, "")
+				}
+			}
+		}
+	}
+
+	// Add regular tab content messages
 	for _, content := range tabContent {
 		formattedMsg := h.formatMessage(content)
 		contentLines = append(contentLines, h.textContentStyle.Render(formattedMsg))

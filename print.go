@@ -2,7 +2,6 @@ package devtui
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/cdvelop/messagetype"
 )
@@ -92,10 +91,12 @@ func (t *DevTUI) formatMessage(msg tabContent) string {
 		timeStr = t.timeStyle.Render("--:--:--")
 	}
 
-	// NEW: Include handler name in message format
+	// NEW: Include handler name in message format with brackets united
 	var handlerName string
 	if msg.handlerName != "" {
-		handlerName = fmt.Sprintf("[%s] ", msg.handlerName)
+		// Aplicar estilo completo a [handlerName] como una unidad
+		styledName := t.infoStyle.Render(fmt.Sprintf("[%s]", msg.handlerName))
+		handlerName = styledName + " "
 	}
 
 	// timeStr := t.timeStyle.Render(msg.Time.Format("15:04:05"))
@@ -136,12 +137,13 @@ func (h *DevTUI) createTabContent(content string, mt messagetype.Type, tabSectio
 	if h.id != nil {
 		timestamp = h.id.GetNewID()
 	} else {
+		errMsg := "Warning: unixid not initialized, using fallback timestamp for content: " + content
 		// Log the issue before using fallback
 		if h.LogToFile != nil {
-			h.LogToFile("Warning: unixid not initialized, using fallback timestamp for content:", content)
+			h.LogToFile(errMsg)
 		}
+		panic(errMsg) // Panic to ensure we catch this critical issue
 		// Graceful fallback when unixid initialization failed
-		timestamp = time.Now().Format("15:04:05")
 	}
 
 	var id string

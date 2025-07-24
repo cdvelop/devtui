@@ -380,7 +380,9 @@ func (f *field) sendProgressMessage(content string) {
 			handlerName = f.handler.Name()
 		}
 
-		f.parentTab.tui.sendMessageWithHandler(content, messagetype.Info, f.parentTab, handlerName, f.asyncState.operationID)
+		// SOLUCIÓN: Usar detección centralizada como Writers
+		msgType := messagetype.DetectMessageType(content)
+		f.parentTab.tui.sendMessageWithHandler(content, msgType, f.parentTab, handlerName, f.asyncState.operationID)
 	}
 }
 
@@ -397,7 +399,9 @@ func (f *field) sendErrorMessage(content string) {
 			handlerName = f.handler.Name()
 		}
 
-		f.parentTab.tui.sendMessageWithHandler(content, messagetype.Error, f.parentTab, handlerName, operationID)
+		// SOLUCIÓN: Usar detección centralizada como sendProgressMessage
+		msgType := messagetype.DetectMessageType(content)
+		f.parentTab.tui.sendMessageWithHandler(content, msgType, f.parentTab, handlerName, operationID)
 	}
 }
 
@@ -414,7 +418,9 @@ func (f *field) sendSuccessMessage(content string) {
 			handlerName = f.handler.Name()
 		}
 
-		f.parentTab.tui.sendMessageWithHandler(content, messagetype.Success, f.parentTab, handlerName, operationID)
+		// SOLUCIÓN: Usar detección centralizada como sendProgressMessage
+		msgType := messagetype.DetectMessageType(content)
+		f.parentTab.tui.sendMessageWithHandler(content, msgType, f.parentTab, handlerName, operationID)
 	}
 }
 

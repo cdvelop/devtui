@@ -74,7 +74,9 @@ if field.isDisplayOnly() {
     
     displayStyle := lipgloss.NewStyle().
         Width(remainingWidth).
-        Padding(0, horizontalPadding)
+        Padding(0, horizontalPadding).
+        Background(lipgloss.Color(h.Highlight)).  // Fondo naranja
+        Foreground(lipgloss.Color(h.Foreground))  // Texto blanco
     styledLabel := displayStyle.Render(labelText)
     
     spacerStyle := lipgloss.NewStyle().Width(horizontalPadding).Render("")
@@ -101,6 +103,7 @@ func (h *StatusHandler) Content() string {
 ```
 [System Status Information Display                              ][100%]
 ```
+*Renderizado con fondo naranja (#FF6600) y texto blanco (#F4F4F4)*
 
 ### Ejemplo 2: Help Handler
 ```go
@@ -119,6 +122,7 @@ func (h *HelpHandler) Content() string {
 ```
 [DevTUI Help & Navigation Guide                                ][100%]
 ```
+*Renderizado con fondo naranja (#FF6600) y texto blanco (#F4F4F4)*
 
 ### Ejemplo 3: Server Info Handler
 ```go
@@ -137,6 +141,7 @@ func (h *ServerInfoHandler) Content() string {
 ```
 [Production Server Monitoring Dashboard                         ][100%]
 ```
+*Renderizado con fondo naranja (#FF6600) y texto blanco (#F4F4F4)*
 
 ## Características del Diseño
 
@@ -173,7 +178,7 @@ Label()           Value()
 ```
 [System Status Information Display                          ][100%]
  ↑
-Name() completo
+Name() completo con fondo naranja y texto blanco
 ```
 
 ## Estilos Visuales
@@ -183,8 +188,13 @@ Name() completo
 - **Padding**: Consistente con otros elementos
 - **Alineación**: Izquierda para el texto, derecha para scroll%
 
+### Colores para HandlerDisplay
+- **Fondo**: `Highlight` (#FF6600) - Color naranja característico de la aplicación
+- **Texto**: `Foreground` (#F4F4F4) - Blanco para máximo contraste y legibilidad
+- **Justificación**: Destaca la información del handler con el color principal, creando consistencia visual con otros elementos destacados de la UI
+
 ### Estados Visuales
-- **Normal**: Estilo estándar del footer
+- **Normal**: Estilo con fondo naranja y texto blanco
 - **Sin interacción**: No responde a clicks o teclas
 - **Solo navegación**: Permite navegación entre fields pero sin edición
 

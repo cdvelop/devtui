@@ -77,7 +77,7 @@ func (w *OperationLogWriter) SetLastOperationID(id string) { w.lastOpID = id }
 
 func main() {
 	tui := devtui.NewTUI(&devtui.TuiConfig{
-		AppName:   "New API Demo",
+		AppName:   "Demo",
 		ExitChan:  make(chan bool),
 		LogToFile: func(messages ...any) {},
 	})

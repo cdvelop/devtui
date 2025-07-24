@@ -62,7 +62,9 @@ func (h *DevTUI) renderFooterInput() string {
 		// Display: [Label expandido] [Scroll%]
 		displayStyle := lipgloss.NewStyle().
 			Width(remainingWidth).
-			Padding(0, horizontalPadding)
+			Padding(0, horizontalPadding).
+			Background(lipgloss.Color(h.Lowlight)).  // Fondo naranja
+			Foreground(lipgloss.Color(h.Foreground)) // Texto blanco
 		styledLabel := displayStyle.Render(labelText)
 
 		spacerStyle := lipgloss.NewStyle().Width(horizontalPadding).Render("")

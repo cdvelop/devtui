@@ -39,9 +39,8 @@ type DevTUI struct {
 }
 
 type TuiConfig struct {
-	AppName       string    // app name eg: "MyApp"
-	TabIndexStart int       // is the index of the tab section to start default 0
-	ExitChan      chan bool //  global chan to close app eg: make(chan bool)
+	AppName  string    // app name eg: "MyApp"
+	ExitChan chan bool //  global chan to close app eg: make(chan bool)
 	/*// *ColorStyle style for the TUI
 	  // if nil it will use default style:
 	type ColorStyle struct {
@@ -61,7 +60,6 @@ type TuiConfig struct {
 //
 //	config := &TuiConfig{
 //	    AppName: "MyApp",
-//	    TabIndexStart: 0,
 //	    ExitChan: make(chan bool),
 //	    Color: nil, // or your *ColorStyle
 //	    LogToFile: func(err any) { fmt.Println(err) },
@@ -99,7 +97,7 @@ func NewTUI(c *TuiConfig) *DevTUI {
 		TuiConfig:       c,
 		focused:         true, // assume the app is focused
 		tabSections:     []*tabSection{},
-		activeTab:       c.TabIndexStart,
+		activeTab:       0, // Will be adjusted in Start() method
 		tabContentsChan: make(chan tabContent, 100),
 		currentTime:     time.Now().Format("15:04:05"),
 		tuiStyle:        newTuiStyle(c.Color),
@@ -154,9 +152,8 @@ func (h *DevTUI) Start(args ...any) {
 		}
 	}
 
-	// If user didn't specify a custom TabIndexStart and we have more than 1 tab,
-	// default to tab 1 (skip SHORTCUTS which is at index 0)
-	if h.TuiConfig.TabIndexStart == 0 && len(h.tabSections) > 1 {
+	// Start with tab 1 (skip SHORTCUTS which is at index 0) if there are multiple tabs
+	if len(h.tabSections) > 1 {
 		h.activeTab = 1
 	}
 

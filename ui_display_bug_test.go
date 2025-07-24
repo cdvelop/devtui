@@ -13,9 +13,8 @@ func TestUIDisplayBug(t *testing.T) {
 	t.Run("UI should show updated value after editing, not old value", func(t *testing.T) {
 		// Setup exactly like main.go but with TestMode disabled to get real async behavior
 		config := &TuiConfig{
-			AppName:       "DevTUI - Display Bug Test",
-			TabIndexStart: 0,
-			ExitChan:      make(chan bool),
+			AppName:  "DevTUI - Display Bug Test",
+			ExitChan: make(chan bool),
 			Color: &ColorStyle{
 				Foreground: "#F4F4F4",
 				Background: "#000000",

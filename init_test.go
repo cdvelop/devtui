@@ -9,9 +9,8 @@ import (
 func TestNewTUI(t *testing.T) {
 	// Test configuration with default tabs
 	config := &TuiConfig{
-		TabIndexStart: 0,
-		ExitChan:      make(chan bool),
-		Color:         &ColorStyle{}, // Usando un ColorStyle vacío
+		ExitChan: make(chan bool),
+		Color:    &ColorStyle{}, // Usando un ColorStyle vacío
 		LogToFile: func(messages ...any) {
 			// Mock function for logging
 		},
@@ -38,9 +37,8 @@ func TestCustomTabs(t *testing.T) { // Create a custom configuration with custom
 	customSection.NewEditHandler(testHandler).Register()
 
 	config := &TuiConfig{
-		TabIndexStart: 0,
-		ExitChan:      make(chan bool),
-		Color:         &ColorStyle{},
+		ExitChan: make(chan bool),
+		Color:    &ColorStyle{},
 	}
 
 	// Add custom tab section
@@ -53,8 +51,7 @@ func TestCustomTabs(t *testing.T) { // Create a custom configuration with custom
 func TestMultipleTabSections(t *testing.T) {
 	// Test that NewTUI correctly adds multiple tab sections
 	config := &TuiConfig{
-		TabIndexStart: 0,
-		Color:         &ColorStyle{},
+		Color: &ColorStyle{},
 	}
 
 	tui := NewTUI(config)

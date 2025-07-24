@@ -59,12 +59,11 @@ func main() {
 
 DevTUI provides 5 specialized handler types, each requiring minimal implementation:
 
-### 1. HandlerDisplay - Read-only Information (3 methods)
+### 1. HandlerDisplay - Read-only Information (2 methods)
 ```go
 type HandlerDisplay interface {
-    Name() string    // Unique identifier for logging
-    Label() string   // Display label in footer
-    Content() string // Content shown immediately
+    Name() string    // full text to display in footer (handler responsible for content) eg. "System Status Information Display"
+    Content() string // Content shown immediately eg: "Status: Running\nPID: 12345\nUptime: 2h 30m\nMemory: 45MB\nCPU: 12%"
 }
 ```
 
@@ -94,9 +93,9 @@ type HandlerWriter interface {
 }
 ```
 
-### 5. HandlerTrackerWriter - Advanced Logging (3 methods)
+### 5. HandlerWriterTracker - Advanced Logging (3 methods)
 ```go
-type HandlerTrackerWriter interface {
+type HandlerWriterTracker interface {
     Name() string
     MessageTracker
 }
@@ -116,7 +115,7 @@ tab.NewEditHandler(handler).WithTimeout(5*time.Second)
 tab.NewExecutionHandler(handler).WithTimeout(10*time.Second)
 
 // Handlers with tracking (can update existing messages)
-tab.NewEditHandlerWithTracking(handlerWithTracker).WithTimeout(5*time.Second)
+tab.NewEditHandlerTracking(handlerWithTracker).WithTimeout(5*time.Second)
 tab.NewExecutionHandlerTracking(handlerWithTracker).WithTimeout(10*time.Second)
 
 // Writers
@@ -125,7 +124,7 @@ tab.NewWriterHandlerTracking(handlerWithTracker).Register()
 
 // Direct writer registration (auto-detects tracking)
 writer := tab.RegisterHandlerWriter(basicWriter)
-writer := tab.RegisterHandlerTrackerWriter(trackerWriter)
+writer := tab.RegisterHandlerWriterTracker(trackerWriter)
 ```
 
 ## Key Features

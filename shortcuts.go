@@ -35,6 +35,5 @@ Application:
 	return &ShortcutsHandler{shortcuts: shortcuts}
 }
 
-func (h *ShortcutsHandler) Name() string    { return "Shortcuts" }
-func (h *ShortcutsHandler) Label() string   { return "Help" }
+func (h *ShortcutsHandler) Name() string    { return "DevTUI Help & Navigation Guide" }
 func (h *ShortcutsHandler) Content() string { return h.shortcuts }

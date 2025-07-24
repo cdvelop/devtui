@@ -140,11 +140,10 @@ func newEditHandler(h HandlerEdit, timeout time.Duration, tracker MessageTracker
 func newDisplayHandler(h HandlerDisplay) *anyHandler {
 	return &anyHandler{
 		handlerType:  handlerTypeDisplay,
-		timeout:      0, // Display no requiere timeout
-		nameFunc:     h.Name,
-		labelFunc:    h.Label,
-		valueFunc:    h.Content, // Content como Value para compatibilidad
-		contentFunc:  h.Content, // Content específico para display
+		timeout:      0,         // Display no requiere timeout
+		nameFunc:     h.Name,    // Solo Name()
+		valueFunc:    h.Content, // Content como Value para compatibilidad interna
+		contentFunc:  h.Content, // Solo Content()
 		editableFunc: func() bool { return false },
 		getOpIDFunc:  func() string { return "" },
 		setOpIDFunc:  func(string) {},
@@ -193,7 +192,7 @@ func newWriterHandler(h HandlerWriter) *anyHandler {
 	}
 }
 
-func newTrackerWriterHandler(h HandlerTrackerWriter) *anyHandler {
+func newTrackerWriterHandler(h HandlerWriterTracker) *anyHandler {
 	return &anyHandler{
 		handlerType: handlerTypeTrackerWriter,
 		nameFunc:    h.Name,
@@ -330,12 +329,12 @@ func (f *field) getDisplayContent() string {
 	return ""
 }
 
-// NUEVO: Método para footer expandido - Label() usa espacio de label + value
+// NUEVO: Método para footer expandido - Name() usa espacio de label + value
 func (f *field) getExpandedFooterLabel() string {
 	if f.usesExpandedFooter() && f.handler != nil {
-		if f.isDisplayOnly() && f.handler.labelFunc != nil {
-			// Display handlers show Label() in footer
-			return f.handler.labelFunc()
+		if f.isDisplayOnly() && f.handler.nameFunc != nil {
+			// Display handlers show Name() in footer
+			return f.handler.nameFunc()
 		} else if f.isExecutionHandler() && f.handler.valueFunc != nil {
 			// Execution handlers show Value() in footer for better UX
 			return f.handler.valueFunc()

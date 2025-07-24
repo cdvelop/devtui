@@ -3,8 +3,7 @@ package devtui
 // HandlerDisplay defines the interface for read-only information display handlers.
 // These handlers show static or dynamic content without user interaction.
 type HandlerDisplay interface {
-	Name() string    // Identificador para logging: "HelpDisplay", "StatusMonitor"
-	Label() string   // Display label (e.g., "Help", "Status")
+	Name() string    // Full text to display in footer (handler responsible for content) eg. "System Status Information Display"
 	Content() string // Display content (e.g., "help\n1-..\n2-...", "executing deploy wait...")
 }
 
@@ -17,6 +16,13 @@ type HandlerEdit interface {
 	Change(newValue any, progress ...func(string)) error // Sin return string - usar Value() si no hay error
 }
 
+// HandlerEditTracker combines HandlerEdit with MessageTracker for advanced edit handlers
+// that need message tracking capabilities.
+type HandlerEditTracker interface {
+	HandlerEdit
+	MessageTracker
+}
+
 // HandlerExecution defines the interface for action buttons that execute operations.
 // These handlers trigger business logic when activated by the user.
 type HandlerExecution interface {
@@ -25,15 +31,22 @@ type HandlerExecution interface {
 	Execute(progress ...func(string)) error
 }
 
+// HandlerExecutionTracker combines HandlerExecution with MessageTracker for advanced execution handlers
+// that need message tracking capabilities.
+type HandlerExecutionTracker interface {
+	HandlerExecution
+	MessageTracker
+}
+
 // HandlerWriter defines the interface for basic writers that create new lines for each write.
 // These writers are suitable for simple logging or output display.
 type HandlerWriter interface {
 	Name() string // Writer identifier (e.g., "webBuilder", "ApplicationLog")
 }
 
-// HandlerTrackerWriter defines the interface for advanced writers that can update existing lines.
+// HandlerWriterTracker defines the interface for advanced writers that can update existing lines.
 // These writers support message tracking and can modify previously written content.
-type HandlerTrackerWriter interface {
+type HandlerWriterTracker interface {
 	Name() string
 	MessageTracker
 }
@@ -43,18 +56,4 @@ type HandlerTrackerWriter interface {
 type MessageTracker interface {
 	GetLastOperationID() string
 	SetLastOperationID(id string)
-}
-
-// EditHandlerTracker combines HandlerEdit with MessageTracker for advanced edit handlers
-// that need message tracking capabilities.
-type EditHandlerTracker interface {
-	HandlerEdit
-	MessageTracker
-}
-
-// ExecutionHandlerTracker combines HandlerExecution with MessageTracker for advanced execution handlers
-// that need message tracking capabilities.
-type ExecutionHandlerTracker interface {
-	HandlerExecution
-	MessageTracker
 }

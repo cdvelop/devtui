@@ -11,12 +11,12 @@ func (ts *tabSection) NewEditHandler(handler HandlerEdit) *editHandlerBuilder {
 	}
 }
 
-// NewEditHandlerWithTracking creates a new EditHandlerBuilder with tracking support
+// NewEditHandlerTracking creates a new EditHandlerBuilder with tracking support
 // Note: The builder automatically detects if handler implements MessageTracker interface
-func (ts *tabSection) NewEditHandlerWithTracking(handler EditHandlerTracker) *editHandlerBuilder {
+func (ts *tabSection) NewEditHandlerTracking(handler HandlerEditTracker) *editHandlerBuilder {
 	return &editHandlerBuilder{
 		tabSection: ts,
-		handler:    handler, // EditHandlerTracker extends HandlerEdit
+		handler:    handler, // HandlerEditTracker extends HandlerEdit
 		timeout:    0,       // Default: synchronous
 	}
 }
@@ -32,10 +32,10 @@ func (ts *tabSection) NewExecutionHandler(handler HandlerExecution) *executionHa
 
 // NewExecutionHandlerTracking creates a new ExecutionHandlerBuilder with tracking support
 // Note: The builder automatically detects if handler implements MessageTracker interface
-func (ts *tabSection) NewExecutionHandlerTracking(handler ExecutionHandlerTracker) *executionHandlerBuilder {
+func (ts *tabSection) NewExecutionHandlerTracking(handler HandlerExecutionTracker) *executionHandlerBuilder {
 	return &executionHandlerBuilder{
 		tabSection: ts,
-		handler:    handler, // ExecutionHandlerTracker extends HandlerExecution
+		handler:    handler, // HandlerExecutionTracker extends HandlerExecution
 		timeout:    0,       // Default: synchronous
 	}
 }
@@ -58,9 +58,9 @@ func (ts *tabSection) NewWriterHandler(handler any) *writerHandlerBuilder {
 
 // NewWriterHandlerTracking creates a new WriterHandlerBuilder with tracking support
 // For handlers that implement both HandlerWriter and MessageTracker interfaces
-func (ts *tabSection) NewWriterHandlerTracking(handler HandlerTrackerWriter) *writerHandlerBuilder {
+func (ts *tabSection) NewWriterHandlerTracking(handler HandlerWriterTracker) *writerHandlerBuilder {
 	return &writerHandlerBuilder{
 		tabSection: ts,
-		handler:    handler, // HandlerTrackerWriter extends both interfaces
+		handler:    handler, // HandlerWriterTracker extends both interfaces
 	}
 }

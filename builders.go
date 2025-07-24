@@ -34,8 +34,8 @@ func (b *editHandlerBuilder) WithTimeout(timeout time.Duration) *tabSection {
 
 	b.tabSection.addFields(f)
 
-	// Auto-register handler for writing if it implements HandlerTrackerWriter interface (both HandlerWriter and MessageTracker)
-	if _, ok := b.handler.(HandlerTrackerWriter); ok {
+	// Auto-register handler for writing if it implements HandlerWriterTracker interface (both HandlerWriter and MessageTracker)
+	if _, ok := b.handler.(HandlerWriterTracker); ok {
 		if writerHandler, ok := b.handler.(HandlerWriter); ok {
 			b.tabSection.RegisterHandlerWriter(writerHandler)
 		}
@@ -102,7 +102,7 @@ func (b *displayHandlerBuilder) Register() *tabSection {
 // writerHandlerBuilder provides method chaining for Writer registration.
 type writerHandlerBuilder struct {
 	tabSection *tabSection
-	handler    any // HandlerWriter or HandlerTrackerWriter
+	handler    any // HandlerWriter or HandlerWriterTracker
 }
 
 // Register finalizes the Writer registration and returns the io.Writer.
@@ -110,7 +110,7 @@ func (b *writerHandlerBuilder) Register() io.Writer {
 	var anyH *anyHandler
 
 	switch h := b.handler.(type) {
-	case HandlerTrackerWriter:
+	case HandlerWriterTracker:
 		anyH = newTrackerWriterHandler(h)
 	case HandlerWriter:
 		anyH = newWriterHandler(h)

@@ -96,15 +96,15 @@ func (ts *tabSection) Write(p []byte) (n int, err error) {
 }
 
 // RegisterHandlerWriter registers a writer handler (basic or tracker) and returns a dedicated writer
-// Automatically detects if handler implements HandlerTrackerWriter interface for tracking capabilities
+// Automatically detects if handler implements HandlerWriterTracker interface for tracking capabilities
 func (ts *tabSection) RegisterHandlerWriter(handler HandlerWriter) io.Writer {
 	ts.mu.Lock()
 	defer ts.mu.Unlock()
 
 	var anyH *anyHandler
 
-	// Check if handler also implements HandlerTrackerWriter interface
-	if trackerHandler, ok := handler.(HandlerTrackerWriter); ok {
+	// Check if handler also implements HandlerWriterTracker interface
+	if trackerHandler, ok := handler.(HandlerWriterTracker); ok {
 		anyH = newTrackerWriterHandler(trackerHandler)
 	} else {
 		anyH = newWriterHandler(handler)
@@ -114,12 +114,12 @@ func (ts *tabSection) RegisterHandlerWriter(handler HandlerWriter) io.Writer {
 	return &handlerWriter{tabSection: ts, handlerName: anyH.Name()}
 }
 
-// RegisterHandlerTrackerWriter registers an advanced writer handler with message tracking and returns a dedicated writer
+// RegisterHandlerWriterTracker registers an advanced writer handler with message tracking and returns a dedicated writer
 // DEPRECATED: Use RegisterHandlerWriter instead - it automatically detects tracker capabilities
-func (ts *tabSection) RegisterHandlerTrackerWriter(handler HandlerTrackerWriter) io.Writer {
+func (ts *tabSection) RegisterHandlerWriterTracker(handler HandlerWriterTracker) io.Writer {
 	// Log deprecation warning
 	if ts.tui != nil && ts.tui.LogToFile != nil {
-		ts.tui.LogToFile("WARNING: RegisterHandlerTrackerWriter is deprecated. Use RegisterHandlerWriter instead - it auto-detects tracker capabilities")
+		ts.tui.LogToFile("WARNING: RegisterHandlerWriterTracker is deprecated. Use RegisterHandlerWriter instead - it auto-detects tracker capabilities")
 	}
 
 	return ts.RegisterHandlerWriter(handler)

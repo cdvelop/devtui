@@ -9,8 +9,7 @@ import (
 
 type testDisplayHandler struct{}
 
-func (h *testDisplayHandler) Name() string    { return "TestDisplay" }
-func (h *testDisplayHandler) Label() string   { return "Test Display" }
+func (h *testDisplayHandler) Name() string    { return "Test Display Handler" }
 func (h *testDisplayHandler) Content() string { return "This is display content" }
 
 type testEditHandler struct {

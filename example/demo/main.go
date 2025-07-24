@@ -9,11 +9,10 @@ import (
 
 // Example showcasing all new handler types with minimal implementation
 
-// 1. HandlerDisplay - Read-only information display (3 methods)
+// 1. HandlerDisplay - Read-only information display (2 methods)
 type StatusHandler struct{}
 
-func (h *StatusHandler) Name() string  { return "SystemStatus" }
-func (h *StatusHandler) Label() string { return "System Status" }
+func (h *StatusHandler) Name() string { return "System Status Information Display" }
 func (h *StatusHandler) Content() string {
 	return "Status: Running\nPID: 12345\nUptime: 2h 30m\nMemory: 45MB\nCPU: 12%"
 }
@@ -67,7 +66,7 @@ type SystemLogWriter struct{}
 
 func (w *SystemLogWriter) Name() string { return "SystemLog" }
 
-// 5. HandlerTrackerWriter - Advanced logging with message tracking (3 methods)
+// 5. HandlerWriterTracker - Advanced logging with message tracking (3 methods)
 type OperationLogWriter struct {
 	lastOpID string
 }
@@ -107,7 +106,7 @@ func main() {
 	systemWriter.Write([]byte("API demo started"))
 
 	// Advanced writer (can update existing messages with tracking)
-	opWriter := logs.RegisterHandlerTrackerWriter(&OperationLogWriter{})
+	opWriter := logs.RegisterHandlerWriterTracker(&OperationLogWriter{})
 	opWriter.Write([]byte("Operation tracking enabled"))
 
 	// Different timeout configurations:
@@ -117,11 +116,11 @@ func main() {
 	// - Tip: Keep timeouts reasonable (2-10 seconds) for good UX
 
 	// Handler Types Summary:
-	// • HandlerDisplay: Name() + Label() + Content() - Shows immediate content
+	// • HandlerDisplay: Name() + Content() - Shows immediate content
 	// • HandlerEdit: Name() + Label() + Value() + Change() - Interactive fields
 	// • HandlerExecution: Name() + Label() + Execute() - Action buttons
 	// • HandlerWriter: Name() - Basic logging (new lines)
-	// • HandlerTrackerWriter: Name() + MessageTracker - Advanced logging (can update)
+	// • HandlerWriterTracker: Name() + MessageTracker - Advanced logging (can update)
 
 	var wg sync.WaitGroup
 	wg.Add(1)

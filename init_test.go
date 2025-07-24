@@ -55,10 +55,12 @@ func TestMultipleTabSections(t *testing.T) {
 	config := &TuiConfig{
 		TabIndexStart: 0,
 		Color:         &ColorStyle{},
-		TestMode:      true, // Evitar mensaje automático de shortcuts
 	}
 
 	tui := NewTUI(config)
+
+	// Enable test mode for synchronous execution
+	tui.SetTestMode(true)
 
 	// Create two more sections using NewTabSection
 	tui.NewTabSection("Tab1", "Description 1")

@@ -14,13 +14,15 @@ func TestTabSectionWriter(t *testing.T) {
 		TabIndexStart: 0,
 		ExitChan:      make(chan bool),
 		Color:         &ColorStyle{}, // Usando un ColorStyle vacío
-		TestMode:      true,          // Evitar mensaje automático de shortcuts
 		LogToFile: func(messages ...any) {
 			// Mock function for logging
 		},
 	}
 
 	tui := NewTUI(config)
+
+	// Enable test mode for synchronous execution
+	tui.SetTestMode(true)
 
 	// Crear tab section de prueba
 	tab := tui.NewTabSection("TEST", "")
@@ -55,13 +57,15 @@ func TestTabContentsIncrementWhenSendingMessages(t *testing.T) {
 		TabIndexStart: 0,
 		ExitChan:      make(chan bool),
 		Color:         &ColorStyle{}, // Usando un ColorStyle vacío
-		TestMode:      true,          // Evitar mensaje automático de shortcuts
 		LogToFile: func(messages ...any) {
 			// Mock function for logging
 		},
 	}
 
 	tui := NewTUI(config)
+
+	// Enable test mode for synchronous execution
+	tui.SetTestMode(true)
 
 	tab := tui.NewTabSection("TEST", "")
 

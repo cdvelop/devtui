@@ -78,8 +78,9 @@ func (w *OperationLogWriter) SetLastOperationID(id string) { w.lastOpID = id }
 
 func main() {
 	tui := devtui.NewTUI(&devtui.TuiConfig{
-		AppName:  "New API Demo",
-		ExitChan: make(chan bool),
+		AppName:   "New API Demo",
+		ExitChan:  make(chan bool),
+		LogToFile: func(messages ...any) {},
 	})
 
 	// Method chaining with optional timeout configuration

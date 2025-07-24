@@ -431,7 +431,7 @@ func (f *field) executeAsyncChange(valueToSave any) {
 	}
 
 	// In test mode, execute synchronously for predictable test behavior
-	if f.parentTab != nil && f.parentTab.tui != nil && f.parentTab.tui.TestMode {
+	if f.parentTab != nil && f.parentTab.tui != nil && f.parentTab.tui.isTestMode() {
 		f.executeChangeSyncWithValue(valueToSave)
 		return
 	}
@@ -605,7 +605,7 @@ func (f *field) handleEnter() {
 	valueToSave := f.getCurrentValue()
 
 	// In test mode, execute synchronously without goroutine
-	if f.parentTab != nil && f.parentTab.tui != nil && f.parentTab.tui.TestMode {
+	if f.parentTab != nil && f.parentTab.tui != nil && f.parentTab.tui.isTestMode() {
 		f.executeChangeSyncWithValue(valueToSave)
 		return
 	}

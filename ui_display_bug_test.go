@@ -16,7 +16,6 @@ func TestUIDisplayBug(t *testing.T) {
 			AppName:       "DevTUI - Display Bug Test",
 			TabIndexStart: 0,
 			ExitChan:      make(chan bool),
-			TestMode:      false, // Enable real async behavior for this test
 			Color: &ColorStyle{
 				Foreground: "#F4F4F4",
 				Background: "#000000",
@@ -29,6 +28,9 @@ func TestUIDisplayBug(t *testing.T) {
 		}
 
 		tui := NewTUI(config)
+
+		// Keep test mode disabled to enable real async behavior for this test
+		tui.SetTestMode(false)
 
 		// Create port handler with initial value "433" (like in the image)
 		portHandler := &PortTestHandler{currentPort: "433"}

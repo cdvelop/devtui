@@ -35,6 +35,7 @@ type DevTUI struct {
 	currentTime     string
 	tabContentsChan chan tabContent
 	tea             *tea.Program
+	testMode        bool // private: only used in tests to enable synchronous behavior
 }
 
 type TuiConfig struct {
@@ -52,7 +53,6 @@ type TuiConfig struct {
 	Color *ColorStyle
 
 	LogToFile func(messages ...any) // function to write log error
-	TestMode  bool                  // only used in tests to enable synchronous behavior
 }
 
 // NewTUI creates a new DevTUI instance and initializes it.
@@ -75,7 +75,7 @@ type TuiConfig struct {
 //	// Start the TUI:
 //	var wg sync.WaitGroup
 //	wg.Add(1)
-//	go tui.Run(&wg)
+//	go tui.Start(&wg)
 //	wg.Wait()
 func NewTUI(c *TuiConfig) *DevTUI {
 	if c.AppName == "" {
@@ -166,4 +166,16 @@ func (h *DevTUI) Start(args ...any) {
 		var input string
 		fmt.Scanln(&input)
 	}
+}
+
+// SetTestMode enables or disables test mode for synchronous behavior in tests.
+// This should only be used in test files to make tests deterministic.
+func (h *DevTUI) SetTestMode(enabled bool) {
+	h.testMode = enabled
+}
+
+// isTestMode returns true if the TUI is running in test mode (synchronous execution).
+// This is an internal method used by field handlers to determine execution mode.
+func (h *DevTUI) isTestMode() bool {
+	return h.testMode
 }

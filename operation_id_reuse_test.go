@@ -17,7 +17,7 @@ func TestOperationIDReuse(t *testing.T) {
 		}
 
 		h := DefaultTUIForTest()
-		h.TestMode = true // Enable test mode
+		h.SetTestMode(true) // Enable test mode
 
 		// Create a test tab since DefaultTUIForTest only creates SHORTCUTS tab
 		testTab := h.NewTabSection("Test Tab", "Test description")
@@ -70,7 +70,7 @@ func TestOperationIDReuse(t *testing.T) {
 		handler2.handlerName = "TestHandler2"
 
 		h := DefaultTUIForTest()
-		h.TestMode = true
+		h.SetTestMode(true)
 
 		// Register handlers using the new API
 		testTab := h.NewTabSection("Test Tab 2", "Test description for multiple handlers")
@@ -107,7 +107,7 @@ func TestOperationIDReuse(t *testing.T) {
 		}
 
 		h := DefaultTUIForTest()
-		h.TestMode = true
+		h.SetTestMode(true)
 
 		// Register handler using the new API
 		testTab := h.NewTabSection("Test Tab 3", "Test description for new operation ID")

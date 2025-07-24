@@ -522,10 +522,12 @@ func DefaultTUIForTest(handlersAndLogger ...any) *DevTUI {
 	h := NewTUI(&TuiConfig{
 		TabIndexStart: 0,               // Start with the first tab
 		ExitChan:      make(chan bool), // Channel to signal exit
-		TestMode:      true,            // Enable test mode for synchronous execution
 		Color:         nil,             // Use default colors
 		LogToFile:     logFunc,
 	})
+
+	// Enable test mode for synchronous execution
+	h.SetTestMode(true)
 
 	// NOTE: For test tabs with handlers, use:
 	// tab := h.NewTabSection("Test Tab", "Tab description")

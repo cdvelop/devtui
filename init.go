@@ -114,8 +114,8 @@ func NewTUI(c *TuiConfig) *DevTUI {
 	// No need for manual sendMessageWithHandler() call
 
 	tui.tea = tea.NewProgram(tui,
-		tea.WithAltScreen(),       // use the full size of the terminal in its "alternate screen buffer"
-		tea.WithMouseCellMotion(), // turn on mouse support so we can track the mouse wheel
+		tea.WithAltScreen(), // use the full size of the terminal in its "alternate screen buffer"
+		// Mouse support disabled to enable terminal text selection
 	)
 
 	return tui

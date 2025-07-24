@@ -114,9 +114,19 @@ func main() {
 	systemWriter.Write([]byte("System initialized"))
 	systemWriter.Write([]byte("API demo started"))
 
+	// Generate multiple log entries to test scrolling (30 total)
+	for i := 1; i <= 15; i++ {
+		systemWriter.Write([]byte(fmt.Sprintf("System log entry #%d - Processing data batch", i)))
+	}
+
 	// Advanced writer (can update existing messages with tracking)
 	opWriter := logs.RegisterHandlerWriterTracker(&OperationLogWriter{})
 	opWriter.Write([]byte("Operation tracking enabled"))
+
+	// Generate more tracking entries to test Page Up/Page Down navigation
+	for i := 1; i <= 13; i++ {
+		opWriter.Write([]byte(fmt.Sprintf("Operation #%d - Background task completed successfully", i)))
+	}
 
 	// Different timeout configurations:
 	// - Synchronous (default): .Register() or timeout = 0

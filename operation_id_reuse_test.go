@@ -26,7 +26,7 @@ func TestOperationIDReuse(t *testing.T) {
 		field := testTab.FieldHandlers()[0]
 
 		// First execution - should create new message with the fixed operationID
-		field.executeChangeSync()
+		field.executeChangeSyncForTesting()
 
 		// Verify the handler was called with SetLastOperationID
 		if handler.lastSetOperationID == "" {
@@ -37,7 +37,7 @@ func TestOperationIDReuse(t *testing.T) {
 		initialMessageCount := len(testTab.tabContents)
 
 		// Second execution - should reuse the same operationID and update existing message
-		field.executeChangeSync()
+		field.executeChangeSyncForTesting()
 
 		// Verify message count didn't increase (updated existing instead of creating new)
 		finalMessageCount := len(testTab.tabContents)
@@ -81,8 +81,8 @@ func TestOperationIDReuse(t *testing.T) {
 		field2 := testTab.FieldHandlers()[1]
 
 		// Execute both handlers
-		field1.executeChangeSync()
-		field2.executeChangeSync()
+		field1.executeChangeSyncForTesting()
+		field2.executeChangeSyncForTesting()
 
 		// Should have 2 messages, one per handler
 		messageCount := len(testTab.tabContents)
@@ -91,7 +91,7 @@ func TestOperationIDReuse(t *testing.T) {
 		}
 
 		// Execute first handler again - should update its message, not create new
-		field1.executeChangeSync()
+		field1.executeChangeSyncForTesting()
 
 		finalMessageCount := len(testTab.tabContents)
 		if finalMessageCount != 2 {
@@ -116,11 +116,11 @@ func TestOperationIDReuse(t *testing.T) {
 		field := testTab.FieldHandlers()[0]
 
 		// First execution
-		field.executeChangeSync()
+		field.executeChangeSyncForTesting()
 		initialMessageCount := len(testTab.tabContents)
 
 		// Second execution - should create new message since no existing operationID
-		field.executeChangeSync()
+		field.executeChangeSyncForTesting()
 		finalMessageCount := len(testTab.tabContents)
 
 		// Verify new message was created

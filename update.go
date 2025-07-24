@@ -71,6 +71,8 @@ func (h *DevTUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// here.
 			h.viewport = viewport.New(msg.Width, msg.Height-verticalMarginHeight)
 			h.viewport.YPosition = headerHeight
+			// Disable mouse wheel to enable terminal text selection
+			h.viewport.MouseWheelEnabled = false
 			h.viewport.SetContent(h.ContentView())
 			h.ready = true
 		} else {
@@ -88,9 +90,12 @@ func (h *DevTUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		h.focused = false
 
 	}
-	// Handle keyboard and mouse events in the viewport
+
+	// Update viewport with all messages since mouse is disabled
 	h.viewport, cmd = h.viewport.Update(msg)
-	cmds = append(cmds, cmd)
+	if cmd != nil {
+		cmds = append(cmds, cmd)
+	}
 
 	return h, tea.Batch(cmds...)
 }

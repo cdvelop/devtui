@@ -23,14 +23,20 @@ Field Editing:
 Text Editing (when in edit mode):
   • Left Arrow  - Move cursor left
   • Right Arrow - Move cursor right
-  • Backspace   - Create space
+  • Backspace   - Delete character
 
 Viewport Navigation:
-  • Up Arrow/Mouse Wheel - Scroll viewport up
-  • Down Arrow/Mouse Wheel - Scroll viewport down
+  • Up Arrow    - Scroll viewport up line by line
+  • Down Arrow  - Scroll viewport down line by line
+  • Page Up     - Scroll viewport up page by page
+  • Page Down   - Scroll viewport down page by page
+  • Mouse Wheel - Scroll viewport (when available)
 
 Application:
   • Ctrl+C      - Exit application
+
+Note: Text selection enabled for copying error messages and logs.
+Mouse scroll may work depending on bubbletea version and terminal capabilities.
 `
 	return &ShortcutsHandler{shortcuts: shortcuts}
 }

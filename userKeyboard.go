@@ -157,9 +157,17 @@ func (h *DevTUI) handleNormalModeKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 
 	switch msg.Type {
 	case tea.KeyUp, tea.KeyDown:
-		// Las teclas arriba y abajo ya no modifican el campo activo
-		// Solo controlarán el desplazamiento del viewport
+		// Las teclas arriba y abajo controlan el scroll línea por línea del viewport
+		// No modifican el campo activo, solo el scroll del contenido
 		// No hacemos nada aquí para permitir que el manejo del viewport siga su curso normal
+
+	case tea.KeyPgUp: // Page Up - scroll página completa hacia arriba
+		h.viewport.PageUp()
+		return false, nil
+
+	case tea.KeyPgDown: // Page Down - scroll página completa hacia abajo
+		h.viewport.PageDown()
+		return false, nil
 
 	case tea.KeyLeft: // Navegar al campo anterior (ciclo continuo)
 		if totalFields > 0 {

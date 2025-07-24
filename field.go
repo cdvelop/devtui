@@ -520,8 +520,9 @@ func (f *field) executeAsyncChange(valueToSave any) {
 	cancel() // Clean up context
 }
 
-// executeChangeSync executes the handler's Change method synchronously (for tests)
-func (f *field) executeChangeSync() {
+// executeChangeSyncForTesting executes the handler's Change method synchronously (for tests)
+// no deletion
+func (f *field) executeChangeSyncForTesting() {
 	if f.handler == nil {
 		return
 	}

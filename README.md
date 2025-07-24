@@ -148,11 +148,16 @@ writer := tab.RegisterHandlerWriterTracker(trackerWriter)
 ## Navigation
 - **Tab/Shift+Tab**: Switch between tabs
 - **Left/Right**: Navigate fields within tab  
+- **Up/Down**: Scroll viewport line by line
+- **Page Up/Page Down**: Scroll viewport page by page
+- **Mouse Wheel**: Scroll viewport (when available)
 - **Enter**: Edit/Execute
 - **Esc**: Cancel edit
 - **Ctrl+C**: Exit
 
 **Note**: DevTUI automatically loads a built-in [ShortcutsHandler](shortcuts.go) at position 0 in the first tab, which displays detailed keyboard navigation commands. This handler demonstrates the `HandlerDisplay` interface and provides interactive help within the application.
+
+**Text Selection**: Terminal text selection is enabled for copying error messages and logs. Mouse scroll functionality may vary depending on bubbletea version and terminal capabilities.
 
 ## Documentation
 

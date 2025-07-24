@@ -1,5 +1,7 @@
 github.com/aymanbagabas/go-osc52/v2 v2.0.1 h1:HwpRHbFMcZLEVr42D4p7XBqjyuxQH5SMiErDT4WkJ2k=
 github.com/aymanbagabas/go-osc52/v2 v2.0.1/go.mod h1:uYgXzlJ7ZpABp8OJ+exZzJJhRNQ2ASbcXHWsFqH8hp8=
+github.com/cdvelop/messagetype v0.0.43 h1:Wxu5GCYWGCZo426m3A9coA2wleN0bt+pvbRc2ui9Qtg=
+github.com/cdvelop/messagetype v0.0.43/go.mod h1:Pfg+qfg+CTj1Ip5E/1LEubwGzBli+M/mXyg+7+5cNv4=
 github.com/cdvelop/tinyreflect v0.0.33 h1:DYR20o/bLjY4L7c/5IjeDRxOsWsGIQDaoarHXqllQf8=
 github.com/cdvelop/tinyreflect v0.0.33/go.mod h1:6+XWgo0mGawupPZtL19aDgxUNXmI3Bakvq2TzeK0A80=
 github.com/cdvelop/tinystring v0.1.38 h1:xUZaKTd2gYyUnxn+CTtkAY3TWlE+psu/6NpznHYCZP0=

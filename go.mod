@@ -2,8 +2,6 @@ module github.com/cdvelop/devtui
 
 go 1.24.4
 
-replace github.com/cdvelop/messagetype => ../messagetype
-
 require (
 	github.com/cdvelop/tinystring v0.1.38
 	github.com/charmbracelet/lipgloss v1.1.0

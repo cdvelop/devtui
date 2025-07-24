@@ -5,7 +5,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cdvelop/messagetype"
 	"github.com/cdvelop/unixid"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
@@ -112,11 +111,9 @@ func NewTUI(c *TuiConfig) *DevTUI {
 	shortcutsHandler := NewShortcutsHandler()
 	shortcutsTab.NewDisplayHandler(shortcutsHandler).Register()
 
-	// Automatically display shortcuts content when tab is created (unless in test mode)
-	// Use sendMessageWithHandler to respect readonly handler formatting
-	if !c.TestMode {
-		tui.sendMessageWithHandler(shortcutsHandler.shortcuts, messagetype.Info, shortcutsTab, shortcutsHandler.Name(), "")
-	}
+	// FIXED: Removed manual content sending to prevent duplication
+	// HandlerDisplay automatically shows Content() when field is selected
+	// No need for manual sendMessageWithHandler() call
 
 	tui.tea = tea.NewProgram(tui,
 		tea.WithAltScreen(),       // use the full size of the terminal in its "alternate screen buffer"

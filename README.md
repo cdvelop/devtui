@@ -144,6 +144,8 @@ writer := tab.RegisterHandlerTrackerWriter(trackerWriter)
 - **Esc**: Cancel edit
 - **Ctrl+C**: Exit
 
+**Note**: DevTUI automatically loads a built-in [ShortcutsHandler](shortcuts.go) at position 0 in the first tab, which displays detailed keyboard navigation commands. This handler demonstrates the `HandlerDisplay` interface and provides interactive help within the application.
+
 ## Documentation
 
 - **[Complete API Specification](docs/API_ANYHANDLER_FINAL.md)** - Final API design and interfaces

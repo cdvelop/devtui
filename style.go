@@ -12,7 +12,6 @@ type ColorStyle struct {
 }
 
 const (
-	infoColor = "#00FF00" // Verde brillante
 	warnColor = "#FFFF00" // Amarillo brillante
 	errColor  = "#FF0000" // Rojo brillante
 )
@@ -114,7 +113,7 @@ func newTuiStyle(cs *ColorStyle) *tuiStyle {
 	// Inicializar los estilos que antes eran globales
 	t.okStyle = lipgloss.NewStyle().
 		Bold(true).
-		Foreground(lipgloss.Color(infoColor)) // Verde brillante
+		Foreground(lipgloss.Color(t.Highlight)) // Usa el color Highlight de la configuración
 
 	t.errStyle = lipgloss.NewStyle().
 		Bold(true).
@@ -126,7 +125,7 @@ func newTuiStyle(cs *ColorStyle) *tuiStyle {
 
 	t.infoStyle = lipgloss.NewStyle().
 		Bold(true).
-		Foreground(lipgloss.Color(infoColor)) // verde brillante
+		Foreground(lipgloss.Color(t.Highlight)) // Usa el color Highlight de la configuración
 
 	t.normStyle = lipgloss.NoColor{}
 

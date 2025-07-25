@@ -60,7 +60,7 @@ func TestNewAPIHandlers(t *testing.T) {
 	tab := tui.NewTabSection("Test", "Testing new API")
 
 	// Test HandlerDisplay registration
-	tab.NewDisplayHandler(&testDisplayHandler{}).Register()
+	tab.RegisterHandlerDisplay(&testDisplayHandler{})
 
 	// Test HandlerEdit registration with and without timeout
 	tab.NewEditHandler(&testEditHandler{value: "initial"}).Register()                 // Sync

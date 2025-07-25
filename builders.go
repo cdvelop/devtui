@@ -77,25 +77,4 @@ func (b *executionHandlerBuilder) Register() *tabSection {
 	return b.WithTimeout(0)
 }
 
-// displayHandlerBuilder provides method chaining for HandlerDisplay registration.
-// DisplayHandlers are always synchronous and don't support timeout configuration.
-type displayHandlerBuilder struct {
-	tabSection *tabSection
-	handler    HandlerDisplay
-}
-
-// Register finalizes the HandlerDisplay registration.
-func (b *displayHandlerBuilder) Register() *tabSection {
-	anyH := newDisplayHandler(b.handler)
-
-	f := &field{
-		handler:    anyH,
-		parentTab:  b.tabSection,
-		asyncState: &internalAsyncState{},
-	}
-
-	b.tabSection.addFields(f)
-	return b.tabSection
-}
-
 // The writerHandlerBuilder struct and its Register method have been removed as part of the refactoring plan.

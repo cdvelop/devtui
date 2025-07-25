@@ -43,7 +43,7 @@ type BackupHandler struct {
 }
 
 func (h *BackupHandler) Name() string  { return "SystemBackup" }
-func (h *BackupHandler) Label() string { return "Create System Backup" }
+func (h *BackupHandler) Label() string { return "With Tracking" }
 func (h *BackupHandler) Execute(progress func(string)) {
 	if progress != nil {
 		progress("Preparing backup...")
@@ -95,15 +95,12 @@ func main() {
 
 	// Dashboard tab with DisplayHandlers (read-only information)
 	dashboard := tui.NewTabSection("Dashboard", "System Overview")
-	dashboard.NewDisplayHandler(&StatusHandler{}).Register()
+	dashboard.RegisterHandlerDisplay(&StatusHandler{})
 
 	// Configuration tab with EditHandlers (interactive fields)
 	config := tui.NewTabSection("Config", "System Configuration")
 	config.NewEditHandler(&DatabaseHandler{connectionString: "postgres://localhost:5432/mydb"}).WithTimeout(2 * time.Second)
-
-	// Operations tab with ExecutionHandlers (action buttons)
-	ops := tui.NewTabSection("Operations", "System Operations")
-	ops.NewExecutionHandlerTracking(&BackupHandler{}).WithTimeout(5 * time.Second)
+	config.NewExecutionHandlerTracking(&BackupHandler{}).WithTimeout(5 * time.Second)
 
 	// Logging tab with Writers
 	logs := tui.NewTabSection("Logs", "System Logs")

@@ -119,7 +119,7 @@ type MessageTracker interface {
 
 ```go
 // Basic handlers
-tab.NewDisplayHandler(handler).Register()
+tab.RegisterHandlerDisplay(handler)
 tab.NewEditHandler(handler).WithTimeout(5*time.Second)
 tab.NewExecutionHandler(handler).WithTimeout(10*time.Second)
 

@@ -31,7 +31,7 @@ Text selection enabled for copy/paste.
 `
 
 	handler := &shortcutsHandler{shortcuts: shortcuts}
-	shortcutsTab.NewDisplayHandler(handler).Register()
+	shortcutsTab.RegisterHandlerDisplay(handler)
 }
 
 // shortcutsHandler - Shows keyboard navigation instructions

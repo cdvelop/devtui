@@ -40,10 +40,14 @@ func (ts *tabSection) NewExecutionHandlerTracking(handler HandlerExecutionTracke
 	}
 }
 
-// NewDisplayHandler creates a new DisplayHandlerBuilder for method chaining
-func (ts *tabSection) NewDisplayHandler(handler HandlerDisplay) *displayHandlerBuilder {
-	return &displayHandlerBuilder{
-		tabSection: ts,
-		handler:    handler,
+// RegisterHandlerDisplay registers a HandlerDisplay directly (no builder pattern).
+func (ts *tabSection) RegisterHandlerDisplay(handler HandlerDisplay) *tabSection {
+	anyH := newDisplayHandler(handler)
+	f := &field{
+		handler:    anyH,
+		parentTab:  ts,
+		asyncState: &internalAsyncState{},
 	}
+	ts.addFields(f)
+	return ts
 }

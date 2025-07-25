@@ -47,20 +47,3 @@ func (ts *tabSection) NewDisplayHandler(handler HandlerDisplay) *displayHandlerB
 		handler:    handler,
 	}
 }
-
-// NewWriterHandler creates a new WriterHandlerBuilder for method chaining
-func (ts *tabSection) NewWriterHandler(handler any) *writerHandlerBuilder {
-	return &writerHandlerBuilder{
-		tabSection: ts,
-		handler:    handler,
-	}
-}
-
-// NewWriterHandlerTracking creates a new WriterHandlerBuilder with tracking support
-// For handlers that implement both HandlerWriter and MessageTracker interfaces
-func (ts *tabSection) NewWriterHandlerTracking(handler HandlerWriterTracker) *writerHandlerBuilder {
-	return &writerHandlerBuilder{
-		tabSection: ts,
-		handler:    handler, // HandlerWriterTracker extends both interfaces
-	}
-}

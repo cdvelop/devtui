@@ -119,7 +119,7 @@ func main() {
 	}
 
 	// Advanced writer (can update existing messages with tracking)
-	opWriter := logs.RegisterHandlerWriterTracker(&OperationLogWriter{})
+	opWriter := logs.RegisterHandlerWriter(&OperationLogWriter{})
 	opWriter.Write([]byte("Operation tracking enabled"))
 
 	// Generate more tracking entries to test Page Up/Page Down navigation

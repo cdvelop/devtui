@@ -128,12 +128,13 @@ tab.NewEditHandlerTracking(handlerWithTracker).WithTimeout(5*time.Second)
 tab.NewExecutionHandlerTracking(handlerWithTracker).WithTimeout(10*time.Second)
 
 // Writers
-tab.NewWriterHandler(handler).Register()
-tab.NewWriterHandlerTracking(handlerWithTracker).Register()
+// Example: Minimal HandlerWriter implementation (returns io.Writer)
+type LogWriter struct{}
+func (w *LogWriter) Name() string { return "LogWriter" }
 
-// Direct writer registration (auto-detects tracking)
-writer := tab.RegisterHandlerWriter(basicWriter)
-writer := tab.RegisterHandlerWriterTracker(trackerWriter)
+writer := tab.RegisterHandlerWriter(&LogWriter{}) // io.Writer
+writer.Write([]byte("Log message 1"))
+writer.Write([]byte("Another log entry"))
 ```
 
 ## Key Features

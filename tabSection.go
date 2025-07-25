@@ -116,14 +116,8 @@ func (ts *tabSection) RegisterHandlerWriter(handler HandlerWriter) io.Writer {
 
 // RegisterHandlerWriterTracker registers an advanced writer handler with message tracking and returns a dedicated writer
 // DEPRECATED: Use RegisterHandlerWriter instead - it automatically detects tracker capabilities
-func (ts *tabSection) RegisterHandlerWriterTracker(handler HandlerWriterTracker) io.Writer {
-	// Log deprecation warning
-	if ts.tui != nil && ts.tui.LogToFile != nil {
-		ts.tui.LogToFile("WARNING: RegisterHandlerWriterTracker is deprecated. Use RegisterHandlerWriter instead - it auto-detects tracker capabilities")
-	}
 
-	return ts.RegisterHandlerWriter(handler)
-}
+// Removed RegisterHandlerWriterTracker function as per refactoring plan
 
 // NEW: SetActiveWriter sets the current active writer for general io.Writer calls
 func (ts *tabSection) SetActiveWriter(handlerName string) {

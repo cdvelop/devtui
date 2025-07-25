@@ -1,7 +1,6 @@
 package devtui
 
 import (
-	"io"
 	"time"
 )
 
@@ -99,30 +98,4 @@ func (b *displayHandlerBuilder) Register() *tabSection {
 	return b.tabSection
 }
 
-// writerHandlerBuilder provides method chaining for Writer registration.
-type writerHandlerBuilder struct {
-	tabSection *tabSection
-	handler    any // HandlerWriter or HandlerWriterTracker
-}
-
-// Register finalizes the Writer registration and returns the io.Writer.
-func (b *writerHandlerBuilder) Register() io.Writer {
-	var anyH *anyHandler
-
-	switch h := b.handler.(type) {
-	case HandlerWriterTracker:
-		anyH = newTrackerWriterHandler(h)
-	case HandlerWriter:
-		anyH = newWriterHandler(h)
-	default:
-		panic("unsupported writer handler type")
-	}
-
-	b.tabSection.registerAnyHandler(anyH)
-
-	// Return a handlerWriter for io.Writer interface
-	return &handlerWriter{
-		tabSection:  b.tabSection,
-		handlerName: anyH.Name(),
-	}
-}
+// The writerHandlerBuilder struct and its Register method have been removed as part of the refactoring plan.

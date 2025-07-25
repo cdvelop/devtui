@@ -1,45 +1,43 @@
 package devtui
 
-// ShortcutsHandler - Shows keyboard navigation instructions
-type ShortcutsHandler struct {
+// createShortcutsTab creates and registers the shortcuts tab with its handler
+func createShortcutsTab(tui *DevTUI) {
+	shortcutsTab := tui.NewTabSection("SHORTCUTS", "Keyboard navigation instructions")
+
+	shortcuts := tui.AppName + ` Keyboard Commands:
+
+Tabs:
+  • Tab/Shift+Tab  - Switch tabs
+
+Fields:
+  • Left/Right     - Navigate fields
+  • Enter          - Edit/Execute
+  • Esc            - Cancel
+
+Text Edit:
+  • Left/Right     - Move cursor
+  • Backspace      - Create space
+  • Space/Letters  - Insert char
+
+Viewport:
+  • Up/Down        - Scroll line
+  • PgUp/PgDown    - Scroll page
+  • Mouse Wheel    - Scroll (optional)
+
+Exit:
+  • Ctrl+C         - Quit
+
+Text selection enabled for copy/paste.
+`
+
+	handler := &shortcutsHandler{shortcuts: shortcuts}
+	shortcutsTab.NewDisplayHandler(handler).Register()
+}
+
+// shortcutsHandler - Shows keyboard navigation instructions
+type shortcutsHandler struct {
 	shortcuts string
 }
 
-func NewShortcutsHandler() *ShortcutsHandler {
-	shortcuts := `Keyboard Navigation Commands:
-
-Navigation Between Tabs:
-  • Tab         - Next tab
-  • Shift+Tab   - Previous tab
-
-Navigation Between Fields:
-  • Left Arrow  - Previous field (cycle)
-  • Right Arrow - Next field (cycle)
-
-Field Editing:
-  • Enter       - Edit field / Execute action
-  • Esc         - Cancel editing / Exit field
-
-Text Editing (when in edit mode):
-  • Left Arrow  - Move cursor left
-  • Right Arrow - Move cursor right
-  • Backspace   - Delete character
-
-Viewport Navigation:
-  • Up Arrow    - Scroll viewport up line by line
-  • Down Arrow  - Scroll viewport down line by line
-  • Page Up     - Scroll viewport up page by page
-  • Page Down   - Scroll viewport down page by page
-  • Mouse Wheel - Scroll viewport (when available)
-
-Application:
-  • Ctrl+C      - Exit application
-
-Note: Text selection enabled for copying error messages and logs.
-Mouse scroll may work depending on bubbletea version and terminal capabilities.
-`
-	return &ShortcutsHandler{shortcuts: shortcuts}
-}
-
-func (h *ShortcutsHandler) Name() string    { return "DevTUI Help & Navigation Guide" }
-func (h *ShortcutsHandler) Content() string { return h.shortcuts }
+func (h *shortcutsHandler) Name() string    { return "DevTUI Help & Navigation Guide" }
+func (h *shortcutsHandler) Content() string { return h.shortcuts }

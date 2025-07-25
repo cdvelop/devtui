@@ -137,7 +137,7 @@ func (h *DevTUI) createTabContent(content string, mt messagetype.Type, tabSectio
 	if h.id != nil {
 		timestamp = h.id.GetNewID()
 	} else {
-		errMsg := "Warning: unixid not initialized, using fallback timestamp for content: " + content
+		errMsg := "error: unixid not initialized, using fallback timestamp for content: " + content
 		// Log the issue before using fallback
 		if h.LogToFile != nil {
 			h.LogToFile(errMsg)

@@ -105,9 +105,7 @@ func NewTUI(c *TuiConfig) *DevTUI {
 	}
 
 	// Always add SHORTCUTS tab first
-	shortcutsTab := tui.NewTabSection("SHORTCUTS", "Keyboard navigation instructions")
-	shortcutsHandler := NewShortcutsHandler()
-	shortcutsTab.NewDisplayHandler(shortcutsHandler).Register()
+	createShortcutsTab(tui)
 
 	// FIXED: Removed manual content sending to prevent duplication
 	// HandlerDisplay automatically shows Content() when field is selected

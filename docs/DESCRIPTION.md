@@ -2,7 +2,17 @@
 
 ## What is DevTUI?
 
-DevTUI is a **reusable generic abstraction** for terminal user interfaces (TUI) built on top of [bubbletea](https://github.com/charmbracelet/bubbletea) and [bubbles](https://github.com/charmbracelet/bubbles). It provides a pre-configured, fixed, and minimalist interface where you can **inject different handlers** to display their messages in the terminal in an organized way.
+DevTUI is a **message presentation and formatting system** for terminal interfaces, built on top of [bubbletea](https://github.com/charmbracelet/bubbletea) and [bubbles](https://github.com/charmbracelet/bubbles). 
+
+**DevTUI is NOT a validation system, error handler, or business logic manager.**
+
+**DevTUI IS a display layer** that:
+- **Receives messages** from your handlers via `progress()` callbacks
+- **Formats and organizes** those messages in a clean terminal interface  
+- **Manages the visual presentation** - tabs, navigation, scrolling, colors
+- **Provides structure** for development tools through minimal handler interfaces
+
+You inject handlers that contain your business logic, and DevTUI simply displays whatever information they send through `progress()`. If your handler fails, succeeds, or needs to show status - it's the handler's responsibility to send the appropriate message. DevTUI just shows it.
 
 ## Problem it Solves
 
@@ -20,11 +30,13 @@ During development of Go-to-WASM compilation tools with:
 - The view layer grew too much and became unmanageable
 
 ### The Solution: DevTUI
-A TUI that **separates the view layer** from business logic, enabling:
-- **Organized logs in the same space** (they don't accumulate infinitely)
-- **Automatic reordering** always showing what happened last
-- **Arrow navigation** maintaining focus without filling the UI with unnecessary elements
-- **Injection of specialized handlers** according to need
+A TUI that **acts as a pure presentation layer**, enabling:
+- **Organized message display** in the same terminal space (no infinite log accumulation)
+- **Automatic message formatting** and reordering (always showing what happened last)
+- **Clean navigation interface** maintaining focus without UI clutter
+- **Simple handler injection** where handlers send messages via `progress()` and DevTUI displays them
+
+**Key Principle**: DevTUI doesn't validate, process, or judge your data. It's a dumb display system that shows whatever your handlers tell it to show.
 
 ## Ideal Use Cases
 
@@ -45,12 +57,15 @@ A TUI that **separates the view layer** from business logic, enabling:
 ## Architecture and Key Concepts
 
 ### What are "Handlers"?
-Handlers are **injectable components** that encapsulate:
-- Specific business logic (compilation, minification, etc.)
-- Information presentation (logs, status, configuration)
-- User interaction (input fields, action buttons)
+Handlers are **business logic components** that:
+- **Contain your application logic** (compilation, configuration, deployment, etc.)
+- **Decide their own state** and validation rules
+- **Send information to DevTUI** via `progress()` callbacks
+- **Handle their own errors** by sending appropriate messages
 
-**They are not traditional widgets**, but **functionality abstractions** that are automatically rendered according to their type.
+**They are NOT UI widgets** - they are **functionality containers** that use DevTUI as their display layer. DevTUI automatically provides the UI structure (tabs, navigation, formatting) based on handler type.
+
+**Critical**: DevTUI doesn't care if your handler succeeds or fails. It only cares about displaying the messages your handler sends.
 
 ### Tab System and Organization
 - **Thematic tabs**: Group related handlers (Config, Build, Logs, etc.)
@@ -114,6 +129,49 @@ All handlers can implement `MessageTracker` for advanced capabilities:
 - **HandlerExecutionTracker**: Execution + MessageTracker  
 - **HandlerWriterTracker**: Writer + MessageTracker (built-in)
 
+## What DevTUI Does NOT Do
+
+**DevTUI is explicitly NOT responsible for:**
+
+- ❌ **Validating user input** - Your handlers validate their own data
+- ❌ **Managing errors** - Your handlers decide how to handle their failures  
+- ❌ **Business logic** - Your handlers contain all the application logic
+- ❌ **Data persistence** - Your handlers manage their own state
+- ❌ **Network operations** - Your handlers handle their own I/O
+- ❌ **File operations** - Your handlers manage their own file access
+- ❌ **Complex decision making** - Your handlers make all the decisions
+
+**DevTUI only cares about:**
+- ✅ **Displaying messages** that handlers send via `progress()`
+- ✅ **Formatting the terminal interface** (colors, layout, navigation)
+- ✅ **Managing UI state** (active tab, scroll position, focus)
+- ✅ **Providing structure** through minimal handler interfaces
+
+**Example of responsibility separation:**
+```go
+// Handler is responsible for ALL business logic
+func (h *DatabaseHandler) Change(newValue any, progress func(string)) {
+    // Handler validates input
+    if !h.validateConnectionString(newValue.(string)) {
+        progress("Error: Invalid connection format")
+        return // Handler decides not to change state
+    }
+    
+    // Handler tests connection
+    if !h.testConnection(newValue.(string)) {
+        progress("Error: Cannot connect to database")
+        return // Handler decides not to change state
+    }
+    
+    // Handler updates its own state
+    h.connectionString = newValue.(string)
+    progress("Database connection updated successfully")
+}
+
+// DevTUI simply displays whatever message the handler sends
+// It doesn't know or care if the operation succeeded or failed
+```
+
 ## When NOT to use DevTUI
 
 - **Complex end-user applications** (use tview, bubbletea directly)
@@ -124,13 +182,13 @@ All handlers can implement `MessageTracker` for advanced capabilities:
 ## Technical Benefits
 
 ### For the Developer
-- **Fast implementation**: Minimal and clear interfaces
-- **Separation of concerns**: View separated from business logic
-- **Reusability**: Portable handlers between projects
-- **Maintenance**: UI changes don't affect business logic
-- **Testing**: Integrated test mode (`testMode`) for automated verification
-- **Focus management**: Automatic focus return system (`ReturnFocus()`)
-- **Error handling**: Integration with `messagetype` for automatic classification
+- **Pure presentation layer**: No mixing of business logic with display concerns
+- **Handler autonomy**: Each handler manages its own state and validation
+- **Simple message interface**: Just send strings via `progress()` - DevTUI handles the rest
+- **Fast implementation**: Minimal interfaces (1-4 methods per handler)
+- **Zero error handling**: DevTUI displays whatever you send - no error management complexity
+- **Reusability**: Portable handlers between projects (business logic stays separate)
+- **Testing**: Test your handler logic independently of display layer
 
 ### For the End User
 - **Consistent experience**: Standard navigation across all tools

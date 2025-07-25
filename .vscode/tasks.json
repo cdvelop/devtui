@@ -1,0 +1,15 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "shell",
+			"label": "go test devtui all",
+			"command": "go test ./...",
+			"group": "test",
+			"problemMatcher": [
+				"$go"
+			],
+			"isBackground": false
+		}
+	]
+}

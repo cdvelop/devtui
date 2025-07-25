@@ -26,16 +26,15 @@ type DatabaseHandler struct {
 func (h *DatabaseHandler) Name() string  { return "DatabaseConfig" }
 func (h *DatabaseHandler) Label() string { return "Database Connection" }
 func (h *DatabaseHandler) Value() string { return h.connectionString }
-func (h *DatabaseHandler) Change(newValue any, progress ...func(string)) error {
-	if len(progress) > 0 {
-		progress[0]("Validating connection string...")
+func (h *DatabaseHandler) Change(newValue string, progress func(string)) {
+	if progress != nil {
+		progress("Validating connection string...")
 		time.Sleep(200 * time.Millisecond)
-		progress[0]("Testing database connectivity...")
+		progress("Testing database connectivity...")
 		time.Sleep(400 * time.Millisecond)
-		progress[0]("Database connection configured successfully")
+		progress("Database connection configured successfully")
 	}
-	h.connectionString = newValue.(string)
-	return nil
+	h.connectionString = newValue
 }
 
 // 3. HandlerExecution - Action buttons (3 methods) with tracking
@@ -45,17 +44,17 @@ type BackupHandler struct {
 
 func (h *BackupHandler) Name() string  { return "SystemBackup" }
 func (h *BackupHandler) Label() string { return "Create System Backup" }
-func (h *BackupHandler) Execute(progress ...func(string)) error {
-	if len(progress) > 0 {
-		progress[0]("Preparing backup...")
+func (h *BackupHandler) Execute(progress func(string)) {
+	if progress != nil {
+		progress("Preparing backup...")
 		time.Sleep(200 * time.Millisecond)
-		progress[0]("Backing up database...")
+		progress("Backing up database...")
 		time.Sleep(500 * time.Millisecond)
-		progress[0]("Backing up files...")
+		progress("Backing up files...")
 		time.Sleep(300 * time.Millisecond)
-		progress[0]("Backup completed successfully")
+		progress("Backup completed successfully")
 	}
-	return nil
+	// ...existing code...
 }
 
 // MessageTracker implementation for operation tracking

@@ -19,20 +19,21 @@ type testEditHandler struct {
 func (h *testEditHandler) Name() string  { return "TestEdit" }
 func (h *testEditHandler) Label() string { return "Test Edit" }
 func (h *testEditHandler) Value() string { return h.value }
-func (h *testEditHandler) Change(newValue any, progress ...func(string)) error {
-	h.value = newValue.(string)
-	return nil
+func (h *testEditHandler) Change(newValue string, progress func(string)) {
+	h.value = newValue
+	if progress != nil {
+		progress("Changed")
+	}
 }
 
 type testRunHandler struct{}
 
 func (h *testRunHandler) Name() string  { return "TestRun" }
 func (h *testRunHandler) Label() string { return "Test Run" }
-func (h *testRunHandler) Execute(progress ...func(string)) error {
-	if len(progress) > 0 {
-		progress[0]("Operation completed")
+func (h *testRunHandler) Execute(progress func(string)) {
+	if progress != nil {
+		progress("Operation completed")
 	}
-	return nil
 }
 
 type testWriterBasic struct{}

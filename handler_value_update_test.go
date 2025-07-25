@@ -27,18 +27,27 @@ func (h *ThreadSafePortTestHandler) Value() string {
 	return h.currentPort
 }
 
-func (h *ThreadSafePortTestHandler) Change(newValue any, progress ...func(string)) (string, error) {
-	portStr := strings.TrimSpace(newValue.(string))
+func (h *ThreadSafePortTestHandler) Change(newValue string, progress func(string)) {
+	portStr := strings.TrimSpace(newValue)
 	if portStr == "" {
-		return "", fmt.Errorf("port cannot be empty")
+		if progress != nil {
+			progress("port cannot be empty")
+		}
+		return
 	}
 
 	port, err := strconv.Atoi(portStr)
 	if err != nil {
-		return "", fmt.Errorf("port must be a number")
+		if progress != nil {
+			progress("port must be a number")
+		}
+		return
 	}
 	if port < 1 || port > 65535 {
-		return "", fmt.Errorf("port must be between 1 and 65535")
+		if progress != nil {
+			progress("port must be between 1 and 65535")
+		}
+		return
 	}
 
 	// Thread-safe update
@@ -46,7 +55,9 @@ func (h *ThreadSafePortTestHandler) Change(newValue any, progress ...func(string
 	h.currentPort = portStr
 	h.mu.Unlock()
 
-	return fmt.Sprintf("Port configured: %d", port), nil
+	if progress != nil {
+		progress(fmt.Sprintf("Port configured: %d", port))
+	}
 }
 
 // TestHandlerValueUpdateAfterEdit tests that the field displays the updated value from handler after editing

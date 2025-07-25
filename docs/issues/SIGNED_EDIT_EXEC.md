@@ -10,7 +10,7 @@ Change(newValue any, progress ...func(string)) error
 Execute(progress ...func(string)) error
 
 // PROPUESTO:
-Change(newValue any, progress func(string))
+Change(newValue string, progress func(string))
 Execute(progress func(string))
 ```
 

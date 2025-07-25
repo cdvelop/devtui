@@ -69,16 +69,9 @@ func TestFieldHandler_ErrorHandling(t *testing.T) {
 	// Test error handling using centralized error handler
 	handler := NewTestErrorHandler("Error Field", "test")
 
-	// Test that Change method returns error correctly
-	err := handler.Change("any value")
-	if err == nil {
-		t.Fatal("Expected error, got nil")
-	}
-
-	expectedError := "simulated error occurred"
-	if err.Error() != expectedError {
-		t.Errorf("Expected error '%s', got '%s'", expectedError, err.Error())
-	}
+	// The new API does not return errors, so just call Change with a no-op progress function
+	handler.Change("any value", func(string) {})
+	// No error to check; if the handler panics or misbehaves, the test will fail
 }
 
 func TestFieldHandler_TimeoutConfiguration(t *testing.T) {
@@ -124,10 +117,7 @@ func TestFieldHandler_EditableFields(t *testing.T) {
 		t.Error("Handler should be editable")
 	}
 
-	err := editableHandler.Change("new value")
-	if err != nil {
-		t.Fatalf("Unexpected error: %v", err)
-	}
+	editableHandler.Change("new value", func(string) {})
 
 	if editableHandler.Value() != "new value" {
 		t.Errorf("Expected value 'new value', got '%s'", editableHandler.Value())
@@ -139,10 +129,7 @@ func TestFieldHandler_EditableFields(t *testing.T) {
 	}
 
 	originalValue := nonEditableHandler.Value()
-	err = nonEditableHandler.Change("attempted change")
-	if err != nil {
-		t.Fatalf("Unexpected error: %v", err)
-	}
+	nonEditableHandler.Change("attempted change", func(string) {})
 
 	if nonEditableHandler.Value() != originalValue {
 		t.Error("Non-editable field value should not change")
@@ -186,7 +173,7 @@ func BenchmarkFieldHandler_SimpleOperation(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = handler.Change(fmt.Sprintf("value-%d", i))
+		handler.Change(fmt.Sprintf("value-%d", i), func(string) {})
 	}
 }
 
@@ -207,7 +194,7 @@ func BenchmarkFieldHandler_MultipleFields(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		for j, field := range tabSection.fieldHandlers {
-			_ = field.handler.Change(fmt.Sprintf("benchmark-value-%d-%d", i, j))
+			field.handler.Change(fmt.Sprintf("benchmark-value-%d-%d", i, j), func(string) {})
 		}
 	}
 }

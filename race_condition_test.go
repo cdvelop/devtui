@@ -14,15 +14,14 @@ type RaceConditionHandler struct {
 
 func (h *RaceConditionHandler) Name() string  { return "RaceTest" }
 func (h *RaceConditionHandler) Label() string { return "Race Condition Test" }
-func (h *RaceConditionHandler) Execute(progress ...func(string)) error {
+func (h *RaceConditionHandler) Execute(progress func(string)) {
 	// Simulate work that triggers progress updates
-	if len(progress) > 0 {
+	if progress != nil {
 		for i := 0; i < 10; i++ {
-			progress[0]("Step " + string(rune('0'+i)))
+			progress("Step " + string(rune('0'+i)))
 			time.Sleep(1 * time.Millisecond) // Small delay to increase race probability
 		}
 	}
-	return nil
 }
 
 func (h *RaceConditionHandler) GetLastOperationID() string {

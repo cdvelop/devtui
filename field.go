@@ -31,16 +31,16 @@ type anyHandler struct {
 	mu          sync.RWMutex  // Protección para lastOpID
 
 	// Function pointers - solo los necesarios poblados
-	nameFunc     func() string                    // Todos
-	labelFunc    func() string                    // Display/Edit/Execution
-	valueFunc    func() string                    // Edit/Display
-	contentFunc  func() string                    // Display únicamente
-	editableFunc func() bool                      // Por tipo
-	changeFunc   func(any, ...func(string)) error // Edit/Execution (solo error)
-	executeFunc  func(...func(string)) error      // Execution únicamente
-	timeoutFunc  func() time.Duration             // Edit/Execution
-	getOpIDFunc  func() string                    // Tracking
-	setOpIDFunc  func(string)                     // Tracking
+	nameFunc     func() string              // Todos
+	labelFunc    func() string              // Display/Edit/Execution
+	valueFunc    func() string              // Edit/Display
+	contentFunc  func() string              // Display únicamente
+	editableFunc func() bool                // Por tipo
+	changeFunc   func(string, func(string)) // Edit/Execution (nueva firma)
+	executeFunc  func(func(string))         // Execution únicamente (nueva firma)
+	timeoutFunc  func() time.Duration       // Edit/Execution
+	getOpIDFunc  func() string              // Tracking
+	setOpIDFunc  func(string)               // Tracking
 }
 
 // ============================================================================
@@ -75,11 +75,10 @@ func (a *anyHandler) Editable() bool {
 	return false
 }
 
-func (a *anyHandler) Change(newValue any, progress ...func(string)) error {
+func (a *anyHandler) Change(newValue string, progress func(string)) {
 	if a.changeFunc != nil {
-		return a.changeFunc(newValue, progress...)
+		a.changeFunc(newValue, progress)
 	}
-	return nil
 }
 
 func (a *anyHandler) Timeout() time.Duration {
@@ -158,8 +157,8 @@ func newExecutionHandler(h HandlerExecution, timeout time.Duration) *anyHandler 
 		labelFunc:    h.Label,
 		editableFunc: func() bool { return false },
 		executeFunc:  h.Execute,
-		changeFunc: func(val any, progress ...func(string)) error {
-			return h.Execute(progress...) // Wrapper para compatibilidad
+		changeFunc: func(_ string, progress func(string)) {
+			h.Execute(progress)
 		},
 		timeoutFunc: func() time.Duration { return timeout },
 	}
@@ -481,15 +480,12 @@ func (f *field) executeAsyncChange(valueToSave any) {
 	}, 1)
 
 	go func() {
-		err := f.handler.Change(currentValue, progressCallback)
-		var result string
-		if err == nil {
-			result = f.handler.Value() // Obtener valor actualizado si no hay error
-		}
+		f.handler.Change(currentValue.(string), progressCallback)
+		result := f.handler.Value() // Obtener valor actualizado
 		resultChan <- struct {
 			result string
 			err    error
-		}{result, err}
+		}{result, nil}
 	}()
 
 	// Wait for completion or timeout
@@ -520,55 +516,6 @@ func (f *field) executeAsyncChange(valueToSave any) {
 	cancel() // Clean up context
 }
 
-// executeChangeSyncForTesting executes the handler's Change method synchronously (for tests)
-// no deletion
-func (f *field) executeChangeSyncForTesting() {
-	if f.handler == nil {
-		return
-	}
-
-	// Generate operation ID for message routing (same as async version)
-	if f.asyncState != nil && f.parentTab != nil && f.parentTab.tui != nil && f.parentTab.tui.id != nil {
-		// Check if handler has existing operationID to reuse (for updates)
-		existingID := f.handler.GetLastOperationID()
-		if existingID != "" {
-			f.asyncState.operationID = existingID
-		} else {
-			// Generate new ID for new operations
-			newID := f.parentTab.tui.id.GetNewID()
-			f.asyncState.operationID = newID
-			// Store the new ID in the handler
-			f.handler.SetLastOperationID(newID)
-		}
-	}
-
-	// Get current value based on field type
-	currentValue := f.getCurrentValue()
-
-	// Create progress callback for sync execution
-	progressCallback := func(message string) {
-		// In sync mode, send progress messages via LogToFile to avoid UI interference
-		if f.parentTab != nil && f.parentTab.tui != nil && f.parentTab.tui.LogToFile != nil {
-			f.parentTab.tui.LogToFile("Progress:", message)
-		}
-	}
-
-	// Execute user's Change method synchronously
-	err := f.handler.Change(currentValue, progressCallback)
-	var result string
-	if err == nil {
-		result = f.handler.Value() // Obtener valor actualizado si no hay error
-	}
-
-	if err != nil {
-		// Handler decides error message content
-		f.sendErrorMessage(err.Error())
-	} else {
-		// Handler decides success message content
-		f.sendSuccessMessage(result)
-	}
-}
-
 // executeChangeSyncWithValue executes the handler's Change method synchronously with pre-captured value
 func (f *field) executeChangeSyncWithValue(valueToSave any) {
 	if f.handler == nil {
@@ -583,11 +530,51 @@ func (f *field) executeChangeSyncWithValue(valueToSave any) {
 		// In sync test mode, we don't send messages to avoid race conditions
 	}
 
-	err := f.handler.Change(valueToSave, progressCallback)
-
+	f.handler.Change(valueToSave.(string), progressCallback)
 	// In test mode, we don't send messages to UI to avoid race conditions
 	// The test can verify the handler's internal state directly
-	_ = err // We still execute the handler but don't send UI messages
+}
+
+// executeChangeSyncWithTracking executes the handler's Change method synchronously but maintains operation ID tracking
+// This is specifically for testing operation ID reuse functionality
+func (f *field) executeChangeSyncWithTracking(valueToSave any) {
+	if f.handler == nil {
+		return
+	}
+
+	// Generate or reuse operation ID like in async mode
+	var operationID string
+	if f.parentTab != nil && f.parentTab.tui != nil && f.parentTab.tui.id != nil {
+		// Check if handler has existing operationID to reuse (for updates)
+		if existingID := f.handler.GetLastOperationID(); existingID != "" {
+			operationID = existingID
+		} else {
+			// Generate new ID for new operations
+			operationID = f.parentTab.tui.id.GetNewID()
+		}
+	}
+
+	// Create progress callback that sends messages with operation tracking
+	handlerName := f.handler.Name()
+	progressCallback := func(message string) {
+		if f.parentTab != nil {
+			msgType := messagetype.DetectMessageType(message)
+			f.parentTab.tui.sendMessageWithHandler(message, msgType, f.parentTab, handlerName, operationID)
+		}
+	}
+
+	// Execute handler
+	f.handler.Change(valueToSave.(string), progressCallback)
+
+	// Set operation ID on handler for tracking
+	f.handler.SetLastOperationID(operationID)
+
+	// Send success message
+	result := f.handler.Value()
+	if f.parentTab != nil {
+		msgType := messagetype.DetectMessageType(result)
+		f.parentTab.tui.sendMessageWithHandler(result, msgType, f.parentTab, handlerName, operationID)
+	}
 }
 
 // handleEnter triggers async operation when user presses Enter

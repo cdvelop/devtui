@@ -26,7 +26,7 @@ func TestOperationIDReuse(t *testing.T) {
 		field := testTab.FieldHandlers()[0]
 
 		// First execution - should create new message with the fixed operationID
-		field.executeChangeSyncForTesting()
+		field.executeChangeSyncWithTracking(field.Value())
 
 		// Verify the handler was called with SetLastOperationID
 		if handler.lastSetOperationID == "" {
@@ -37,7 +37,7 @@ func TestOperationIDReuse(t *testing.T) {
 		initialMessageCount := len(testTab.tabContents)
 
 		// Second execution - should reuse the same operationID and update existing message
-		field.executeChangeSyncForTesting()
+		field.executeChangeSyncWithTracking(field.Value())
 
 		// Verify message count didn't increase (updated existing instead of creating new)
 		finalMessageCount := len(testTab.tabContents)
@@ -81,8 +81,8 @@ func TestOperationIDReuse(t *testing.T) {
 		field2 := testTab.FieldHandlers()[1]
 
 		// Execute both handlers
-		field1.executeChangeSyncForTesting()
-		field2.executeChangeSyncForTesting()
+		field1.executeChangeSyncWithTracking(field1.Value())
+		field2.executeChangeSyncWithTracking(field2.Value())
 
 		// Should have 2 messages, one per handler
 		messageCount := len(testTab.tabContents)
@@ -91,7 +91,7 @@ func TestOperationIDReuse(t *testing.T) {
 		}
 
 		// Execute first handler again - should update its message, not create new
-		field1.executeChangeSyncForTesting()
+		field1.executeChangeSyncWithTracking(field1.Value())
 
 		finalMessageCount := len(testTab.tabContents)
 		if finalMessageCount != 2 {
@@ -116,11 +116,11 @@ func TestOperationIDReuse(t *testing.T) {
 		field := testTab.FieldHandlers()[0]
 
 		// First execution
-		field.executeChangeSyncForTesting()
+		field.executeChangeSyncWithTracking(field.Value())
 		initialMessageCount := len(testTab.tabContents)
 
 		// Second execution - should create new message since no existing operationID
-		field.executeChangeSyncForTesting()
+		field.executeChangeSyncWithTracking(field.Value())
 		finalMessageCount := len(testTab.tabContents)
 
 		// Verify new message was created
@@ -152,11 +152,10 @@ func (h *TestOperationIDHandler) Value() string          { return h.value }
 func (h *TestOperationIDHandler) Editable() bool         { return true }
 func (h *TestOperationIDHandler) Timeout() time.Duration { return 0 }
 
-func (h *TestOperationIDHandler) Change(newValue any, progress ...func(string)) error {
-	if len(progress) > 0 {
-		progress[0]("Operation completed")
+func (h *TestOperationIDHandler) Change(newValue string, progress func(string)) {
+	if progress != nil {
+		progress("Operation completed")
 	}
-	return nil
 }
 
 func (h *TestOperationIDHandler) SetLastOperationID(id string) {
@@ -181,11 +180,10 @@ func (h *TestNewOperationHandler) Value() string          { return h.value }
 func (h *TestNewOperationHandler) Editable() bool         { return true }
 func (h *TestNewOperationHandler) Timeout() time.Duration { return 0 }
 
-func (h *TestNewOperationHandler) Change(newValue any, progress ...func(string)) error {
-	if len(progress) > 0 {
-		progress[0]("New operation completed")
+func (h *TestNewOperationHandler) Change(newValue string, progress func(string)) {
+	if progress != nil {
+		progress("New operation completed")
 	}
-	return nil
 }
 
 func (h *TestNewOperationHandler) SetLastOperationID(id string) {

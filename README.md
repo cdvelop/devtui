@@ -25,15 +25,13 @@ type BackupHandler struct {
 
 func (h *BackupHandler) Name() string  { return "SystemBackup" }
 func (h *BackupHandler) Label() string { return "Create System Backup" }
-func (h *BackupHandler) Execute(progress ...func(string)) error {
-    if len(progress) > 0 {
-        progress[0]("Preparing backup...")
-        time.Sleep(200 * time.Millisecond)
-        progress[0]("Backing up database...")
-        time.Sleep(500 * time.Millisecond)
-        progress[0]("Backup completed successfully")
-    }
-    return nil
+func (h *BackupHandler) Execute(progress func(string)) {
+    progress("Preparing backup...")
+    time.Sleep(200 * time.Millisecond)
+    progress("Backing up database...")
+    time.Sleep(500 * time.Millisecond)
+    progress("Backup completed successfully")
+}
 }
 
 // MessageTracker implementation for operation tracking
@@ -82,20 +80,18 @@ type HandlerDisplay interface {
 
 ### 2. HandlerEdit - Interactive Input Fields (4 methods)  
 ```go
-type HandlerEdit interface {
     Name() string    // Unique identifier for logging
     Label() string   // Field label
     Value() string   // Current/initial value
-    Change(newValue any, progress ...func(string)) error
+    Change(newValue string, progress func(string))
 }
 ```
 
 ### 3. HandlerExecution - Action Buttons (3 methods)
 ```go
-type HandlerExecution interface {
     Name() string  // Unique identifier for logging
     Label() string // Button label
-    Execute(progress ...func(string)) error
+    Execute(progress func(string))
 }
 ```
 

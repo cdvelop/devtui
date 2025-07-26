@@ -26,15 +26,43 @@ func (h *DevTUI) footerView() string {
 		return h.renderFooterInput()
 	}
 
-	// Si no hay campos, mostrar scrollbar estándar
+	// Si no hay campos, mostrar paginación de writers-only y scrollbar estándar
+	tabSection := h.tabSections[h.activeTab]
+	fieldHandlers := tabSection.FieldHandlers()
+	currentField := tabSection.indexActiveEditField
+	totalFields := len(fieldHandlers)
+	if currentField > 99 || totalFields > 99 {
+		if h.LogToFile != nil {
+			h.LogToFile("Field limit exceeded:", currentField, "/", totalFields)
+		}
+	}
+	// Writers-only tab: show  1/ 1 for clarity
+	var displayCurrent, displayTotal int
+	if totalFields == 0 {
+		displayCurrent = 1
+		displayTotal = 1
+	} else {
+		displayCurrent = min(currentField, 99) + 1 // 1-based for display
+		displayTotal = min(totalFields, 99)
+	}
+	fieldPagination := fmt.Sprintf("%2d/%2d", displayCurrent, displayTotal)
+	paginationStyled := h.paginationStyle.Render(fieldPagination)
 	info := h.renderScrollInfo()
-	line := h.lineHeadFootStyle.Render(strings.Repeat("─", max(0, h.viewport.Width-lipgloss.Width(info))))
-	return lipgloss.JoinHorizontal(lipgloss.Center, line, info)
+	horizontalPadding := 1
+	spacerStyle := lipgloss.NewStyle().Width(horizontalPadding).Render("")
+	lineWidth := h.viewport.Width - lipgloss.Width(info) - lipgloss.Width(paginationStyled) - horizontalPadding*2
+	if lineWidth < 0 {
+		lineWidth = 0
+	}
+	line := h.lineHeadFootStyle.Render(strings.Repeat("─", lineWidth))
+	// Layout: [Pagination] [Line] [Scroll%]
+	return lipgloss.JoinHorizontal(lipgloss.Left, paginationStyled, spacerStyle, line, spacerStyle, info)
 }
 
-// renderScrollInfo returns the formatted scroll percentage
+// renderScrollInfo returns the formatted scroll percentage with fixed width
 func (h *DevTUI) renderScrollInfo() string {
-	return h.footerInfoStyle.Render(fmt.Sprintf("%3.f%%", h.viewport.ScrollPercent()*100))
+	scrollText := fmt.Sprintf("%3.f%%", h.viewport.ScrollPercent()*100)
+	return h.footerInfoStyle.Render(scrollText)
 }
 
 // renderFooterInput renderiza un campo de entrada en el footer
@@ -55,23 +83,90 @@ func (h *DevTUI) renderFooterInput() string {
 
 	// Check if this handler uses expanded footer (Display only)
 	if field.isDisplayOnly() {
-		// Layout for Display: [Label expandido usando resto del espacio] [Scroll%]
-		remainingWidth := h.viewport.Width - lipgloss.Width(info) - horizontalPadding
+		// Pagination logic
+		currentField := tabSection.indexActiveEditField
+		totalFields := len(fieldHandlers)
+		if currentField > 99 || totalFields > 99 {
+			if h.LogToFile != nil {
+				h.LogToFile("Field limit exceeded:", currentField, "/", totalFields)
+			}
+		}
+		displayCurrent := min(currentField, 99) + 1 // 1-based for display
+		displayTotal := min(totalFields, 99)
+		fieldPagination := fmt.Sprintf("%2d/%2d", displayCurrent, displayTotal)
+		paginationStyled := h.paginationStyle.Render(fieldPagination)
+		remainingWidth := h.viewport.Width - lipgloss.Width(info) - lipgloss.Width(paginationStyled) - horizontalPadding*2
 		labelText := tinystring.Convert(field.getExpandedFooterLabel()).Truncate(remainingWidth-1, 0).String()
-
-		// Display: [Label expandido] [Scroll%]
 		displayStyle := lipgloss.NewStyle().
 			Width(remainingWidth).
 			Padding(0, horizontalPadding).
-			Background(lipgloss.Color(h.Lowlight)).  // Fondo naranja
-			Foreground(lipgloss.Color(h.Foreground)) // Texto blanco
+			Background(lipgloss.Color(h.Lowlight)).
+			Foreground(lipgloss.Color(h.Foreground))
 		styledLabel := displayStyle.Render(labelText)
-
 		spacerStyle := lipgloss.NewStyle().Width(horizontalPadding).Render("")
-		return lipgloss.JoinHorizontal(lipgloss.Left, styledLabel, spacerStyle, info)
+		return lipgloss.JoinHorizontal(lipgloss.Left, paginationStyled, spacerStyle, styledLabel, spacerStyle, info)
 	}
 
-	// Normal layout for Edit and Execution handlers: [Scroll%] [Label] [Value]
+	// Diferente layout para Edit vs Execution handlers
+	if field.isExecutionHandler() {
+		// Execution handler: Solo mostrar [Pagination] [Value expandido] [Scroll%]
+		// El valor usa todo el espacio disponible, sin label separado
+
+		// Calcular la paginación PRIMERO para incluirla en el cálculo del ancho
+		currentField := tabSection.indexActiveEditField
+		totalFields := len(fieldHandlers)
+		if currentField > 99 || totalFields > 99 {
+			if h.LogToFile != nil {
+				h.LogToFile("Field limit exceeded:", currentField, "/", totalFields)
+			}
+		}
+		displayCurrent := min(currentField, 99) + 1 // 1-based for display
+		displayTotal := min(totalFields, 99)
+		fieldPagination := fmt.Sprintf("%2d/%2d", displayCurrent, displayTotal)
+		paginationStyled := h.paginationStyle.Render(fieldPagination)
+
+		// Para execution: el valor usa todo el espacio disponible (sin label separado)
+		usedWidth := lipgloss.Width(info) + lipgloss.Width(paginationStyled) + horizontalPadding*2
+		valueWidth := h.viewport.Width - usedWidth
+		if valueWidth < 10 {
+			valueWidth = 10 // Mínimo
+		}
+
+		// Preparar el texto del valor (usar label como contenido del valor)
+		valueText := field.handler.Label()
+
+		// Truncar el valor para que no afecte el diseño del footer
+		textWidth := valueWidth - (horizontalPadding * 2)
+		if textWidth < 1 {
+			textWidth = 1
+		}
+		valueText = tinystring.Convert(valueText).Truncate(textWidth, 0).String()
+
+		// Definir el estilo para el valor del campo (Execution: Fondo blanco con letras oscuras)
+		inputValueStyle := lipgloss.NewStyle().
+			Width(valueWidth).
+			Padding(0, horizontalPadding).
+			Background(lipgloss.Color(h.Foreground)).
+			Foreground(lipgloss.Color(h.Background))
+
+		// Renderizar el valor con el estilo adecuado
+		styledValue := inputValueStyle.Render(valueText)
+
+		// Crear un estilo para el espacio entre elementos
+		spacerStyle := lipgloss.NewStyle().Width(horizontalPadding).Render("")
+
+		// Layout: [Pagination] [Value expandido] [Scroll%]
+		return lipgloss.JoinHorizontal(
+			lipgloss.Left,
+			paginationStyled,
+			spacerStyle,
+			styledValue,
+			spacerStyle,
+			info,
+		)
+	}
+
+	// Normal layout for Edit handlers only: [Pagination] [Label] [Value] [Scroll%]
 	labelWidth := h.labelWidth
 
 	// Truncar la etiqueta si es necesario
@@ -81,8 +176,22 @@ func (h *DevTUI) renderFooterInput() string {
 	fixedWidthLabel := h.labelStyle.Render(labelText)
 	paddedLabel := h.headerTitleStyle.Render(fixedWidthLabel)
 
-	// Calcular ancho para el valor usando el espacio restante
-	usedWidth := lipgloss.Width(info) + lipgloss.Width(paddedLabel) + horizontalPadding*2
+	// Calcular la paginación PRIMERO para incluirla en el cálculo del ancho
+	currentField := tabSection.indexActiveEditField
+	totalFields := len(fieldHandlers)
+	if currentField > 99 || totalFields > 99 {
+		if h.LogToFile != nil {
+			h.LogToFile("Field limit exceeded:", currentField, "/", totalFields)
+		}
+	}
+	displayCurrent := min(currentField, 99) + 1 // 1-based for display
+	displayTotal := min(totalFields, 99)
+	fieldPagination := fmt.Sprintf("%2d/%2d", displayCurrent, displayTotal)
+	paginationStyled := h.paginationStyle.Render(fieldPagination)
+
+	// Calcular ancho para el valor incluyendo TODOS los elementos: [Pagination] [Label] [Value] [Scroll%]
+	// Layout tiene 3 espacios: pagination|space|label|space|value|space|scroll
+	usedWidth := lipgloss.Width(info) + lipgloss.Width(paddedLabel) + lipgloss.Width(paginationStyled) + horizontalPadding*3
 	valueWidth := h.viewport.Width - usedWidth
 	if valueWidth < 10 {
 		valueWidth = 10 // Mínimo
@@ -114,13 +223,8 @@ func (h *DevTUI) renderFooterInput() string {
 		Width(valueWidth).
 		Padding(0, horizontalPadding)
 
-	// Aplicar estilos según el estado y tipo de handler
-	if field.isExecutionHandler() {
-		// Execution: Fondo blanco con letras grises (botón ejecutable)
-		inputValueStyle = inputValueStyle.
-			Background(lipgloss.Color(h.Foreground)).
-			Foreground(lipgloss.Color(h.Background))
-	} else if h.editModeActivated && field.Editable() {
+	// Aplicar estilos para Edit handlers según el estado
+	if h.editModeActivated && field.Editable() {
 		// Edit en modo edición activa
 		inputValueStyle = inputValueStyle.
 			Background(lipgloss.Color(h.Lowlight)).
@@ -159,13 +263,15 @@ func (h *DevTUI) renderFooterInput() string {
 	// Crear un estilo para el espacio entre elementos
 	spacerStyle := lipgloss.NewStyle().Width(horizontalPadding).Render("")
 
-	// Layout: [Label] [Value] [Scroll%] - scroll siempre a la derecha
+	// Layout: [Pagination] [Label] [Value] [Scroll%]
 	return lipgloss.JoinHorizontal(
 		lipgloss.Left,
+		paginationStyled,
+		spacerStyle,
 		paddedLabel,
-		spacerStyle, // Espacio entre label y value
+		spacerStyle,
 		styledValue,
-		spacerStyle, // Espacio entre value y scroll
-		info,        // Scroll % siempre a la derecha
+		spacerStyle,
+		info,
 	)
 }

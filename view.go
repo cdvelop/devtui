@@ -80,6 +80,19 @@ func (h *DevTUI) headerView() string {
 	// Aplicar el estilo visual manteniendo el ancho fijo
 	title := h.headerTitleStyle.Render(fixedWidthHeader)
 
-	line := h.lineHeadFootStyle.Render(strings.Repeat("─", max(0, h.viewport.Width-lipgloss.Width(title))))
-	return lipgloss.JoinHorizontal(lipgloss.Center, title, line)
+	// Pagination logic
+	currentTab := h.activeTab
+	totalTabs := len(h.tabSections)
+	if currentTab > 99 || totalTabs > 99 {
+		if h.LogToFile != nil {
+			h.LogToFile("Tab limit exceeded:", currentTab, "/", totalTabs)
+		}
+	}
+	displayCurrent := min(currentTab, 99) + 1 // 1-based for display
+	displayTotal := min(totalTabs, 99)
+	pagination := fmt.Sprintf("%2d/%2d", displayCurrent, displayTotal)
+	paginationStyled := h.paginationStyle.Render(pagination)
+	lineWidth := h.viewport.Width - lipgloss.Width(title) - lipgloss.Width(paginationStyled)
+	line := h.lineHeadFootStyle.Render(strings.Repeat("─", max(0, lineWidth)))
+	return lipgloss.JoinHorizontal(lipgloss.Center, title, line, paginationStyled)
 }

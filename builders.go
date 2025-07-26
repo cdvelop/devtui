@@ -43,7 +43,7 @@ func (b *editHandlerBuilder) WithTimeout(timeout time.Duration) *tabSection {
 	return b.tabSection
 }
 
-// Register finalizes the handler registration with default synchronous behavior (timeout = 0).
+// DEPRECATED Register finalizes the handler registration with default synchronous behavior (timeout = 0).
 func (b *editHandlerBuilder) Register() *tabSection {
 	return b.WithTimeout(0)
 }

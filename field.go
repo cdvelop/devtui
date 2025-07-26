@@ -239,14 +239,7 @@ func (f *field) SetCursorForTest(cursor int) {
 	f.cursor = cursor
 }
 
-// NewField creates a new field with handler-based approach, adds it to the tabSection, and returns the tabSection for chaining.
-// DEPRECATED: Use NewEditHandler, NewExecutionHandler, or NewDisplayHandler instead
-// This method will be removed in future versions. Use the type-safe builder methods instead.
-//
-// Example migration:
-//
-//	OLD: tab.NewField(handler)
-//	NEW: tab.NewEditHandler(handler).Register()
+// DEPRECATED ONLY USE NewEditHandler, NewExecutionHandler, or NewDisplayHandler
 func (ts *tabSection) NewField(handler *anyHandler) *tabSection {
 	// Log deprecation warning
 	if ts.tui != nil && ts.tui.LogToFile != nil {

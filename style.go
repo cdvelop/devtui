@@ -24,8 +24,8 @@ type tuiStyle struct {
 	labelWidth       int // Ancho estándar para etiquetas
 	labelStyle       lipgloss.Style
 
-	footerInfoStyle lipgloss.Style
-
+	footerInfoStyle    lipgloss.Style
+	paginationStyle    lipgloss.Style // NEW: For pagination indicators
 	fieldLineStyle     lipgloss.Style
 	fieldSelectedStyle lipgloss.Style
 	fieldEditingStyle  lipgloss.Style
@@ -83,6 +83,11 @@ func newTuiStyle(cs *ColorStyle) *tuiStyle {
 		Foreground(lipgloss.Color(t.Foreground))
 
 	t.footerInfoStyle = t.headerTitleStyle
+
+	t.paginationStyle = lipgloss.NewStyle().
+		Padding(0, 1).
+		Background(lipgloss.Color(t.Highlight)).
+		Foreground(lipgloss.Color(t.Foreground))
 
 	t.fieldLineStyle = lipgloss.NewStyle().
 		Padding(0, 2)

@@ -130,11 +130,11 @@ func TestRenderFooterInput(t *testing.T) {
 			// Test logger - do nothing
 		})
 
-		expectedValue := "Value index OK"
+		expectedLabel := "Test Handler"
 		// Configurar un índice activo fuera de rango
 		tab := h.tabSections[h.activeTab]
 		tab.setFieldHandlers([]*field{})
-		testHandler := NewTestNonEditableHandler("Test", expectedValue)
+		testHandler := NewTestNonEditableHandler(expectedLabel, "Some Value")
 		tab.NewExecutionHandler(testHandler).Register()
 
 		// Set viewport width for proper layout calculation
@@ -146,8 +146,9 @@ func TestRenderFooterInput(t *testing.T) {
 		result := h.renderFooterInput()
 
 		// Verificar que se resetea el índice y se muestra el primer campo
-		if !strings.Contains(result, expectedValue) {
-			t.Fatal("No se manejó correctamente el índice fuera de rango result:\n", result)
+		// Para handlers de ejecución, se muestra el Label() en el footer
+		if !strings.Contains(result, expectedLabel) {
+			t.Fatalf("No se manejó correctamente el índice fuera de rango. Esperado: %q, resultado:\n%s", expectedLabel, result)
 		}
 	})
 

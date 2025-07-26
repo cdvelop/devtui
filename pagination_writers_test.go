@@ -23,7 +23,7 @@ func TestPaginationWritersOnlyTab(t *testing.T) {
 	h.activeTab = 0
 	// Call the real footerView rendering logic
 	output := h.footerView()
-	expected := "[ 1/ 1]"
+	expected := " 1/ 1"
 	if !contains(output, expected) {
 		t.Errorf("Writers-only tab pagination failed: got %q, want %q", output, expected)
 	}

@@ -30,6 +30,8 @@ type anyHandler struct {
 	lastOpID    string        // Tracking interno
 	mu          sync.RWMutex  // Protección para lastOpID
 
+	origHandler interface{} // Store original handler for type assertions
+
 	// Function pointers - solo los necesarios poblados
 	nameFunc     func() string              // Todos
 	labelFunc    func() string              // Display/Edit/Execution
@@ -122,6 +124,7 @@ func newEditHandler(h HandlerEdit, timeout time.Duration, tracker MessageTracker
 		editableFunc: func() bool { return true },
 		changeFunc:   h.Change,
 		timeoutFunc:  func() time.Duration { return timeout },
+		origHandler:  h,
 	}
 
 	// Configurar tracking opcional
@@ -161,6 +164,7 @@ func newExecutionHandler(h HandlerExecution, timeout time.Duration) *anyHandler 
 			h.Execute(progress)
 		},
 		timeoutFunc: func() time.Duration { return timeout },
+		origHandler: h,
 	}
 
 	// Check if handler implements MessageTracker interface for operation tracking
@@ -498,8 +502,16 @@ func (f *field) executeAsyncChange(valueToSave any) {
 			// Handler decides error message content
 			f.sendErrorMessage(res.err.Error())
 		} else {
-			// Handler decides success message content
-			f.sendSuccessMessage(res.result)
+			switch f.handler.handlerType {
+			case handlerTypeEdit:
+				f.sendSuccessMessage(res.result)
+			case handlerTypeExecution:
+				// Only send if handler explicitly implements Value()
+				if _, ok := f.handler.origHandler.(interface{ Value() string }); ok {
+					f.sendSuccessMessage(res.result)
+				}
+				// Other handler types: do not send success message
+			}
 		}
 
 	case <-ctx.Done():

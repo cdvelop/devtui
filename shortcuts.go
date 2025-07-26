@@ -24,6 +24,12 @@ Viewport:
   • PgUp/PgDown    - Scroll page
   • Mouse Wheel    - Scroll (optional)
 
+Scroll Status Icons:
+  •  ■  - All content visible
+  •  ▼  - Can scroll down
+  •  ▲  - Can scroll up
+  • ▼ ▲ - Can scroll both ways
+
 Exit:
   • Ctrl+C         - Quit
 

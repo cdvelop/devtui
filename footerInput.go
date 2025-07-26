@@ -61,8 +61,23 @@ func (h *DevTUI) footerView() string {
 
 // renderScrollInfo returns the formatted scroll percentage with fixed width
 func (h *DevTUI) renderScrollInfo() string {
-	scrollText := fmt.Sprintf("%3.f%%", h.viewport.ScrollPercent()*100)
-	return h.footerInfoStyle.Render(scrollText)
+	var scrollIcon string
+
+	atTop := h.viewport.AtTop()
+	atBottom := h.viewport.AtBottom()
+
+	switch {
+	case atTop && atBottom:
+		scrollIcon = " ■ " // All content visible (empty square)
+	case atTop && !atBottom:
+		scrollIcon = " ▼ " // Can scroll down (down triangle)
+	case !atTop && atBottom:
+		scrollIcon = " ▲ " // Can scroll up (up triangle)
+	default:
+		scrollIcon = "▼ ▲" // Can scroll both directions (both arrows)
+	}
+
+	return h.footerInfoStyle.Render(scrollIcon)
 }
 
 // renderFooterInput renderiza un campo de entrada en el footer

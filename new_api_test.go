@@ -19,7 +19,7 @@ type testEditHandler struct {
 func (h *testEditHandler) Name() string  { return "TestEdit" }
 func (h *testEditHandler) Label() string { return "Test Edit" }
 func (h *testEditHandler) Value() string { return h.value }
-func (h *testEditHandler) Change(newValue string, progress func(string)) {
+func (h *testEditHandler) Change(newValue string, progress func(msgs ...any)) {
 	h.value = newValue
 	if progress != nil {
 		progress("Changed")
@@ -30,7 +30,7 @@ type testRunHandler struct{}
 
 func (h *testRunHandler) Name() string  { return "TestRun" }
 func (h *testRunHandler) Label() string { return "Test Run" }
-func (h *testRunHandler) Execute(progress func(string)) {
+func (h *testRunHandler) Execute(progress func(msgs ...any)) {
 	if progress != nil {
 		progress("Operation completed")
 	}

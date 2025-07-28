@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/cdvelop/devtui"
+	. "github.com/cdvelop/tinystring"
 )
 
 // Example showcasing all new handler types with minimal implementation
@@ -13,7 +14,7 @@ import (
 // 1. HandlerDisplay - Read-only information display (2 methods)
 type StatusHandler struct{}
 
-func (h *StatusHandler) Name() string { return "System Status Information Display" }
+func (h *StatusHandler) Name() string { return T(D.St) "System Status Information Display" }
 func (h *StatusHandler) Content() string {
 	return "Status: Running\nPID: 12345\nUptime: 2h 30m\nMemory: 45MB\nCPU: 12%"
 }
@@ -26,13 +27,13 @@ type DatabaseHandler struct {
 func (h *DatabaseHandler) Name() string  { return "DatabaseConfig" }
 func (h *DatabaseHandler) Label() string { return "Database Connection" }
 func (h *DatabaseHandler) Value() string { return h.connectionString }
-func (h *DatabaseHandler) Change(newValue string, progress func(string)) {
+func (h *DatabaseHandler) Change(newValue string, progress func(msgs ...any)) {
 	if progress != nil {
-		progress("Validating connection string...")
+		progress("Validating connection string...", newValue)
 		time.Sleep(200 * time.Millisecond)
-		progress("Testing database connectivity...")
+		progress("Testing database connectivity...", newValue)
 		time.Sleep(400 * time.Millisecond)
-		progress("Database connection configured successfully")
+		progress("Database connection configured successfully", newValue)
 	}
 	h.connectionString = newValue
 }
@@ -44,15 +45,15 @@ type BackupHandler struct {
 
 func (h *BackupHandler) Name() string  { return "SystemBackup" }
 func (h *BackupHandler) Label() string { return "With Tracking" }
-func (h *BackupHandler) Execute(progress func(string)) {
+func (h *BackupHandler) Execute(progress func(msgs ...any)) {
 	if progress != nil {
-		progress("Preparing backup...")
+		progress("Preparing backup...", h.lastOpID)
 		time.Sleep(200 * time.Millisecond)
-		progress("Backing up database...")
+		progress("Backing up database...", h.lastOpID)
 		time.Sleep(500 * time.Millisecond)
-		progress("Backing up files...")
+		progress("Backing up files...", h.lastOpID)
 		time.Sleep(300 * time.Millisecond)
-		progress("Backup completed successfully")
+		progress("Backup completed successfully", h.lastOpID)
 	}
 	// ...existing code...
 }

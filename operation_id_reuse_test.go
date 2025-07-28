@@ -152,7 +152,7 @@ func (h *TestOperationIDHandler) Value() string          { return h.value }
 func (h *TestOperationIDHandler) Editable() bool         { return true }
 func (h *TestOperationIDHandler) Timeout() time.Duration { return 0 }
 
-func (h *TestOperationIDHandler) Change(newValue string, progress func(string)) {
+func (h *TestOperationIDHandler) Change(newValue string, progress func(msgs ...any)) {
 	if progress != nil {
 		progress("Operation completed")
 	}
@@ -180,7 +180,7 @@ func (h *TestNewOperationHandler) Value() string          { return h.value }
 func (h *TestNewOperationHandler) Editable() bool         { return true }
 func (h *TestNewOperationHandler) Timeout() time.Duration { return 0 }
 
-func (h *TestNewOperationHandler) Change(newValue string, progress func(string)) {
+func (h *TestNewOperationHandler) Change(newValue string, progress func(msgs ...any)) {
 	if progress != nil {
 		progress("New operation completed")
 	}

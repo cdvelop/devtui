@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/cdvelop/messagetype"
+	"github.com/cdvelop/tinystring"
 )
 
 // ============================================================================
@@ -33,16 +34,16 @@ type anyHandler struct {
 	origHandler interface{} // Store original handler for type assertions
 
 	// Function pointers - solo los necesarios poblados
-	nameFunc     func() string              // Todos
-	labelFunc    func() string              // Display/Edit/Execution
-	valueFunc    func() string              // Edit/Display
-	contentFunc  func() string              // Display únicamente
-	editableFunc func() bool                // Por tipo
-	changeFunc   func(string, func(string)) // Edit/Execution (nueva firma)
-	executeFunc  func(func(string))         // Execution únicamente (nueva firma)
-	timeoutFunc  func() time.Duration       // Edit/Execution
-	getOpIDFunc  func() string              // Tracking
-	setOpIDFunc  func(string)               // Tracking
+	nameFunc     func() string                   // Todos
+	labelFunc    func() string                   // Display/Edit/Execution
+	valueFunc    func() string                   // Edit/Display
+	contentFunc  func() string                   // Display únicamente
+	editableFunc func() bool                     // Por tipo
+	changeFunc   func(string, func(msgs ...any)) // Edit/Execution (nueva firma)
+	executeFunc  func(func(msgs ...any))         // Execution únicamente (nueva firma)
+	timeoutFunc  func() time.Duration            // Edit/Execution
+	getOpIDFunc  func() string                   // Tracking
+	setOpIDFunc  func(string)                    // Tracking
 }
 
 // ============================================================================
@@ -77,7 +78,7 @@ func (a *anyHandler) Editable() bool {
 	return false
 }
 
-func (a *anyHandler) Change(newValue string, progress func(string)) {
+func (a *anyHandler) Change(newValue string, progress func(msgs ...any)) {
 	if a.changeFunc != nil {
 		a.changeFunc(newValue, progress)
 	}
@@ -160,7 +161,7 @@ func newExecutionHandler(h HandlerExecution, timeout time.Duration) *anyHandler 
 		labelFunc:    h.Label,
 		editableFunc: func() bool { return false },
 		executeFunc:  h.Execute,
-		changeFunc: func(_ string, progress func(string)) {
+		changeFunc: func(_ string, progress func(msgs ...any)) {
 			h.Execute(progress)
 		},
 		timeoutFunc: func() time.Duration { return timeout },
@@ -442,8 +443,11 @@ func (f *field) executeAsyncChange(valueToSave any) {
 	f.asyncState.startTime = time.Now()
 
 	// Create progress callback for handler
-	progressCallback := func(message string) {
-		f.sendProgressMessage(message)
+	progressCallback := func(msgs ...any) {
+		if f.parentTab != nil && len(msgs) > 0 {
+			message := tinystring.T(msgs...)
+			f.sendProgressMessage(message)
+		}
 	}
 
 	// Use the pre-captured value instead of getCurrentValue()
@@ -510,8 +514,9 @@ func (f *field) executeChangeSyncWithValue(valueToSave any) {
 	// Use the pre-captured value directly
 
 	// Create empty progress callback for sync test execution
-	progressCallback := func(message string) {
+	progressCallback := func(msgs ...any) {
 		// In sync test mode, we don't send messages to avoid race conditions
+		_ = tinystring.T(msgs...) // Ensure signature and translation are consistent
 	}
 
 	f.handler.Change(valueToSave.(string), progressCallback)
@@ -540,8 +545,9 @@ func (f *field) executeChangeSyncWithTracking(valueToSave any) {
 
 	// Create progress callback that sends messages with operation tracking
 	handlerName := f.handler.Name()
-	progressCallback := func(message string) {
-		if f.parentTab != nil {
+	progressCallback := func(msgs ...any) {
+		if f.parentTab != nil && len(msgs) > 0 {
+			message := tinystring.T(msgs...)
 			msgType := messagetype.DetectMessageType(message)
 			f.parentTab.tui.sendMessageWithHandler(message, msgType, f.parentTab, handlerName, operationID)
 		}

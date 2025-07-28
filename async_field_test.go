@@ -70,7 +70,7 @@ func TestFieldHandler_ErrorHandling(t *testing.T) {
 	handler := NewTestErrorHandler("Error Field", "test")
 
 	// The new API does not return errors, so just call Change with a no-op progress function
-	handler.Change("any value", func(string) {})
+	handler.Change("any value", func(msgs ...any) {})
 	// No error to check; if the handler panics or misbehaves, the test will fail
 }
 
@@ -117,7 +117,7 @@ func TestFieldHandler_EditableFields(t *testing.T) {
 		t.Error("Handler should be editable")
 	}
 
-	editableHandler.Change("new value", func(string) {})
+	editableHandler.Change("new value", func(msgs ...any) {})
 
 	if editableHandler.Value() != "new value" {
 		t.Errorf("Expected value 'new value', got '%s'", editableHandler.Value())
@@ -129,7 +129,7 @@ func TestFieldHandler_EditableFields(t *testing.T) {
 	}
 
 	originalValue := nonEditableHandler.Value()
-	nonEditableHandler.Change("attempted change", func(string) {})
+	nonEditableHandler.Change("attempted change", func(msgs ...any) {})
 
 	if nonEditableHandler.Value() != originalValue {
 		t.Error("Non-editable field value should not change")
@@ -173,7 +173,7 @@ func BenchmarkFieldHandler_SimpleOperation(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		handler.Change(fmt.Sprintf("value-%d", i), func(string) {})
+		handler.Change(fmt.Sprintf("value-%d", i), func(msgs ...any) {})
 	}
 }
 
@@ -194,7 +194,7 @@ func BenchmarkFieldHandler_MultipleFields(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		for j, field := range tabSection.fieldHandlers {
-			field.handler.Change(fmt.Sprintf("benchmark-value-%d-%d", i, j), func(string) {})
+			field.handler.Change(fmt.Sprintf("benchmark-value-%d-%d", i, j), func(msgs ...any) {})
 		}
 	}
 }

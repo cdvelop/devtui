@@ -11,7 +11,7 @@ type ExecHandler struct{}
 
 func (h *ExecHandler) Name() string  { return "TestExec" }
 func (h *ExecHandler) Label() string { return "Action" }
-func (h *ExecHandler) Execute(progress func(string)) {
+func (h *ExecHandler) Execute(progress func(msgs ...any)) {
 	progress("Step 1")
 	time.Sleep(10 * time.Millisecond)
 	progress("Step 2")

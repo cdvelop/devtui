@@ -60,13 +60,6 @@ func (ts *tabSection) getWritingHandler(name string) *anyHandler {
 	return nil
 }
 
-// registerAnyHandler registers an anyHandler in the thread-safe slice
-func (ts *tabSection) registerAnyHandler(handler *anyHandler) {
-	ts.mu.Lock()
-	defer ts.mu.Unlock()
-	ts.writingHandlers = append(ts.writingHandlers, handler)
-}
-
 // Write implementa io.Writer para capturar la salida de otros procesos
 func (ts *tabSection) Write(p []byte) (n int, err error) {
 	msg := strings.TrimSpace(string(p))

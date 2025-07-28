@@ -212,7 +212,6 @@ type internalAsyncState struct {
 	startTime   time.Time
 }
 
-// use NewField to create a new field in the tab section
 // Field represents a field in the TUI with a handler-based approach
 // field represents a field in the TUI with async capabilities
 type field struct {
@@ -237,26 +236,6 @@ func (f *field) SetTempEditValueForTest(val string) {
 // SetCursorForTest permite modificar el cursor en tests
 func (f *field) SetCursorForTest(cursor int) {
 	f.cursor = cursor
-}
-
-// DEPRECATED ONLY USE NewEditHandler, NewExecutionHandler, or NewDisplayHandler
-func (ts *tabSection) NewField(handler *anyHandler) *tabSection {
-	// Log deprecation warning
-	if ts.tui != nil && ts.tui.LogToFile != nil {
-		ts.tui.LogToFile("WARNING: NewField is deprecated. Use NewEditHandler/NewExecutionHandler/NewDisplayHandler instead")
-	}
-
-	f := &field{
-		handler:    handler,
-		parentTab:  ts,
-		asyncState: &internalAsyncState{},
-	}
-
-	// AUTO-REGISTER: FieldHandlers are automatically registered for writing
-	ts.registerAnyHandler(handler)
-
-	ts.addFields(f)
-	return ts
 }
 
 // setFieldHandlers sets the field handlers slice (mainly for testing)

@@ -65,16 +65,6 @@ type TuiConfig struct {
 //	    LogToFile: func(err any) { fmt.Println(err) },
 //	}
 //	tui := NewTUI(config)
-//
-//	// Configure your sections and fields:
-//	tui.NewTabSection("My Section", "Description").
-//		NewField("Field1", "value", true, nil)
-//
-//	// Start the TUI:
-//	var wg sync.WaitGroup
-//	wg.Add(1)
-//	go tui.Start(&wg)
-//	wg.Wait()
 func NewTUI(c *TuiConfig) *DevTUI {
 	if c.AppName == "" {
 		c.AppName = "DevTUI"

@@ -1,0 +1,35 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"path": "../../godev"
+		},
+		{
+			"path": "../../messagetype"
+		},
+		{
+			"path": "../../unixid"
+		},
+		{
+			"path": "../../tinywasm"
+		},
+		{
+			"path": "../../assetmin"
+		},
+		{
+			"path": "../../gobuild"
+		},
+		{
+			"path": "../../tinystring"
+		},
+		{
+			"path": "../../tinyreflect"
+		},
+		{
+			"path": "../../devscripts"
+		}
+	],
+	"settings": {}
+}

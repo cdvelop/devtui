@@ -27,8 +27,8 @@ func TestFooterView(t *testing.T) {
 		result := h.footerView()
 
 		// Verificar que contiene indicador de scroll con iconos (no porcentaje)
-		hasScrollIcon := strings.Contains(result, "■") || 
-			strings.Contains(result, "▼") || 
+		hasScrollIcon := strings.Contains(result, "■") ||
+			strings.Contains(result, "▼") ||
 			strings.Contains(result, "▲")
 		if !hasScrollIcon {
 			t.Error("El footer sin campos debería mostrar indicador de scroll con iconos (■, ▼, ▲)")

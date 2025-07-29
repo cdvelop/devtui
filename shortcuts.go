@@ -1,10 +1,39 @@
 package devtui
 
 // createShortcutsTab creates and registers the shortcuts tab with its handler
+import (
+	"github.com/cdvelop/tinystring"
+)
+
 func createShortcutsTab(tui *DevTUI) {
 	shortcutsTab := tui.NewTabSection("SHORTCUTS", "Keyboard navigation instructions")
 
-	shortcuts := tui.AppName + ` Keyboard Commands:
+	handler := &shortcutsEditHandler{
+		appName: tui.AppName,
+		lang:    "EN",
+	}
+	shortcutsTab.NewEditHandler(handler)
+}
+
+// shortcutsEditHandler - Editable handler for language selection and help
+type shortcutsEditHandler struct {
+	appName string
+	lang    string // e.g. "EN", "ES", etc.
+}
+
+func (h *shortcutsEditHandler) Name() string  { return "DevTUI Help & Navigation Guide" }
+func (h *shortcutsEditHandler) Label() string { return "Language (idioma)" }
+func (h *shortcutsEditHandler) Value() string { return h.lang }
+
+// Change actualiza el idioma global usando OutLang
+func (h *shortcutsEditHandler) Change(newValue string, progress func(msgs ...any)) {
+	tinystring.OutLang(newValue)
+	h.lang = newValue
+	progress("Language changed to ", newValue)
+}
+
+func (h *shortcutsEditHandler) Content() string {
+	return h.appName + ` Keyboard Commands ("` + h.lang + `"):
 
 Tabs:
   • Tab/Shift+Tab  - Switch tabs
@@ -33,17 +62,5 @@ Scroll Status Icons:
 Exit:
   • Ctrl+C         - Quit
 
-Text selection enabled for copy/paste.
-`
-
-	handler := &shortcutsHandler{shortcuts: shortcuts}
-	shortcutsTab.RegisterHandlerDisplay(handler)
+Text selection enabled for copy/paste.`
 }
-
-// shortcutsHandler - Shows keyboard navigation instructions
-type shortcutsHandler struct {
-	shortcuts string
-}
-
-func (h *shortcutsHandler) Name() string    { return "DevTUI Help & Navigation Guide" }
-func (h *shortcutsHandler) Content() string { return h.shortcuts }

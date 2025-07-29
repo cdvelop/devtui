@@ -52,7 +52,7 @@ func TestRaceConditionReproduction(t *testing.T) {
 	handlers := make([]*RaceConditionHandler, 5)
 	for i := 0; i < 5; i++ {
 		handlers[i] = &RaceConditionHandler{}
-		tab.NewExecutionHandlerTracking(handlers[i]).WithTimeout(100 * time.Millisecond)
+		tab.AddExecutionHandlerTracking(handlers[i]).WithTimeout(100 * time.Millisecond)
 	}
 
 	// Simulate concurrent executions
@@ -95,7 +95,7 @@ func TestConcurrentOperationIDAccess(t *testing.T) {
 
 	handler := &RaceConditionHandler{}
 
-	// Create anyHandler through factory method (same as used in NewExecutionHandlerTracking)
+	// Create anyHandler through factory method (same as used in AddExecutionHandlerTracking)
 	anyH := newExecutionHandler(handler, 100*time.Millisecond)
 
 	var wg sync.WaitGroup

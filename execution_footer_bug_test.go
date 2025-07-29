@@ -37,7 +37,7 @@ func TestExecutionHandlerFooterBug(t *testing.T) {
 	})
 
 	tab := tui.NewTabSection("Tab", "TestTab")
-	tab.NewExecutionHandler(&ExecHandler{}).WithTimeout(50 * time.Millisecond)
+	tab.AddExecutionHandler(&ExecHandler{}).WithTimeout(50 * time.Millisecond)
 
 	// Simulate Enter key (async)
 	fields := tab.FieldHandlers()

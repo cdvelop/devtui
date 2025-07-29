@@ -500,7 +500,7 @@ func DefaultTUIForTest(handlersAndLogger ...any) *DevTUI {
 		switch v := arg.(type) {
 		case func(messages ...any):
 			logFunc = v
-			// NOTE: Specific handler types should be added via tab.NewEditHandler, etc.
+			// NOTE: Specific handler types should be added via tab.AddEditHandler, etc.
 		}
 	}
 
@@ -523,7 +523,7 @@ func DefaultTUIForTest(handlersAndLogger ...any) *DevTUI {
 
 	// NOTE: For test tabs with handlers, use:
 	// tab := h.NewTabSection("Test Tab", "Tab description")
-	// tab.NewEditHandler(yourHandler).WithTimeout(timeout)
+	// tab.AddEditHandler(yourHandler).WithTimeout(timeout)
 	// tab.NewDisplayHandler(yourDisplayHandler)
 	// etc.
 

@@ -118,7 +118,7 @@ func TestHandlerAutoRegistration(t *testing.T) {
 	fieldHandler := NewTestEditableHandler("TestField", "test")
 
 	// Add field using new API (auto-registers for writing)
-	tab.NewEditHandler(fieldHandler).Register()
+	tab.AddEditHandler(fieldHandler).Register()
 
 	// Verify the field handler was auto-registered for writing
 	if tab.writingHandlers == nil {

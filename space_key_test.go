@@ -16,7 +16,7 @@ func setupTestWithEditableField(t *testing.T) (*DevTUI, *field) {
 
 	// Create test tab and register handler
 	tab := h.NewTabSection("Test Tab", "Test description")
-	tab.NewEditHandler(testHandler).Register()
+	tab.AddEditHandler(testHandler).Register()
 
 	// Initialize viewport with a reasonable size for testing FIRST
 	h.viewport.Width = 80

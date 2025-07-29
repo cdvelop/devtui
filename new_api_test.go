@@ -60,15 +60,15 @@ func TestNewAPIHandlers(t *testing.T) {
 	tab := tui.NewTabSection("Test", "Testing new API")
 
 	// Test HandlerDisplay registration
-	tab.RegisterHandlerDisplay(&testDisplayHandler{})
+	tab.AddHandlerDisplay(&testDisplayHandler{})
 
 	// Test HandlerEdit registration with and without timeout
-	tab.NewEditHandler(&testEditHandler{value: "initial"}).Register()                 // Sync
-	tab.NewEditHandler(&testEditHandler{value: "async"}).WithTimeout(5 * time.Second) // Async
+	tab.AddEditHandler(&testEditHandler{value: "initial"}).Register()                 // Sync
+	tab.AddEditHandler(&testEditHandler{value: "async"}).WithTimeout(5 * time.Second) // Async
 
 	// Test HandlerExecution registration with and without timeout
-	tab.NewExecutionHandler(&testRunHandler{}).Register()                    // Sync
-	tab.NewExecutionHandler(&testRunHandler{}).WithTimeout(10 * time.Second) // Async
+	tab.AddExecutionHandler(&testRunHandler{}).Register()                    // Sync
+	tab.AddExecutionHandler(&testRunHandler{}).WithTimeout(10 * time.Second) // Async
 
 	// Test Writer registration
 	basicWriter := tab.RegisterHandlerWriter(&testWriterBasic{})

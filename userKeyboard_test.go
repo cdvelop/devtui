@@ -34,7 +34,7 @@ func TestHandleKeyboard(t *testing.T) {
 
 	// Create test tab and register handler
 	tab := h.NewTabSection("Test Tab", "Test description")
-	tab.NewEditHandler(testHandler).Register()
+	tab.AddEditHandler(testHandler).Register()
 
 	// Test case: Normal mode, changing tabs with tab key
 	t.Run("Normal mode - Tab key", func(t *testing.T) {
@@ -87,7 +87,7 @@ func TestHandleKeyboard(t *testing.T) {
 
 		// Create test tab and register handler
 		tab := h.NewTabSection("Test Tab", "Test description")
-		tab.NewEditHandler(testHandler).Register()
+		tab.AddEditHandler(testHandler).Register()
 
 		// Configurar viewport para tener espacio suficiente para el texto
 		h.viewport.Width = 80
@@ -169,7 +169,7 @@ func TestHandleKeyboard(t *testing.T) {
 
 		// Create test tab and register handler
 		tab := h.NewTabSection("Test Tab", "Test description")
-		tab.NewEditHandler(testHandler).Register()
+		tab.AddEditHandler(testHandler).Register()
 
 		// Setup: Enter editing mode
 		field := prepareFieldForEditing(t, h)
@@ -231,7 +231,7 @@ func TestHandleKeyboard(t *testing.T) {
 
 		// Create test tab and register handler
 		tab := h.NewTabSection("Test Tab", "Test description")
-		tab.NewEditHandler(testHandler).Register()
+		tab.AddEditHandler(testHandler).Register()
 
 		// Use centralized function to get correct tab index
 		testTabIndex := GetFirstTestTabIndex()
@@ -275,7 +275,7 @@ func TestHandleKeyboard(t *testing.T) {
 
 		// Create test tab and register handler
 		tab := h.NewTabSection("Test Tab", "Test description")
-		tab.NewEditHandler(testHandler).Register()
+		tab.AddEditHandler(testHandler).Register()
 
 		h.editModeActivated = false
 
@@ -308,7 +308,7 @@ func TestAdditionalKeyboardFeatures(t *testing.T) {
 
 	// Create test tab and register handler
 	tab := h.NewTabSection("Test Tab", "Test description")
-	tab.NewEditHandler(testHandler).Register()
+	tab.AddEditHandler(testHandler).Register()
 
 	// Test: Cancelación de edición con ESC debe restaurar el valor original
 	t.Run("Editing mode - Cancel with ESC discards changes", func(t *testing.T) {
@@ -320,7 +320,7 @@ func TestAdditionalKeyboardFeatures(t *testing.T) {
 
 		// Create test tab and register handler
 		tab := h.NewTabSection("Test Tab", "Test description")
-		tab.NewEditHandler(testHandler).Register()
+		tab.AddEditHandler(testHandler).Register()
 
 		// Use the correct tab (index 1, not 0 which is SHORTCUTS)
 		testTabIndex := 1
@@ -402,7 +402,7 @@ func TestAdditionalKeyboardFeatures(t *testing.T) {
 
 		// Create test tab and register handler
 		tab := h.NewTabSection("Test Tab", "Test description")
-		tab.NewEditHandler(testHandler).Register()
+		tab.AddEditHandler(testHandler).Register()
 
 		// Use centralized function to get correct tab index
 		testTabIndex := 1

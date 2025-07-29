@@ -2,7 +2,7 @@ package devtui
 
 // createShortcutsTab creates and registers the shortcuts tab with its handler
 import (
-	"github.com/cdvelop/tinystring"
+	. "github.com/cdvelop/tinystring"
 )
 
 func createShortcutsTab(tui *DevTUI) {
@@ -12,7 +12,7 @@ func createShortcutsTab(tui *DevTUI) {
 		appName: tui.AppName,
 		lang:    "EN",
 	}
-	shortcutsTab.NewEditHandler(handler)
+	shortcutsTab.AddEditHandler(handler).Register()
 }
 
 // shortcutsEditHandler - Editable handler for language selection and help
@@ -27,9 +27,9 @@ func (h *shortcutsEditHandler) Value() string { return h.lang }
 
 // Change actualiza el idioma global usando OutLang
 func (h *shortcutsEditHandler) Change(newValue string, progress func(msgs ...any)) {
-	tinystring.OutLang(newValue)
+	OutLang(newValue)
 	h.lang = newValue
-	progress("Language changed to ", newValue)
+	progress(D.Language, D.Changed, D.To, newValue)
 }
 
 func (h *shortcutsEditHandler) Content() string {

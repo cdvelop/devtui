@@ -9,7 +9,7 @@ The devtui library has **API inconsistency** between handler registration patter
 ### INCONSISTENT PATTERNS:
 1. **HandlerWriter (SIMPLE)**: `tab.RegisterHandlerWriter(handler)` - Direct registration ✅
 2. **HandlerDisplay (VERBOSE)**: `tab.NewDisplayHandler(handler).Register()` - Builder pattern ❌
-3. **HandlerEdit/Execution (JUSTIFIED)**: `tab.NewEditHandler(handler).WithTimeout(duration)` - Builder pattern ✅
+3. **HandlerEdit/Execution (JUSTIFIED)**: `tab.AddEditHandler(handler).WithTimeout(duration)` - Builder pattern ✅
 
 ### PROBLEM ANALYSIS:
 - **HandlerDisplay** doesn't support timeout configuration, making the builder pattern unnecessary
@@ -47,7 +47,7 @@ Eliminate unnecessary builder pattern for `HandlerDisplay` to achieve **API cons
 
 ### SOLUTION:
 **REMOVE**: Builder pattern for `HandlerDisplay`  
-**ADD**: Direct registration method `RegisterHandlerDisplay()`  
+**ADD**: Direct registration method `AddHandlerDisplay()`  
 **KEEP**: Builder pattern for `HandlerEdit/Execution` (justified by timeout configuration)
 
 ## IMPLEMENTATION PLAN
@@ -60,7 +60,7 @@ Eliminate unnecessary builder pattern for `HandlerDisplay` to achieve **API cons
 func (ts *tabSection) NewDisplayHandler(handler HandlerDisplay) *displayHandlerBuilder
 
 // ADD new direct registration method:
-func (ts *tabSection) RegisterHandlerDisplay(handler HandlerDisplay) *tabSection {
+func (ts *tabSection) AddHandlerDisplay(handler HandlerDisplay) *tabSection {
     anyH := newDisplayHandler(handler)
     f := &field{
         handler:    anyH,
@@ -90,7 +90,7 @@ func (b *displayHandlerBuilder) Register() *tabSection
 tab.NewDisplayHandler(handler).Register()
 
 // AFTER:
-tab.RegisterHandlerDisplay(handler)
+tab.AddHandlerDisplay(handler)
 ```
 
 #### D) `/example/demo/main.go`:
@@ -100,7 +100,7 @@ tab.RegisterHandlerDisplay(handler)
 dashboard.NewDisplayHandler(&StatusHandler{}).Register()
 
 // AFTER:
-dashboard.RegisterHandlerDisplay(&StatusHandler{})
+dashboard.AddHandlerDisplay(&StatusHandler{})
 ```
 
 ### TESTS TO UPDATE:
@@ -112,7 +112,7 @@ dashboard.RegisterHandlerDisplay(&StatusHandler{})
 tab.NewDisplayHandler(&testDisplayHandler{}).Register()
 
 // AFTER:
-tab.RegisterHandlerDisplay(&testDisplayHandler{})
+tab.AddHandlerDisplay(&testDisplayHandler{})
 ```
 
 #### B) All test files using `.Register()` for DisplayHandler:
@@ -123,22 +123,22 @@ tab.RegisterHandlerDisplay(&testDisplayHandler{})
 
 ```go
 // BEFORE (inconsistent):
-tab.NewDisplayHandler(handler).Register()           → tab.RegisterHandlerDisplay(handler)
+tab.NewDisplayHandler(handler).Register()           → tab.AddHandlerDisplay(handler)
 tab.RegisterHandlerWriter(handler)                  → NO CHANGE (already consistent)
-tab.NewEditHandler(handler).WithTimeout(duration)   → NO CHANGE (justified by timeout)
-tab.NewExecutionHandler(handler).WithTimeout(duration) → NO CHANGE (justified by timeout)
+tab.AddEditHandler(handler).WithTimeout(duration)   → NO CHANGE (justified by timeout)
+tab.AddExecutionHandler(handler).WithTimeout(duration) → NO CHANGE (justified by timeout)
 
 // AFTER (consistent):
-tab.RegisterHandlerDisplay(handler)     // Direct registration (like Writers)
+tab.AddHandlerDisplay(handler)     // Direct registration (like Writers)
 tab.RegisterHandlerWriter(handler)      // Direct registration (existing)
-tab.NewEditHandler(handler).WithTimeout(duration)    // Builder pattern (timeout config)
-tab.NewExecutionHandler(handler).WithTimeout(duration) // Builder pattern (timeout config)
+tab.AddEditHandler(handler).WithTimeout(duration)    // Builder pattern (timeout config)
+tab.AddExecutionHandler(handler).WithTimeout(duration) // Builder pattern (timeout config)
 ```
 
 ## VALIDATION REQUIREMENTS
 
 ### POST-REFACTORING TESTS:
-1. **Direct Registration**: Verify `RegisterHandlerDisplay()` works correctly
+1. **Direct Registration**: Verify `AddHandlerDisplay()` works correctly
 2. **API Consistency**: Verify similar patterns for handlers without configuration
 3. **No Regression**: Ensure Edit/Execution handlers still support timeout configuration
 4. **Integration**: Verify examples and demos function correctly
@@ -158,7 +158,7 @@ tab.NewExecutionHandler(handler).WithTimeout(duration) // Builder pattern (timeo
 - [ ] Remove `displayHandlerBuilder.Register()` method from `builders.go`
 
 ### PHASE 2 - ADD NEW METHOD:
-- [ ] Add `RegisterHandlerDisplay()` method to `handlerRegistration.go`
+- [ ] Add `AddHandlerDisplay()` method to `handlerRegistration.go`
 - [ ] Implement direct registration logic (similar to `RegisterHandlerWriter`)
 
 ### PHASE 3 - MIGRATION:

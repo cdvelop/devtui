@@ -55,7 +55,7 @@ func main() {
 
     // Operations tab with ExecutionHandlers (action buttons)
     ops := tui.NewTabSection("Operations", "System Operations")
-    ops.NewExecutionHandlerTracking(&BackupHandler{}).WithTimeout(5 * time.Second)
+    ops.AddExecutionHandlerTracking(&BackupHandler{}).WithTimeout(5 * time.Second)
 
     var wg sync.WaitGroup
     wg.Add(1)
@@ -119,13 +119,13 @@ type MessageTracker interface {
 
 ```go
 // Basic handlers
-tab.RegisterHandlerDisplay(handler)
-tab.NewEditHandler(handler).WithTimeout(5*time.Second)
-tab.NewExecutionHandler(handler).WithTimeout(10*time.Second)
+tab.AddHandlerDisplay(handler)
+tab.AddEditHandler(handler).WithTimeout(5*time.Second)
+tab.AddExecutionHandler(handler).WithTimeout(10*time.Second)
 
 // Handlers with tracking (can update existing messages)
-tab.NewEditHandlerTracking(handlerWithTracker).WithTimeout(5*time.Second)
-tab.NewExecutionHandlerTracking(handlerWithTracker).WithTimeout(10*time.Second)
+tab.AddEditHandlerTracking(handlerWithTracker).WithTimeout(5*time.Second)
+tab.AddExecutionHandlerTracking(handlerWithTracker).WithTimeout(10*time.Second)
 
 // Writers
 // Example: Minimal HandlerWriter implementation (returns io.Writer)

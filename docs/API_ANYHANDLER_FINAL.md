@@ -356,7 +356,7 @@ func (f *field) getExpandedFooterLabel() string {
 
 ```go
 // Builders actualizados - API completa con tracking
-func (ts *tabSection) NewEditHandler(handler HandlerEdit) *editHandlerBuilder {
+func (ts *tabSection) AddEditHandler(handler HandlerEdit) *editHandlerBuilder {
     return &editHandlerBuilder{
         tabSection: ts,
         handler:    handler,
@@ -364,7 +364,7 @@ func (ts *tabSection) NewEditHandler(handler HandlerEdit) *editHandlerBuilder {
     }
 }
 
-func (ts *tabSection) NewEditHandlerTracking(handler HandlerEditTracker) *editHandlerBuilder {
+func (ts *tabSection) AddEditHandlerTracking(handler HandlerEditTracker) *editHandlerBuilder {
     return &editHandlerBuilder{
         tabSection: ts,
         handler:    handler, // HandlerEditTracker extends HandlerEdit
@@ -372,7 +372,7 @@ func (ts *tabSection) NewEditHandlerTracking(handler HandlerEditTracker) *editHa
     }
 }
 
-func (ts *tabSection) NewExecutionHandler(handler HandlerExecution) *executionHandlerBuilder {
+func (ts *tabSection) AddExecutionHandler(handler HandlerExecution) *executionHandlerBuilder {
     return &executionHandlerBuilder{
         tabSection: ts,
         handler:    handler,
@@ -380,7 +380,7 @@ func (ts *tabSection) NewExecutionHandler(handler HandlerExecution) *executionHa
     }
 }
 
-func (ts *tabSection) NewExecutionHandlerTracking(handler HandlerExecutionTracker) *executionHandlerBuilder {
+func (ts *tabSection) AddExecutionHandlerTracking(handler HandlerExecutionTracker) *executionHandlerBuilder {
     return &executionHandlerBuilder{
         tabSection: ts,
         handler:    handler,
@@ -464,9 +464,9 @@ func (h *DeployHandler) Execute(progress ...func(string)) error {
 
 // Uso
 tab := tui.NewTabSection("Server", "Configuration")
-tab.NewEditHandler(&PortHandler{}).WithTimeout(5*time.Second)
+tab.AddEditHandler(&PortHandler{}).WithTimeout(5*time.Second)
 tab.NewDisplayHandler(&HelpHandler{})  // Contenido inmediato
-tab.NewExecutionHandler(&DeployHandler{}).WithTimeout(30*time.Second)
+tab.AddExecutionHandler(&DeployHandler{}).WithTimeout(30*time.Second)
 ```
 
 ## Plan de Implementación

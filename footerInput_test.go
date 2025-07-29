@@ -45,7 +45,7 @@ func TestFooterView(t *testing.T) {
 		tab := h.tabSections[h.activeTab]
 		tab.setFieldHandlers([]*field{})
 		testHandler := NewTestEditableHandler("TestLabel", "TestValue Rendered")
-		tab.NewEditHandler(testHandler).Register()
+		tab.AddEditHandler(testHandler).Register()
 
 		// Set viewport width for proper layout calculation
 		h.viewport.Width = 80
@@ -79,7 +79,7 @@ func TestRenderFooterInput(t *testing.T) {
 		// Crear un nuevo field con handler para la prueba
 		tab.setFieldHandlers([]*field{})
 		testHandler := NewTestEditableHandler("Test", "test value")
-		tab.NewEditHandler(testHandler).Register()
+		tab.AddEditHandler(testHandler).Register()
 
 		// Set viewport width for proper layout calculation
 		h.viewport.Width = 80
@@ -109,7 +109,7 @@ func TestRenderFooterInput(t *testing.T) {
 			// Crear un campo si no hay ninguno
 			tab := h.tabSections[h.activeTab]
 			testHandler := NewTestNonEditableHandler("Test", "Value")
-			tab.NewExecutionHandler(testHandler).Register()
+			tab.AddExecutionHandler(testHandler).Register()
 		}
 
 		h.editModeActivated = true
@@ -138,7 +138,7 @@ func TestRenderFooterInput(t *testing.T) {
 		tab := h.tabSections[h.activeTab]
 		tab.setFieldHandlers([]*field{})
 		testHandler := NewTestNonEditableHandler(expectedLabel, "Some Value")
-		tab.NewExecutionHandler(testHandler).Register()
+		tab.AddExecutionHandler(testHandler).Register()
 
 		// Set viewport width for proper layout calculation
 		h.viewport.Width = 80
@@ -164,7 +164,7 @@ func TestRenderFooterInput(t *testing.T) {
 		tab := h.tabSections[h.activeTab]
 		tab.setFieldHandlers([]*field{})
 		testHandler := NewTestEditableHandler("Test", "Value")
-		tab.NewEditHandler(testHandler).Register()
+		tab.AddEditHandler(testHandler).Register()
 		h.tabSections[h.activeTab].indexActiveEditField = 0
 		h.editModeActivated = false // No en modo edición
 
@@ -201,9 +201,9 @@ func TestInputNavigation(t *testing.T) {
 	testHandler1 := NewTestEditableHandler("Field1", "Value1")
 	testHandler2 := NewTestEditableHandler("Field2", "Value2")
 	testHandler3 := NewTestEditableHandler("Field3", "Value3")
-	tab.NewEditHandler(testHandler1).Register()
-	tab.NewEditHandler(testHandler2).Register()
-	tab.NewEditHandler(testHandler3).Register()
+	tab.AddEditHandler(testHandler1).Register()
+	tab.AddEditHandler(testHandler2).Register()
+	tab.AddEditHandler(testHandler3).Register()
 	h.tabSections[h.activeTab].indexActiveEditField = 0
 	h.editModeActivated = false
 
@@ -265,7 +265,7 @@ func TestInputNavigation(t *testing.T) {
 		tab := h.tabSections[h.activeTab]
 		tab.setFieldHandlers([]*field{})
 		testHandler := NewTestEditableHandler("Test", "Value")
-		tab.NewEditHandler(testHandler).Register()
+		tab.AddEditHandler(testHandler).Register()
 
 		// Asegurar que no estamos en modo edición
 		h.editModeActivated = false
@@ -290,7 +290,7 @@ func TestInputNavigation(t *testing.T) {
 		tab := h.tabSections[h.activeTab]
 		tab.setFieldHandlers([]*field{})
 		testHandler := NewTestEditableHandler("Test", "Value")
-		tab.NewEditHandler(testHandler).Register()
+		tab.AddEditHandler(testHandler).Register()
 
 		// Asegurar que estamos en modo edición
 		h.editModeActivated = true
@@ -313,7 +313,7 @@ func TestInputNavigation(t *testing.T) {
 		tab := h.tabSections[h.activeTab]
 		tab.setFieldHandlers([]*field{})
 		testHandler := NewTestEditableHandler("Test", "Value1")
-		tab.NewEditHandler(testHandler).Register()
+		tab.AddEditHandler(testHandler).Register()
 
 		// Configurar para edición
 		h.editModeActivated = true

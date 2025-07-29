@@ -2,8 +2,8 @@ package devtui
 
 // NEW: Handler registration methods using builder pattern
 
-// NewEditHandler creates a new EditHandlerBuilder for method chaining
-func (ts *tabSection) NewEditHandler(handler HandlerEdit) *editHandlerBuilder {
+// AddEditHandler creates a new EditHandlerBuilder for method chaining
+func (ts *tabSection) AddEditHandler(handler HandlerEdit) *editHandlerBuilder {
 	return &editHandlerBuilder{
 		tabSection: ts,
 		handler:    handler,
@@ -11,9 +11,9 @@ func (ts *tabSection) NewEditHandler(handler HandlerEdit) *editHandlerBuilder {
 	}
 }
 
-// NewEditHandlerTracking creates a new EditHandlerBuilder with tracking support
+// AddEditHandlerTracking creates a new EditHandlerBuilder with tracking support
 // Note: The builder automatically detects if handler implements MessageTracker interface
-func (ts *tabSection) NewEditHandlerTracking(handler HandlerEditTracker) *editHandlerBuilder {
+func (ts *tabSection) AddEditHandlerTracking(handler HandlerEditTracker) *editHandlerBuilder {
 	return &editHandlerBuilder{
 		tabSection: ts,
 		handler:    handler, // HandlerEditTracker extends HandlerEdit
@@ -21,8 +21,8 @@ func (ts *tabSection) NewEditHandlerTracking(handler HandlerEditTracker) *editHa
 	}
 }
 
-// NewExecutionHandler creates a new RunHandlerBuilder for method chaining
-func (ts *tabSection) NewExecutionHandler(handler HandlerExecution) *executionHandlerBuilder {
+// AddExecutionHandler creates a new RunHandlerBuilder for method chaining
+func (ts *tabSection) AddExecutionHandler(handler HandlerExecution) *executionHandlerBuilder {
 	return &executionHandlerBuilder{
 		tabSection: ts,
 		handler:    handler,
@@ -30,9 +30,9 @@ func (ts *tabSection) NewExecutionHandler(handler HandlerExecution) *executionHa
 	}
 }
 
-// NewExecutionHandlerTracking creates a new ExecutionHandlerBuilder with tracking support
+// AddExecutionHandlerTracking creates a new ExecutionHandlerBuilder with tracking support
 // Note: The builder automatically detects if handler implements MessageTracker interface
-func (ts *tabSection) NewExecutionHandlerTracking(handler HandlerExecutionTracker) *executionHandlerBuilder {
+func (ts *tabSection) AddExecutionHandlerTracking(handler HandlerExecutionTracker) *executionHandlerBuilder {
 	return &executionHandlerBuilder{
 		tabSection: ts,
 		handler:    handler, // HandlerExecutionTracker extends HandlerExecution
@@ -40,8 +40,8 @@ func (ts *tabSection) NewExecutionHandlerTracking(handler HandlerExecutionTracke
 	}
 }
 
-// RegisterHandlerDisplay registers a HandlerDisplay directly (no builder pattern).
-func (ts *tabSection) RegisterHandlerDisplay(handler HandlerDisplay) *tabSection {
+// AddHandlerDisplay registers a HandlerDisplay directly (no builder pattern).
+func (ts *tabSection) AddHandlerDisplay(handler HandlerDisplay) *tabSection {
 	anyH := newDisplayHandler(handler)
 	f := &field{
 		handler:    anyH,

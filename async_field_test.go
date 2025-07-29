@@ -16,7 +16,7 @@ func TestFieldHandler_BasicOperation(t *testing.T) {
 
 	// Create a test tab and add the handler using new API
 	tabSection := tui.NewTabSection("Test Tab", "Test description")
-	tabSection.NewEditHandler(handler).Register()
+	tabSection.AddEditHandler(handler).Register()
 
 	// Verify field was created with handler
 	if len(tabSection.fieldHandlers) != 1 {
@@ -51,7 +51,7 @@ func TestFieldHandler_AsyncExecution(t *testing.T) {
 
 	// Create a test tab and add the handler using new API
 	tabSection := tui.NewTabSection("Test Tab", "Test description")
-	tabSection.NewExecutionHandler(slowHandler).Register()
+	tabSection.AddExecutionHandler(slowHandler).Register()
 
 	field := tabSection.fieldHandlers[0]
 
@@ -79,7 +79,7 @@ func TestFieldHandler_TimeoutConfiguration(t *testing.T) {
 	editHandler := NewTestEditableHandler("Test", "value")
 	tui := DefaultTUIForTest()
 	tabSection := tui.NewTabSection("Test Tab", "Test description")
-	tabSection.NewEditHandler(editHandler).Register()
+	tabSection.AddEditHandler(editHandler).Register()
 
 	if len(tabSection.fieldHandlers) != 1 {
 		t.Fatalf("Expected 1 field, got %d", len(tabSection.fieldHandlers))
@@ -94,7 +94,7 @@ func TestFieldHandler_TimeoutConfiguration(t *testing.T) {
 	// Test Execution Handler
 	execHandler := NewTestNonEditableHandler("Action", "Press Enter")
 	tabSection2 := tui.NewTabSection("Test Tab 2", "Test description")
-	tabSection2.NewExecutionHandler(execHandler).Register()
+	tabSection2.AddExecutionHandler(execHandler).Register()
 
 	if len(tabSection2.fieldHandlers) != 1 {
 		t.Fatalf("Expected 1 field in second tab, got %d", len(tabSection2.fieldHandlers))
@@ -143,7 +143,7 @@ func TestAsyncState_Management(t *testing.T) {
 
 	// Create a test tab and add the handler using new API
 	tabSection := tui.NewTabSection("Test Tab", "Test description")
-	tabSection.NewEditHandler(handler).Register()
+	tabSection.AddEditHandler(handler).Register()
 
 	field := tabSection.fieldHandlers[0]
 

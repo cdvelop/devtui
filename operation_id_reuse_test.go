@@ -21,7 +21,7 @@ func TestOperationIDReuse(t *testing.T) {
 
 		// Create a test tab since DefaultTUIForTest only creates SHORTCUTS tab
 		testTab := h.NewTabSection("Test Tab", "Test description")
-		testTab.NewEditHandler(handler).Register()
+		testTab.AddEditHandler(handler).Register()
 
 		field := testTab.FieldHandlers()[0]
 
@@ -74,8 +74,8 @@ func TestOperationIDReuse(t *testing.T) {
 
 		// Register handlers using the new API
 		testTab := h.NewTabSection("Test Tab 2", "Test description for multiple handlers")
-		testTab.NewEditHandler(handler1).Register()
-		testTab.NewEditHandler(handler2).Register()
+		testTab.AddEditHandler(handler1).Register()
+		testTab.AddEditHandler(handler2).Register()
 
 		field1 := testTab.FieldHandlers()[0]
 		field2 := testTab.FieldHandlers()[1]
@@ -111,7 +111,7 @@ func TestOperationIDReuse(t *testing.T) {
 
 		// Register handler using the new API
 		testTab := h.NewTabSection("Test Tab 3", "Test description for new operation ID")
-		testTab.NewEditHandler(handler).Register()
+		testTab.AddEditHandler(handler).Register()
 
 		field := testTab.FieldHandlers()[0]
 

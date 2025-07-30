@@ -113,15 +113,16 @@ type MessageTracker interface {
     GetLastOperationID() string
     SetLastOperationID(id string)
 }
-```
+
 
 tab.AddEditHandler(handler).WithTimeout(5*time.Second)
 tab.AddExecutionHandler(handler).WithTimeout(10*time.Second)
 tab.AddEditHandlerTracking(handlerWithTracker).WithTimeout(5*time.Second)
 tab.AddExecutionHandlerTracking(handlerWithTracker).WithTimeout(10*time.Second)
 type LogWriter struct{}
+```
 
-## Registration Methods (New Simplified API)
+## Registration Methods
 
 ```go
 // Display handlers (no timeout needed)
@@ -167,11 +168,6 @@ writer.Write([]byte("Another log entry"))
 **Note**: DevTUI automatically loads a built-in [ShortcutsHandler](shortcuts.go) at position 0 in the first tab, which displays detailed keyboard navigation commands. This handler demonstrates the `HandlerEdit` interface and provides interactive help within the application.
 
 **Text Selection**: Terminal text selection is enabled for copying error messages and logs. Mouse scroll functionality may vary depending on bubbletea version and terminal capabilities.
-
-
-## Documentation
-
-- **[Complete API Specification](docs/API_ANYHANDLER_FINAL.md)** - Final API design and interfaces
 
 
 ## Acknowledgments

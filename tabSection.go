@@ -175,7 +175,11 @@ func (t *tabSection) updateOrAddContentWithHandler(msgType messagetype.Type, con
 					// Graceful fallback when unixid initialization failed
 					t.tabContents[i].Timestamp = time.Now().Format("15:04:05")
 				}
-				return true, t.tabContents[i]
+				// Move updated content to end
+				updatedContent := t.tabContents[i]
+				t.tabContents = append(t.tabContents[:i], t.tabContents[i+1:]...)
+				t.tabContents = append(t.tabContents, updatedContent)
+				return true, updatedContent
 			}
 		}
 	}

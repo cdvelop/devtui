@@ -23,7 +23,7 @@ type shortcutsEditHandler struct {
 }
 
 func (h *shortcutsEditHandler) Name() string  { return "DevTUI Help & Navigation Guide" }
-func (h *shortcutsEditHandler) Label() string { return "Language (idioma)" }
+func (h *shortcutsEditHandler) Label() string { return T(D.Configuration, D.Language) }
 func (h *shortcutsEditHandler) Value() string { return h.lang }
 
 // Change actualiza el idioma global usando OutLang

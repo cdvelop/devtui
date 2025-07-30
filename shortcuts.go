@@ -12,7 +12,8 @@ func createShortcutsTab(tui *DevTUI) {
 		appName: tui.AppName,
 		lang:    "EN",
 	}
-	shortcutsTab.AddEditHandler(handler).Register()
+	// Provide a suitable time.Duration, e.g., 0 for no timeout
+	shortcutsTab.AddEditHandler(handler, 0)
 }
 
 // shortcutsEditHandler - Editable handler for language selection and help

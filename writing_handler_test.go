@@ -19,7 +19,7 @@ func TestWriterHandlerRegistration(t *testing.T) {
 	handler := NewTestWriterHandler("TestWriter")
 
 	// Register the handler and get its writer
-	writer := tab.RegisterHandlerWriter(handler)
+	writer := tab.RegisterWriterHandler(handler)
 
 	if writer == nil {
 		t.Fatal("RegisterHandlerWriter should return a non-nil writer")
@@ -46,7 +46,7 @@ func TestHandlerWriterFunctionality(t *testing.T) {
 	handler := NewTestWriterHandler("TestWriter")
 
 	// Register the handler and get its writer
-	writer := tab.RegisterHandlerWriter(handler)
+	writer := tab.RegisterWriterHandler(handler)
 
 	// Write a test message
 	testMessage := "Test message from handler"
@@ -118,7 +118,7 @@ func TestHandlerAutoRegistration(t *testing.T) {
 	fieldHandler := NewTestEditableHandler("TestField", "test")
 
 	// Add field using new API (auto-registers for writing)
-	tab.AddEditHandler(fieldHandler).Register()
+	tab.AddEditHandler(fieldHandler, 0)
 
 	// Verify the field handler was auto-registered for writing
 	if tab.writingHandlers == nil {

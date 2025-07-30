@@ -34,7 +34,8 @@ func TestCustomTabs(t *testing.T) { // Create a custom configuration with custom
 	// Create handler for testing
 	testHandler := NewTestEditableHandler("Test Field", "test value")
 
-	customSection.AddEditHandler(testHandler).Register()
+	// Provide a dummy duration (e.g., 0) as required by AddEditHandler
+	customSection.AddEditHandler(testHandler, 0)
 
 	config := &TuiConfig{
 		ExitChan: make(chan bool),

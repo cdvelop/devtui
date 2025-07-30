@@ -75,7 +75,7 @@ func TestHandlerValueUpdateAfterEdit(t *testing.T) {
 		// Create a new tab with our port handler
 		portHandler := &PortTestHandler{currentPort: "8080"}
 		h.NewTabSection("Server", "Server configuration").
-			AddEditHandler(portHandler).Register()
+			AddEditHandler(portHandler, 0)
 
 		// Get the test tab index (should be the last one added)
 		testTabIndex := len(h.tabSections) - 1
@@ -156,7 +156,7 @@ func TestHandlerValueUpdateAfterEdit(t *testing.T) {
 		// Create a new tab with our port handler
 		portHandler := &PortTestHandler{currentPort: "8080"}
 		h.NewTabSection("Server", "Server configuration").
-			AddEditHandler(portHandler).Register()
+			AddEditHandler(portHandler, 0)
 
 		// Get the test tab index
 		testTabIndex := len(h.tabSections) - 1

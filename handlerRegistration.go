@@ -1,47 +1,12 @@
 package devtui
 
-// NEW: Handler registration methods using builder pattern
+import (
+	"io"
+	"time"
+)
 
-// AddEditHandler creates a new EditHandlerBuilder for method chaining
-func (ts *tabSection) AddEditHandler(handler HandlerEdit) *editHandlerBuilder {
-	return &editHandlerBuilder{
-		tabSection: ts,
-		handler:    handler,
-		timeout:    0, // Default: synchronous
-	}
-}
-
-// AddEditHandlerTracking creates a new EditHandlerBuilder with tracking support
-// Note: The builder automatically detects if handler implements MessageTracker interface
-func (ts *tabSection) AddEditHandlerTracking(handler HandlerEditTracker) *editHandlerBuilder {
-	return &editHandlerBuilder{
-		tabSection: ts,
-		handler:    handler, // HandlerEditTracker extends HandlerEdit
-		timeout:    0,       // Default: synchronous
-	}
-}
-
-// AddExecutionHandler creates a new RunHandlerBuilder for method chaining
-func (ts *tabSection) AddExecutionHandler(handler HandlerExecution) *executionHandlerBuilder {
-	return &executionHandlerBuilder{
-		tabSection: ts,
-		handler:    handler,
-		timeout:    0, // Default: synchronous
-	}
-}
-
-// AddExecutionHandlerTracking creates a new ExecutionHandlerBuilder with tracking support
-// Note: The builder automatically detects if handler implements MessageTracker interface
-func (ts *tabSection) AddExecutionHandlerTracking(handler HandlerExecutionTracker) *executionHandlerBuilder {
-	return &executionHandlerBuilder{
-		tabSection: ts,
-		handler:    handler, // HandlerExecutionTracker extends HandlerExecution
-		timeout:    0,       // Default: synchronous
-	}
-}
-
-// AddHandlerDisplay registers a HandlerDisplay directly (no builder pattern).
-func (ts *tabSection) AddHandlerDisplay(handler HandlerDisplay) *tabSection {
+// AddDisplayHandler registers a HandlerDisplay directly
+func (ts *tabSection) AddDisplayHandler(handler HandlerDisplay) *tabSection {
 	anyH := newDisplayHandler(handler)
 	f := &field{
 		handler:    anyH,
@@ -50,4 +15,56 @@ func (ts *tabSection) AddHandlerDisplay(handler HandlerDisplay) *tabSection {
 	}
 	ts.addFields(f)
 	return ts
+}
+
+// AddEditHandler registers a HandlerEdit with mandatory timeout
+func (ts *tabSection) AddEditHandler(handler HandlerEdit, timeout time.Duration) *tabSection {
+	var tracker MessageTracker
+	if t, ok := handler.(MessageTracker); ok {
+		tracker = t
+	}
+
+	anyH := newEditHandler(handler, timeout, tracker)
+	f := &field{
+		handler:    anyH,
+		parentTab:  ts,
+		asyncState: &internalAsyncState{},
+	}
+	ts.addFields(f)
+
+	// Auto-register handler for writing if it implements HandlerWriterTracker
+	if _, ok := handler.(HandlerWriterTracker); ok {
+		if writerHandler, ok := handler.(HandlerWriter); ok {
+			ts.RegisterWriterHandler(writerHandler)
+		}
+	}
+
+	return ts
+}
+
+// AddEditHandlerTracking registers a HandlerEditTracker with mandatory timeout
+func (ts *tabSection) AddEditHandlerTracking(handler HandlerEditTracker, timeout time.Duration) *tabSection {
+	return ts.AddEditHandler(handler, timeout) // HandlerEditTracker extends HandlerEdit
+}
+
+// AddExecutionHandler registers a HandlerExecution with mandatory timeout
+func (ts *tabSection) AddExecutionHandler(handler HandlerExecution, timeout time.Duration) *tabSection {
+	anyH := newExecutionHandler(handler, timeout)
+	f := &field{
+		handler:    anyH,
+		parentTab:  ts,
+		asyncState: &internalAsyncState{},
+	}
+	ts.addFields(f)
+	return ts
+}
+
+// AddExecutionHandlerTracking registers a HandlerExecutionTracker with mandatory timeout
+func (ts *tabSection) AddExecutionHandlerTracking(handler HandlerExecutionTracker, timeout time.Duration) *tabSection {
+	return ts.AddExecutionHandler(handler, timeout) // HandlerExecutionTracker extends HandlerExecution
+}
+
+// RegisterWriterHandler registers a writer handler and returns io.Writer (kept from existing API)
+func (ts *tabSection) RegisterWriterHandler(handler HandlerWriter) io.Writer {
+	return ts.RegisterHandlerWriter(handler) // Delegate to existing implementation
 }

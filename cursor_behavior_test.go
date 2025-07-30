@@ -12,7 +12,7 @@ func TestCursorBehaviorInEditMode(t *testing.T) {
 		// Setup
 		h := DefaultTUIForTest(func(messages ...any) {})
 		portHandler := &PortTestHandler{currentPort: "8080"}
-		h.NewTabSection("Server", "Config").AddEditHandler(portHandler).Register()
+		h.NewTabSection("Server", "Config").AddEditHandler(portHandler, 0)
 
 		// Set viewport size properly for calculation
 		h.viewport.Width = 80

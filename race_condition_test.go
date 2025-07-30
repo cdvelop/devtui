@@ -52,7 +52,7 @@ func TestRaceConditionReproduction(t *testing.T) {
 	handlers := make([]*RaceConditionHandler, 5)
 	for i := 0; i < 5; i++ {
 		handlers[i] = &RaceConditionHandler{}
-		tab.AddExecutionHandlerTracking(handlers[i]).WithTimeout(100 * time.Millisecond)
+		tab.AddExecutionHandlerTracking(handlers[i], 100*time.Millisecond)
 	}
 
 	// Simulate concurrent executions

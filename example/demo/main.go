@@ -96,18 +96,18 @@ func main() {
 
 	// Dashboard tab with DisplayHandlers (read-only information)
 	dashboard := tui.NewTabSection("Dashboard", "System Overview")
-	dashboard.AddHandlerDisplay(&StatusHandler{})
+	dashboard.AddDisplayHandler(&StatusHandler{})
 
 	// Configuration tab with EditHandlers (interactive fields)
 	config := tui.NewTabSection("Config", "System Configuration")
-	config.AddEditHandler(&DatabaseHandler{connectionString: "postgres://localhost:5432/mydb"}).WithTimeout(2 * time.Second)
-	config.AddExecutionHandlerTracking(&BackupHandler{}).WithTimeout(5 * time.Second)
+	config.AddEditHandler(&DatabaseHandler{connectionString: "postgres://localhost:5432/mydb"}, 2*time.Second)
+	config.AddExecutionHandlerTracking(&BackupHandler{}, 5*time.Second)
 
 	// Logging tab with Writers
 	logs := tui.NewTabSection("Logs", "System Logs")
 
 	// Basic writer (always creates new lines)
-	systemWriter := logs.RegisterHandlerWriter(&SystemLogWriter{})
+	systemWriter := logs.RegisterWriterHandler(&SystemLogWriter{})
 	systemWriter.Write([]byte("System initialized"))
 	systemWriter.Write([]byte("API demo started"))
 
@@ -117,7 +117,7 @@ func main() {
 	}
 
 	// Advanced writer (can update existing messages with tracking)
-	opWriter := logs.RegisterHandlerWriter(&OperationLogWriter{})
+	opWriter := logs.RegisterWriterHandler(&OperationLogWriter{})
 	opWriter.Write([]byte("Operation tracking enabled"))
 
 	// Generate more tracking entries to test Page Up/Page Down navigation

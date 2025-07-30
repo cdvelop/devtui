@@ -15,7 +15,8 @@ Reusable **message presentation system** for Go development tools. DevTUI is a p
 
 ## Quick Start
 
-DevTUI uses specialized handler interfaces that require minimal implementation. Here's a complete example with message tracking:
+
+DevTUI uses specialized handler interfaces that require minimal implementation. Here is a complete example using the new simplified API:
 
 ```go
 // HandlerExecution with MessageTracker - Action buttons with progress tracking
@@ -31,7 +32,6 @@ func (h *BackupHandler) Execute(progress func(string)) {
     progress("Backing up database...")
     time.Sleep(500 * time.Millisecond)
     progress("Backup completed successfully")
-}
 }
 
 // MessageTracker implementation for operation tracking
@@ -55,7 +55,7 @@ func main() {
 
     // Operations tab with ExecutionHandlers (action buttons)
     ops := tui.NewTabSection("Operations", "System Operations")
-    ops.AddExecutionHandlerTracking(&BackupHandler{}).WithTimeout(5 * time.Second)
+    ops.AddExecutionHandlerTracking(&BackupHandler{}, 5*time.Second)
 
     var wg sync.WaitGroup
     wg.Add(1)
@@ -115,24 +115,31 @@ type MessageTracker interface {
 }
 ```
 
-## Registration Methods
-
-```go
-// Basic handlers
-tab.AddHandlerDisplay(handler)
 tab.AddEditHandler(handler).WithTimeout(5*time.Second)
 tab.AddExecutionHandler(handler).WithTimeout(10*time.Second)
-
-// Handlers with tracking (can update existing messages)
 tab.AddEditHandlerTracking(handlerWithTracker).WithTimeout(5*time.Second)
 tab.AddExecutionHandlerTracking(handlerWithTracker).WithTimeout(10*time.Second)
+type LogWriter struct{}
 
-// Writers
-// Example: Minimal HandlerWriter implementation (returns io.Writer)
+## Registration Methods (New Simplified API)
+
+```go
+// Display handlers (no timeout needed)
+tab.AddDisplayHandler(handler)
+
+// Edit handlers (timeout mandatory)
+tab.AddEditHandler(handler, 5*time.Second)
+tab.AddEditHandlerTracking(handlerWithTracker, 5*time.Second)
+
+// Execution handlers (timeout mandatory)
+tab.AddExecutionHandler(handler, 10*time.Second)
+tab.AddExecutionHandlerTracking(handlerWithTracker, 10*time.Second)
+
+// Writers (returns io.Writer)
 type LogWriter struct{}
 func (w *LogWriter) Name() string { return "LogWriter" }
 
-writer := tab.RegisterHandlerWriter(&LogWriter{}) // io.Writer
+writer := tab.RegisterWriterHandler(&LogWriter{}) // io.Writer
 writer.Write([]byte("Log message 1"))
 writer.Write([]byte("Another log entry"))
 ```
@@ -143,7 +150,7 @@ writer.Write([]byte("Another log entry"))
 - **Specialized Interfaces**: Clear separation by purpose (Display, Edit, Execution, Writing)
 - **Progress Callbacks**: Real-time feedback for long-running operations
 - **Message Tracking**: Update existing messages instead of creating new ones
-- **Method Chaining**: Clean timeout configuration with `.WithTimeout(duration)`
+- **Method Chaining**: All handler registration methods return `*tabSection` for chaining
 - **Thread-Safe**: Concurrent handler registration and execution
 
 ## Navigation
@@ -156,9 +163,11 @@ writer.Write([]byte("Another log entry"))
 - **Esc**: Cancel edit
 - **Ctrl+C**: Exit
 
-**Note**: DevTUI automatically loads a built-in [ShortcutsHandler](shortcuts.go) at position 0 in the first tab, which displays detailed keyboard navigation commands. This handler demonstrates the `HandlerDisplay` interface and provides interactive help within the application.
+
+**Note**: DevTUI automatically loads a built-in [ShortcutsHandler](shortcuts.go) at position 0 in the first tab, which displays detailed keyboard navigation commands. This handler demonstrates the `HandlerEdit` interface and provides interactive help within the application.
 
 **Text Selection**: Terminal text selection is enabled for copying error messages and logs. Mouse scroll functionality may vary depending on bubbletea version and terminal capabilities.
+
 
 ## Documentation
 

@@ -60,19 +60,19 @@ func TestNewAPIHandlers(t *testing.T) {
 	tab := tui.NewTabSection("Test", "Testing new API")
 
 	// Test HandlerDisplay registration
-	tab.AddHandlerDisplay(&testDisplayHandler{})
+	tab.AddDisplayHandler(&testDisplayHandler{})
 
 	// Test HandlerEdit registration with and without timeout
-	tab.AddEditHandler(&testEditHandler{value: "initial"}).Register()                 // Sync
-	tab.AddEditHandler(&testEditHandler{value: "async"}).WithTimeout(5 * time.Second) // Async
+	tab.AddEditHandler(&testEditHandler{value: "initial"}, 0)           // Sync
+	tab.AddEditHandler(&testEditHandler{value: "async"}, 5*time.Second) // Async
 
 	// Test HandlerExecution registration with and without timeout
-	tab.AddExecutionHandler(&testRunHandler{}).Register()                    // Sync
-	tab.AddExecutionHandler(&testRunHandler{}).WithTimeout(10 * time.Second) // Async
+	tab.AddExecutionHandler(&testRunHandler{}, 0)              // Sync
+	tab.AddExecutionHandler(&testRunHandler{}, 10*time.Second) // Async
 
 	// Test Writer registration
-	basicWriter := tab.RegisterHandlerWriter(&testWriterBasic{})
-	trackerWriter := tab.RegisterHandlerWriter(&testWriterTracker{})
+	basicWriter := tab.RegisterWriterHandler(&testWriterBasic{})
+	trackerWriter := tab.RegisterWriterHandler(&testWriterTracker{})
 
 	// Verify field count (5 fields registered)
 	if len(tab.fieldHandlers) != 5 {

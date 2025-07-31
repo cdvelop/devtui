@@ -10,8 +10,8 @@ func createShortcutsTab(tui *DevTUI) {
 
 	handler := &shortcutsInteractiveHandler{
 		appName:            tui.AppName,
-		lang:               "EN",
-		needsLanguageInput: false, // Initially show help content
+		lang:               OutLang(), // Get current language automatically
+		needsLanguageInput: false,     // Initially show help content
 	}
 	// Use AddInteractiveHandler instead of AddEditHandler
 	shortcutsTab.AddInteractiveHandler(handler, 0)
@@ -25,13 +25,12 @@ type shortcutsInteractiveHandler struct {
 	lastOpID           string // Operation ID for tracking
 }
 
-func (h *shortcutsInteractiveHandler) Name() string { return "DevTUI Help & Navigation Guide" }
+func (h *shortcutsInteractiveHandler) Name() string {
+	return "shortcutsGuide"
+}
 
 func (h *shortcutsInteractiveHandler) Label() string {
-	if h.needsLanguageInput {
-		return "Select Language"
-	}
-	return "Help & Navigation (" + h.lang + ")"
+	return T(D.Configuration, D.Language, ":")
 }
 
 // MessageTracker implementation for operation tracking
@@ -49,10 +48,9 @@ func (h *shortcutsInteractiveHandler) Change(newValue string, progress func(msgs
 	}
 
 	// Handle language change
-	OutLang(newValue)
-	h.lang = newValue
+	lang := OutLang(newValue)
+	h.lang = lang
 	h.needsLanguageInput = false
-	progress(D.Language, D.Changed, D.To, newValue)
 
 	// Show updated help content
 	progress(h.generateHelpContent())
@@ -64,25 +62,25 @@ func (h *shortcutsInteractiveHandler) WaitingForUser() bool {
 
 // generateHelpContent creates the help content string
 func (h *shortcutsInteractiveHandler) generateHelpContent() string {
-	return h.appName + ` Keyboard Commands ("` + h.lang + `"):
+	return T(h.appName, D.Shortcuts, D.Keyboard, `("`+h.lang+`"):
 
 Tabs:
-  • Tab/Shift+Tab  - Switch tabs
+  • Tab/Shift+Tab  - `, D.Switch, `tabs
 
-Fields:
+`, D.Fields, `:
   • Left/Right     - Navigate fields
   • Enter          - Edit/Execute
-  • Esc            - Cancel
+  • Esc            -`, D.Cancel, `
 
 Text Edit:
-  • Left/Right     - Move cursor
-  • Backspace      - Create space
-  • Space/Letters  - Insert char
+  • Left/Right     -`, D.Move, `cursor
+  • Backspace      -`, D.Create, D.Space, `
+  • Space/Letters  -`, D.Insert, D.Character, `
 
 Viewport:
   • Up/Down        - Scroll line
-  • PgUp/PgDown    - Scroll page
-  • Mouse Wheel    - Scroll (optional)
+  • PgUp/PgDown    - Scroll`, D.Page, `
+  • Mouse Wheel    - Scroll`, D.Page, `
 
 Scroll Status Icons:
   •  ■  - All content visible
@@ -93,5 +91,5 @@ Scroll Status Icons:
 Exit:
   • Ctrl+C         - Quit
 
-Text selection enabled for copy/paste.`
+Text selection enabled for copy/paste.`)
 }

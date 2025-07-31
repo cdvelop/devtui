@@ -145,6 +145,9 @@ func (h *DevTUI) Start(args ...any) {
 		h.activeTab = 1
 	}
 
+	// NEW: Trigger initial content display for interactive handlers after setting initial tab
+	h.checkAndTriggerInteractiveContent()
+
 	if _, err := h.tea.Run(); err != nil {
 		fmt.Println("Error running DevTUI:", err)
 		fmt.Println("\nPress any key to exit...")

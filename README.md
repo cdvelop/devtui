@@ -16,6 +16,34 @@ Reusable **message presentation system** for Go development tools. DevTUI is a p
 ## Quick Start
 
 
+
+## Special Case: HandlerEdit with Content() (No new messages, only refresh)
+
+If your handler implements both the HandlerEdit interface and a Content() method, DevTUI will only refresh the display when the value changes, and **will not create a new timestamped message**. This is ideal for cases like language selectors, dashboards, or any field where the content is always shown in a custom format.
+
+**Example:**
+
+```go
+type LanguageHandler struct {
+    lang string
+}
+
+func (h *LanguageHandler) Name() string  { return "Language" }
+func (h *LanguageHandler) Label() string { return "Language" }
+func (h *LanguageHandler) Value() string { return h.lang }
+func (h *LanguageHandler) Change(newValue string, progress func(msgs ...any)) {
+    h.lang = newValue
+    progress("Language changed to", newValue) // Will only refresh, not create a message
+}
+func (h *LanguageHandler) Content() string {
+    return "Current language: " + h.lang
+}
+```
+
+When the user changes the value, the UI will update the content, but **no new message will appear in the message area**. This behavior is now fully tested and guaranteed by the DevTUI test suite.
+
+---
+
 DevTUI uses specialized handler interfaces that require minimal implementation. Here is a complete example using the new simplified API:
 
 ```go
@@ -68,7 +96,7 @@ func main() {
 
 ## Handler Interfaces
 
-DevTUI provides 5 specialized handler types, each requiring minimal implementation:
+DevTUI provides 6 specialized handler types, each requiring minimal implementation:
 
 ### 1. HandlerDisplay - Read-only Information (2 methods)
 ```go
@@ -77,32 +105,57 @@ type HandlerDisplay interface {
     Content() string // Content shown immediately
 }
 ```
+**[→ See complete implementation example](example/HandlerDisplay.go)**
 
 ### 2. HandlerEdit - Interactive Input Fields (4 methods)  
 ```go
+type HandlerEdit interface {
     Name() string    // Unique identifier for logging
     Label() string   // Field label
     Value() string   // Current/initial value
-    Change(newValue string, progress func(string))
+    Change(newValue string, progress func(msgs ...any))
 }
 ```
+**[→ See complete implementation example](example/HandlerEdit.go)**
 
 ### 3. HandlerExecution - Action Buttons (3 methods)
 ```go
+type HandlerExecution interface {
     Name() string  // Unique identifier for logging
     Label() string // Button label
-    Execute(progress func(string))
+    Execute(progress func(msgs ...any))
+}
+```
+**[→ See complete implementation example](example/HandlerExecution.go)**
+
+### 4. HandlerInteractive - Interactive Content Management (5 methods)
+```go
+type HandlerInteractive interface {
+    Name() string                                       // Identifier for logging
+    Label() string                                      // Field label (updates dynamically)
+    Value() string                                      // Current input value
+    Change(newValue string, progress func(msgs ...any)) // Handle user input + content display
+    WaitingForUser() bool                               // Should edit mode be auto-activated?
 }
 ```
 
-### 4. HandlerWriter - Simple Logging (1 method)
+**Key Features:**
+- **Dynamic Content**: All content updates through `progress()` for consistency
+- **Auto Edit Mode**: `WaitingForUser()` controls when edit mode is activated
+- **Content Display**: Use empty `newValue` + `WaitingForUser() == false` to trigger content display
+- **Perfect for**: Chat interfaces, configuration wizards, interactive help systems
+
+**[→ See complete implementation example](example/HandlerInteractive.go)**
+
+### 5. HandlerWriter - Simple Logging (1 method)
 ```go
 type HandlerWriter interface {
     Name() string // Writer identifier
 }
 ```
+**[→ See complete implementation example](example/HandlerWriter.go)**
 
-### 5. HandlerWriterTracker - Advanced Logging (3 methods)
+### 6. HandlerWriterTracker - Advanced Logging (3 methods)
 ```go
 type HandlerWriterTracker interface {
     Name() string
@@ -113,14 +166,8 @@ type MessageTracker interface {
     GetLastOperationID() string
     SetLastOperationID(id string)
 }
-
-
-tab.AddEditHandler(handler).WithTimeout(5*time.Second)
-tab.AddExecutionHandler(handler).WithTimeout(10*time.Second)
-tab.AddEditHandlerTracking(handlerWithTracker).WithTimeout(5*time.Second)
-tab.AddExecutionHandlerTracking(handlerWithTracker).WithTimeout(10*time.Second)
-type LogWriter struct{}
 ```
+**[→ See complete implementation example](example/HandlerWriterTracker.go)**
 
 ## Registration Methods
 
@@ -135,6 +182,10 @@ tab.AddEditHandlerTracking(handlerWithTracker, 5*time.Second)
 // Execution handlers (timeout mandatory)
 tab.AddExecutionHandler(handler, 10*time.Second)
 tab.AddExecutionHandlerTracking(handlerWithTracker, 10*time.Second)
+
+// Interactive handlers (timeout mandatory)
+tab.AddInteractiveHandler(handler, 5*time.Second)
+tab.AddInteractiveHandlerTracking(handlerWithTracker, 5*time.Second)
 
 // Writers (returns io.Writer)
 type LogWriter struct{}
@@ -168,7 +219,6 @@ writer.Write([]byte("Another log entry"))
 **Note**: DevTUI automatically loads a built-in [ShortcutsHandler](shortcuts.go) at position 0 in the first tab, which displays detailed keyboard navigation commands. This handler demonstrates the `HandlerEdit` interface and provides interactive help within the application.
 
 **Text Selection**: Terminal text selection is enabled for copying error messages and logs. Mouse scroll functionality may vary depending on bubbletea version and terminal capabilities.
-
 
 ## Acknowledgments
 

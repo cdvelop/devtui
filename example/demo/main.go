@@ -6,75 +6,9 @@ import (
 	"time"
 
 	"github.com/cdvelop/devtui"
-	. "github.com/cdvelop/tinystring"
+
+	example "github.com/cdvelop/devtui/example"
 )
-
-// Example showcasing all new handler types with minimal implementation
-
-// 1. HandlerDisplay - Read-only information display (2 methods)
-type StatusHandler struct{}
-
-func (h *StatusHandler) Name() string { return T(D.Information, D.Status, D.System) }
-func (h *StatusHandler) Content() string {
-	return "Status: Running\nPID: 12345\nUptime: 2h 30m\nMemory: 45MB\nCPU: 12%"
-}
-
-// 2. HandlerEdit - Interactive input fields (4 methods)
-type DatabaseHandler struct {
-	connectionString string
-}
-
-func (h *DatabaseHandler) Name() string  { return "DatabaseConfig" }
-func (h *DatabaseHandler) Label() string { return "Database Connection" }
-func (h *DatabaseHandler) Value() string { return h.connectionString }
-func (h *DatabaseHandler) Change(newValue string, progress func(msgs ...any)) {
-	if progress != nil {
-		progress(D.Validating, D.Connection, newValue)
-		time.Sleep(500 * time.Millisecond)
-		progress("Testing database connectivity...", newValue)
-		time.Sleep(500 * time.Millisecond)
-		progress(D.Connection, "Database", "configured", "successfully", newValue)
-	}
-	h.connectionString = newValue
-}
-
-// 3. HandlerExecution - Action buttons (3 methods) with tracking
-type BackupHandler struct {
-	lastOpID string
-}
-
-func (h *BackupHandler) Name() string  { return "SystemBackup" }
-func (h *BackupHandler) Label() string { return "With Tracking" }
-func (h *BackupHandler) Execute(progress func(msgs ...any)) {
-	if progress != nil {
-		progress(D.Preparing, "backup...", h.lastOpID)
-		time.Sleep(500 * time.Millisecond)
-		progress(D.BackingUp, "database...", h.lastOpID)
-		time.Sleep(500 * time.Millisecond)
-		progress(D.BackingUp, D.Files, h.lastOpID)
-		time.Sleep(500 * time.Millisecond)
-		progress("Backup", D.End, "OK", h.lastOpID)
-	}
-	// ...existing code...
-}
-
-// MessageTracker implementation for operation tracking
-func (h *BackupHandler) GetLastOperationID() string   { return h.lastOpID }
-func (h *BackupHandler) SetLastOperationID(id string) { h.lastOpID = id }
-
-// 4. HandlerWriter - Simple logging (1 method)
-type SystemLogWriter struct{}
-
-func (w *SystemLogWriter) Name() string { return "SystemLog" }
-
-// 5. HandlerWriterTracker - Advanced logging with message tracking (3 methods)
-type OperationLogWriter struct {
-	lastOpID string
-}
-
-func (w *OperationLogWriter) Name() string                 { return "OperationLog" }
-func (w *OperationLogWriter) GetLastOperationID() string   { return w.lastOpID }
-func (w *OperationLogWriter) SetLastOperationID(id string) { w.lastOpID = id }
 
 func main() {
 	tui := devtui.NewTUI(&devtui.TuiConfig{
@@ -96,34 +30,50 @@ func main() {
 
 	// Dashboard tab with DisplayHandlers (read-only information)
 	dashboard := tui.NewTabSection("Dashboard", "System Overview")
-	dashboard.AddDisplayHandler(&StatusHandler{})
+	dashboard.AddDisplayHandler(&example.StatusHandler{})
 
 	// Configuration tab with EditHandlers (interactive fields)
 	config := tui.NewTabSection("Config", "System Configuration")
-	config.AddEditHandler(&DatabaseHandler{connectionString: "postgres://localhost:5432/mydb"}, 2*time.Second)
-	config.AddExecutionHandlerTracking(&BackupHandler{}, 5*time.Second)
+	config.AddEditHandler(&example.DatabaseHandler{ConnectionString: "postgres://localhost:5432/mydb"}, 2*time.Second)
+	config.AddExecutionHandlerTracking(&example.BackupHandler{}, 5*time.Second)
+
+	// NEW: Chat tab with InteractiveHandler - Demonstrates interactive content management
+	chat := tui.NewTabSection("Chat", "AI Chat Assistant")
+	chatHandler := &example.SimpleChatHandler{
+		Messages:           make([]example.ChatMessage, 0),
+		WaitingForUserFlag: false, // Start showing content, not waiting for input
+		IsProcessing:       false, // Not processing initially
+	}
+	chat.AddInteractiveHandler(chatHandler, 3*time.Second)
 
 	// Logging tab with Writers
 	logs := tui.NewTabSection("Logs", "System Logs")
 
 	// Basic writer (always creates new lines)
-	systemWriter := logs.RegisterWriterHandler(&SystemLogWriter{})
+	systemWriter := logs.RegisterWriterHandler(&example.SystemLogWriter{})
 	systemWriter.Write([]byte("System initialized"))
 	systemWriter.Write([]byte("API demo started"))
+	systemWriter.Write([]byte("Chat interface enabled"))
 
 	// Generate multiple log entries to test scrolling (30 total)
-	for i := 1; i <= 15; i++ {
-		systemWriter.Write([]byte(fmt.Sprintf("System log entry #%d - Processing data batch", i)))
-	}
+	go func() {
+		for i := 1; i <= 30; i++ {
+			time.Sleep(3 * time.Second) // Simulate processing delay
+			systemWriter.Write([]byte(fmt.Sprintf("System log entry #%d - Processing data batch", i)))
+		}
+	}()
 
 	// Advanced writer (can update existing messages with tracking)
-	opWriter := logs.RegisterWriterHandler(&OperationLogWriter{})
+	opWriter := logs.RegisterWriterHandler(&example.OperationLogWriter{})
 	opWriter.Write([]byte("Operation tracking enabled"))
 
 	// Generate more tracking entries to test Page Up/Page Down navigation
-	for i := 1; i <= 13; i++ {
-		opWriter.Write([]byte(fmt.Sprintf("Operation #%d - Background task completed successfully", i)))
-	}
+	go func() {
+		for i := 1; i <= 50; i++ {
+			time.Sleep(3 * time.Second) // Simulate processing delay
+			opWriter.Write([]byte(fmt.Sprintf("Operation #%d - Background task completed successfully", i)))
+		}
+	}()
 
 	// Different timeout configurations:
 	// - Synchronous (default): .Register() or timeout = 0
@@ -135,6 +85,7 @@ func main() {
 	// • HandlerDisplay: Name() + Content() - Shows immediate content
 	// • HandlerEdit: Name() + Label() + Value() + Change() - Interactive fields
 	// • HandlerExecution: Name() + Label() + Execute() - Action buttons
+	// • HandlerInteractive: Name() + Label() + Value() + Change() + WaitingForUser() - Interactive content
 	// • HandlerWriter: Name() - Basic logging (new lines)
 	// • HandlerWriterTracker: Name() + MessageTracker - Advanced logging (can update)
 

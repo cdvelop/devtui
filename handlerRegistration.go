@@ -68,3 +68,25 @@ func (ts *tabSection) AddExecutionHandlerTracking(handler HandlerExecutionTracke
 func (ts *tabSection) RegisterWriterHandler(handler HandlerWriter) io.Writer {
 	return ts.RegisterHandlerWriter(handler) // Delegate to existing implementation
 }
+
+// AddInteractiveHandler registers a HandlerInteractive with mandatory timeout
+func (ts *tabSection) AddInteractiveHandler(handler HandlerInteractive, timeout time.Duration) *tabSection {
+	var tracker MessageTracker
+	if t, ok := handler.(MessageTracker); ok {
+		tracker = t
+	}
+
+	anyH := newInteractiveHandler(handler, timeout, tracker)
+	f := &field{
+		handler:    anyH,
+		parentTab:  ts,
+		asyncState: &internalAsyncState{},
+	}
+	ts.addFields(f)
+	return ts
+}
+
+// AddInteractiveHandlerTracking registers a HandlerInteractiveTracker with mandatory timeout
+func (ts *tabSection) AddInteractiveHandlerTracking(handler HandlerInteractiveTracker, timeout time.Duration) *tabSection {
+	return ts.AddInteractiveHandler(handler, timeout) // HandlerInteractiveTracker extends HandlerInteractive
+}

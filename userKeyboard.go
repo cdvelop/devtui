@@ -173,23 +173,27 @@ func (h *DevTUI) handleNormalModeKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 		if totalFields > 0 {
 			currentTab.indexActiveEditField = (currentTab.indexActiveEditField - 1 + totalFields) % totalFields
 			h.updateViewport()
-			return false, nil // Detener procesamiento adicional
+			h.checkAndTriggerInteractiveContent() // NEW: Auto-trigger content for interactive handlers
+			return false, nil                     // Detener procesamiento adicional
 		}
 
 	case tea.KeyRight: // Navegar al campo siguiente (ciclo continuo)
 		if totalFields > 0 {
 			currentTab.indexActiveEditField = (currentTab.indexActiveEditField + 1) % totalFields
 			h.updateViewport()
-			return false, nil // Detener procesamiento adicional
+			h.checkAndTriggerInteractiveContent() // NEW: Auto-trigger content for interactive handlers
+			return false, nil                     // Detener procesamiento adicional
 		}
 
 	case tea.KeyTab: // cambiar tabSection
 		h.activeTab = (h.activeTab + 1) % len(h.tabSections)
 		h.updateViewport()
+		h.checkAndTriggerInteractiveContent() // NEW: Auto-trigger content for interactive handlers
 
 	case tea.KeyShiftTab: // cambiar tabSection
 		h.activeTab = (h.activeTab - 1 + len(h.tabSections)) % len(h.tabSections)
 		h.updateViewport()
+		h.checkAndTriggerInteractiveContent() // NEW: Auto-trigger content for interactive handlers
 
 	case tea.KeyEnter: //Enter para entrar en modo edición, ejecuta la acción directamente si el campo no es editable
 		if totalFields > 0 {
@@ -217,4 +221,24 @@ func (h *DevTUI) handleNormalModeKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 	}
 
 	return true, nil
+}
+
+// checkAndTriggerInteractiveContent checks if the active field is interactive and triggers content display automatically
+func (h *DevTUI) checkAndTriggerInteractiveContent() {
+	if h.activeTab >= len(h.tabSections) {
+		return
+	}
+
+	activeTab := h.tabSections[h.activeTab]
+	fieldHandlers := activeTab.FieldHandlers()
+
+	if len(fieldHandlers) == 0 || activeTab.indexActiveEditField >= len(fieldHandlers) {
+		return
+	}
+
+	activeField := fieldHandlers[activeTab.indexActiveEditField]
+	if activeField != nil && activeField.isInteractiveHandler() && !h.editModeActivated {
+		// Trigger content display for interactive handlers when field is selected
+		activeField.triggerContentDisplay()
+	}
 }

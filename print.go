@@ -77,45 +77,60 @@ func (d *DevTUI) sendMessageWithHandler(content string, mt messagetype.Type, tab
 
 // formatMessage formatea un mensaje según su tipo
 func (t *DevTUI) formatMessage(msg tabContent) string {
-	// Check if message comes from a readonly field handler
+	// Check if message comes from a readonly field handler (HandlerDisplay)
 	if msg.handlerName != "" && t.isReadOnlyHandler(msg.handlerName) {
 		// For readonly fields: no timestamp, cleaner visual content, no special coloring
 		return msg.Content
 	}
 
-	var timeStr string
-	if t.id != nil {
-		timeStr = t.timeStyle.Render(t.id.UnixNanoToTime(msg.Timestamp))
-	} else {
-		// When unixid is not initialized, use a simple timestamp format
-		timeStr = t.timeStyle.Render("--:--:--")
+	// Apply message type styling to content (unified for all handler types)
+	styledContent := t.applyMessageTypeStyle(msg.Content, msg.Type)
+
+	// Generate timestamp (unified for all handler types that need it)
+	timeStr := t.generateTimestamp(msg.Timestamp)
+
+	// Check if message comes from interactive handler - clean format with timestamp only
+	if msg.handlerName != "" && t.isInteractiveHandler(msg.handlerName) {
+		// Interactive handlers: timestamp + content (no handler name for cleaner UX)
+		return fmt.Sprintf("%s %s", timeStr, styledContent)
 	}
 
-	// NEW: Include handler name in message format with brackets united
-	var handlerName string
-	if msg.handlerName != "" {
-		// Aplicar estilo completo a [handlerName] como una unidad
-		styledName := t.infoStyle.Render(fmt.Sprintf("[%s]", msg.handlerName))
-		handlerName = styledName + " "
-	}
+	// Default format for other handlers (Edit, Execution, Writers)
+	handlerName := t.formatHandlerName(msg.handlerName)
+	return fmt.Sprintf("%s %s%s", timeStr, handlerName, styledContent)
+}
 
-	// timeStr := t.timeStyle.Render(msg.Time.Format("15:04:05"))
-	// content := fmt.Sprintf("[%s] %s", timeStr, msg.Content)
+// Helper methods to reduce code duplication
 
-	switch msg.Type {
+func (t *DevTUI) applyMessageTypeStyle(content string, msgType messagetype.Type) string {
+	switch msgType {
 	case messagetype.Error:
-		msg.Content = t.errStyle.Render(msg.Content)
+		return t.errStyle.Render(content)
 	case messagetype.Warning:
-		msg.Content = t.warnStyle.Render(msg.Content)
+		return t.warnStyle.Render(content)
 	case messagetype.Info:
-		msg.Content = t.infoStyle.Render(msg.Content)
+		return t.infoStyle.Render(content)
 	case messagetype.Success:
-		msg.Content = t.okStyle.Render(msg.Content)
-		// default:
-		// 	msg.Content= msg.Content
+		return t.okStyle.Render(content)
+	default:
+		return content
 	}
+}
 
-	return fmt.Sprintf("%s %s%s", timeStr, handlerName, msg.Content)
+func (t *DevTUI) generateTimestamp(timestamp string) string {
+	if t.id != nil {
+		return t.timeStyle.Render(t.id.UnixNanoToTime(timestamp))
+	}
+	return t.timeStyle.Render("--:--:--")
+}
+
+func (t *DevTUI) formatHandlerName(handlerName string) string {
+	if handlerName == "" {
+		return ""
+	}
+	// Aplicar estilo completo a [handlerName] como una unidad
+	styledName := t.infoStyle.Render(fmt.Sprintf("[%s]", handlerName))
+	return styledName + " "
 }
 
 // Helper to detect readonly handlers
@@ -125,6 +140,18 @@ func (t *DevTUI) isReadOnlyHandler(handlerName string) bool {
 		if handler := tab.getWritingHandler(handlerName); handler != nil {
 			// Check if it's a display handler (readonly)
 			return handler.handlerType == handlerTypeDisplay
+		}
+	}
+	return false
+}
+
+// NEW: Helper to detect interactive handlers
+func (t *DevTUI) isInteractiveHandler(handlerName string) bool {
+	for _, tab := range t.tabSections {
+		for _, field := range tab.FieldHandlers() {
+			if field.handler != nil && field.handler.Name() == handlerName {
+				return field.handler.handlerType == handlerTypeInteractive
+			}
 		}
 	}
 	return false

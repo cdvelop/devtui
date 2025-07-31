@@ -38,7 +38,7 @@ func (h *DevTUI) ContentView() string {
 	fieldHandlers := section.FieldHandlers()
 	if len(fieldHandlers) > 0 && section.indexActiveEditField < len(fieldHandlers) {
 		activeField := fieldHandlers[section.indexActiveEditField]
-		if activeField.isDisplayOnly() {
+		if activeField.hasContentMethod() {
 			displayContent := activeField.getDisplayContent()
 			if displayContent != "" {
 				// Add display content at the top of the content view with Highlight color

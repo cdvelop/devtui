@@ -51,6 +51,24 @@ type HandlerWriterTracker interface {
 	MessageTracker
 }
 
+// HandlerInteractive defines the interface for interactive content handlers.
+// These handlers combine content display with user interaction capabilities.
+// All content display is handled through progress() for consistency.
+type HandlerInteractive interface {
+	Name() string                                       // Identifier for logging: "ChatBot", "ConfigWizard"
+	Label() string                                      // Field label (updates dynamically)
+	Value() string                                      // Current input value
+	Change(newValue string, progress func(msgs ...any)) // Handle user input + content display via progress
+	WaitingForUser() bool                               // Should edit mode be auto-activated?
+}
+
+// HandlerInteractiveTracker combines HandlerInteractive with MessageTracker
+// for advanced interactive handlers that need message tracking capabilities.
+type HandlerInteractiveTracker interface {
+	HandlerInteractive
+	MessageTracker
+}
+
 // MessageTracker provides optional interface for message tracking control.
 // Handlers can implement this to control message updates and operation tracking.
 type MessageTracker interface {

@@ -4,8 +4,8 @@ github.com/cdvelop/messagetype v0.0.46 h1:0bW2tB3B49mC5Sm/P5qMcSKUgggugPTo93wPeY
 github.com/cdvelop/messagetype v0.0.46/go.mod h1:b2pRqNksnW4vfRZU9ieELqDjykDGddtxW9c5Feeaae0=
 github.com/cdvelop/tinyreflect v0.0.33 h1:DYR20o/bLjY4L7c/5IjeDRxOsWsGIQDaoarHXqllQf8=
 github.com/cdvelop/tinyreflect v0.0.33/go.mod h1:6+XWgo0mGawupPZtL19aDgxUNXmI3Bakvq2TzeK0A80=
-github.com/cdvelop/tinystring v0.1.41 h1:iupOUOs7noCKamCX6CHjzh5s95B2InsJJKrHmW9RWs4=
-github.com/cdvelop/tinystring v0.1.41/go.mod h1:85ltrACJtjf1Zu/o8kqwHGKAiN0oBwb+TR2tkXdURJo=
+github.com/cdvelop/tinystring v0.1.42 h1:04XhZiidLDwAM4Yv8PekStF6v1bvWdYK22a2Y53vDj0=
+github.com/cdvelop/tinystring v0.1.42/go.mod h1:85ltrACJtjf1Zu/o8kqwHGKAiN0oBwb+TR2tkXdURJo=
 github.com/cdvelop/tinytime v0.0.3 h1:vNDmcSebzxK0v2j15DqVbVlx5EnEJDpm+hb/8sKhfyU=
 github.com/cdvelop/tinytime v0.0.3/go.mod h1:/GKa6LHF4P9+TQjkPwPAt0fsoIiXWt2xa/alvKQk8XU=
 github.com/cdvelop/unixid v0.0.102 h1:R4YBAS7ipOlRUu5wRwNlS1F1jUsCdNni98CYde4hlkg=

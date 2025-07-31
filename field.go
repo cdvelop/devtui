@@ -22,6 +22,7 @@ const (
 	handlerTypeExecution
 	handlerTypeWriter
 	handlerTypeTrackerWriter
+	handlerTypeInteractive // NEW: Interactive content handler
 )
 
 // anyHandler - Estructura privada que unifica todos los handlers
@@ -39,6 +40,7 @@ type anyHandler struct {
 	valueFunc    func() string                   // Edit/Display
 	contentFunc  func() string                   // Display únicamente
 	editableFunc func() bool                     // Por tipo
+	editModeFunc func() bool                     // NEW: Auto edit mode activation
 	changeFunc   func(string, func(msgs ...any)) // Edit/Execution (nueva firma)
 	executeFunc  func(func(msgs ...any))         // Execution únicamente (nueva firma)
 	timeoutFunc  func() time.Duration            // Edit/Execution
@@ -111,6 +113,13 @@ func (a *anyHandler) GetLastOperationID() string {
 	return a.lastOpID
 }
 
+func (a *anyHandler) WaitingForUser() bool {
+	if a.editModeFunc != nil {
+		return a.editModeFunc()
+	}
+	return false
+}
+
 // ============================================================================
 // Factory Methods
 // ============================================================================
@@ -127,6 +136,15 @@ func newEditHandler(h HandlerEdit, timeout time.Duration, tracker MessageTracker
 		timeoutFunc:  func() time.Duration { return timeout },
 		origHandler:  h,
 	}
+
+	// NEW: Check if handler also implements Value() method (like TestNonEditableHandler)
+	if valuer, ok := h.(interface{ Value() string }); ok {
+		anyH.valueFunc = valuer.Value
+	} else {
+		anyH.valueFunc = h.Label // Fallback to Label
+	}
+
+	// REMOVED: Hybrid Content() detection - use HandlerInteractive instead
 
 	// Configurar tracking opcional
 	if tracker != nil {
@@ -184,6 +202,8 @@ func newExecutionHandler(h HandlerExecution, timeout time.Duration) *anyHandler 
 		anyH.valueFunc = h.Label // Fallback to Label
 	}
 
+	// REMOVED: Hybrid Content() detection - use HandlerInteractive instead
+
 	return anyH
 }
 
@@ -203,6 +223,33 @@ func newTrackerWriterHandler(h HandlerWriterTracker) *anyHandler {
 		getOpIDFunc: h.GetLastOperationID,
 		setOpIDFunc: h.SetLastOperationID,
 	}
+}
+
+func newInteractiveHandler(h HandlerInteractive, timeout time.Duration, tracker MessageTracker) *anyHandler {
+	anyH := &anyHandler{
+		handlerType: handlerTypeInteractive,
+		timeout:     timeout,
+		nameFunc:    h.Name,
+		labelFunc:   h.Label,
+		valueFunc:   h.Value,
+		// NO contentFunc - interactive handlers use progress() only
+		editableFunc: func() bool { return true },
+		changeFunc:   h.Change,
+		timeoutFunc:  func() time.Duration { return timeout },
+		editModeFunc: h.WaitingForUser, // NEW: Auto edit mode detection
+		origHandler:  h,
+	}
+
+	// Configure optional tracking
+	if tracker != nil {
+		anyH.getOpIDFunc = tracker.GetLastOperationID
+		anyH.setOpIDFunc = tracker.SetLastOperationID
+	} else {
+		anyH.getOpIDFunc = func() string { return "" }
+		anyH.setOpIDFunc = func(string) {}
+	}
+
+	return anyH
 }
 
 // Internal async state management (not exported)
@@ -295,14 +342,65 @@ func (f *field) usesExpandedFooter() bool {
 	return f.isDisplayOnly() || f.isExecutionHandler()
 }
 
-// NUEVO: Método para mostrar contenido en la sección principal
+// NUEVO: Método para mostrar contenido en la sección principal - only Display handlers show content immediately
 func (f *field) getDisplayContent() string {
-	if f.isDisplayOnly() && f.handler != nil {
-		if f.handler.contentFunc != nil {
-			return f.handler.contentFunc() // Content() se muestra en la sección principal
-		}
+	if f.handler != nil && f.handler.contentFunc != nil && f.isDisplayOnly() {
+		return f.handler.contentFunc()
 	}
 	return ""
+}
+
+// NEW: Helper method to detect Content() capability - only Display handlers have Content()
+func (f *field) hasContentMethod() bool {
+	return f.handler != nil && f.handler.contentFunc != nil && f.isDisplayOnly()
+}
+
+func (f *field) isInteractiveHandler() bool {
+	if f.handler == nil {
+		return false
+	}
+	return f.handler.handlerType == handlerTypeInteractive
+}
+
+func (f *field) shouldAutoActivateEditMode() bool {
+	if f.isInteractiveHandler() && f.handler != nil {
+		return f.handler.WaitingForUser()
+	}
+	return false
+}
+
+// NEW: Trigger content display for interactive handlers via Change()
+func (f *field) triggerContentDisplay() {
+	if f.isInteractiveHandler() && f.handler != nil && !f.handler.WaitingForUser() {
+		// Follow EXACT same MessageTracker logic as executeChangeSyncWithTracking
+		var operationID string
+		if f.parentTab != nil && f.parentTab.tui != nil && f.parentTab.tui.id != nil {
+			// Check if handler has existing operationID to reuse (for updates)
+			if existingID := f.handler.GetLastOperationID(); existingID != "" {
+				operationID = existingID
+			} else {
+				// Generate new ID for new operations
+				operationID = f.parentTab.tui.id.GetNewID()
+			}
+		}
+
+		// Create progress callback that follows MessageTracker logic
+		handlerName := f.handler.Name()
+		progressCallback := func(msgs ...any) {
+			if f.parentTab != nil && len(msgs) > 0 {
+				// For regular handlers, create timestamped messages with tracking
+				message := tinystring.T(msgs...)
+				msgType := messagetype.DetectMessageType(message)
+				f.parentTab.tui.sendMessageWithHandler(message, msgType, f.parentTab, handlerName, operationID)
+			}
+		}
+
+		// Call Change with empty value to trigger content display
+		f.handler.Change("", progressCallback)
+
+		// Set operation ID on handler for tracking (same as executeChangeSyncWithTracking)
+		f.handler.SetLastOperationID(operationID)
+	}
 }
 
 // NUEVO: Método para footer expandido - Name() usa espacio de label + value
@@ -353,6 +451,14 @@ func (f *field) sendProgressMessage(content string) {
 		handlerName := ""
 		if f.handler != nil {
 			handlerName = f.handler.Name()
+		}
+
+		// NEW: If handler has Content() method, refresh display instead of creating messages
+		if f.hasContentMethod() {
+			// For content-capable handlers, trigger view refresh to call Content() again
+			// This ensures the handler's custom formatting is preserved
+			f.parentTab.tui.updateViewport()
+			return
 		}
 
 		// SOLUCIÓN: Usar detección centralizada como Writers
@@ -445,6 +551,15 @@ func (f *field) executeAsyncChange(valueToSave any) {
 	// Create progress callback for handler
 	progressCallback := func(msgs ...any) {
 		if f.parentTab != nil && len(msgs) > 0 {
+			// NEW: If handler has Content() method, refresh display instead of creating messages
+			if f.hasContentMethod() {
+				// For content-capable handlers, trigger view refresh to call Content() again
+				// This ensures the handler's custom formatting is preserved
+				f.parentTab.tui.updateViewport()
+				return
+			}
+
+			// For regular handlers, create timestamped messages (normal behavior)
 			message := tinystring.T(msgs...)
 			f.sendProgressMessage(message)
 		}
@@ -480,7 +595,12 @@ func (f *field) executeAsyncChange(valueToSave any) {
 		} else {
 			switch f.handler.handlerType {
 			case handlerTypeEdit:
-				f.sendSuccessMessage(res.result)
+				// NEW: If handler has Content() method, only refresh display
+				if f.hasContentMethod() {
+					f.parentTab.tui.updateViewport()
+				} else {
+					f.sendSuccessMessage(res.result)
+				}
 			case handlerTypeExecution:
 				// Only send if handler explicitly implements Value()
 				if _, ok := f.handler.origHandler.(interface{ Value() string }); ok {
@@ -547,6 +667,13 @@ func (f *field) executeChangeSyncWithTracking(valueToSave any) {
 	handlerName := f.handler.Name()
 	progressCallback := func(msgs ...any) {
 		if f.parentTab != nil && len(msgs) > 0 {
+			// NEW: If handler has Content() method, refresh display instead of creating messages
+			if f.hasContentMethod() {
+				f.parentTab.tui.updateViewport()
+				return
+			}
+
+			// For regular handlers, create timestamped messages with tracking
 			message := tinystring.T(msgs...)
 			msgType := messagetype.DetectMessageType(message)
 			f.parentTab.tui.sendMessageWithHandler(message, msgType, f.parentTab, handlerName, operationID)
@@ -559,11 +686,17 @@ func (f *field) executeChangeSyncWithTracking(valueToSave any) {
 	// Set operation ID on handler for tracking
 	f.handler.SetLastOperationID(operationID)
 
-	// Send success message
-	result := f.handler.Value()
+	// Send success message (unless handler has Content() method)
 	if f.parentTab != nil {
-		msgType := messagetype.DetectMessageType(result)
-		f.parentTab.tui.sendMessageWithHandler(result, msgType, f.parentTab, handlerName, operationID)
+		// NEW: If handler has Content() method, only refresh display
+		if f.hasContentMethod() {
+			f.parentTab.tui.updateViewport()
+		} else {
+			// For regular handlers, send success message
+			result := f.handler.Value()
+			msgType := messagetype.DetectMessageType(result)
+			f.parentTab.tui.sendMessageWithHandler(result, msgType, f.parentTab, handlerName, operationID)
+		}
 	}
 }
 

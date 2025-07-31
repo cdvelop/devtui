@@ -30,7 +30,7 @@ func (h *shortcutsInteractiveHandler) Name() string {
 }
 
 func (h *shortcutsInteractiveHandler) Label() string {
-	return T(D.Configuration, D.Language, ":")
+	return T(D.Language, ":").String()
 }
 
 // MessageTracker implementation for operation tracking
@@ -65,7 +65,7 @@ func (h *shortcutsInteractiveHandler) generateHelpContent() string {
 	return T(h.appName, D.Shortcuts, D.Keyboard, `("`+h.lang+`"):
 
 Tabs:
-  • Tab/Shift+Tab  - `, D.Switch, `tabs
+  • Tab/Shift+Tab  -`, D.Switch, ` tabs
 
 `, D.Fields, `:
   • Left/Right     - Navigate fields
@@ -91,5 +91,7 @@ Scroll Status Icons:
 Exit:
   • Ctrl+C         - Quit
 
-Text selection enabled for copy/paste.`)
+Text selection enabled for copy/paste.
+
+`, D.Language, D.Supported, `: EN, ES, ZH, HI, AR, PT, FR, DE, RU`).String()
 }

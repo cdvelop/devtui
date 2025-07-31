@@ -389,7 +389,7 @@ func (f *field) triggerContentDisplay() {
 		progressCallback := func(msgs ...any) {
 			if f.parentTab != nil && len(msgs) > 0 {
 				// For regular handlers, create timestamped messages with tracking
-				message := tinystring.T(msgs...)
+				message := tinystring.T(msgs...).String()
 				msgType := messagetype.DetectMessageType(message)
 				f.parentTab.tui.sendMessageWithHandler(message, msgType, f.parentTab, handlerName, operationID)
 			}
@@ -560,7 +560,7 @@ func (f *field) executeAsyncChange(valueToSave any) {
 			}
 
 			// For regular handlers, create timestamped messages (normal behavior)
-			message := tinystring.T(msgs...)
+			message := tinystring.T(msgs...).String()
 			f.sendProgressMessage(message)
 		}
 	}
@@ -674,7 +674,7 @@ func (f *field) executeChangeSyncWithTracking(valueToSave any) {
 			}
 
 			// For regular handlers, create timestamped messages with tracking
-			message := tinystring.T(msgs...)
+			message := tinystring.T(msgs...).String()
 			msgType := messagetype.DetectMessageType(message)
 			f.parentTab.tui.sendMessageWithHandler(message, msgType, f.parentTab, handlerName, operationID)
 		}

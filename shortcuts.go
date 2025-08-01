@@ -62,25 +62,25 @@ func (h *shortcutsInteractiveHandler) WaitingForUser() bool {
 
 // generateHelpContent creates the help content string
 func (h *shortcutsInteractiveHandler) generateHelpContent() string {
-	return T(h.appName, D.Shortcuts, D.Keyboard, `("`+h.lang+`"):
+	return T(h.appName, D.Shortcuts, D.Keyboard, `:
 
-Tabs:
-  • Tab/Shift+Tab  -`, D.Switch, ` tabs
+`, D.Content, D.Tab, `:
+  • Tab/Shift+Tab  -`, D.Switch, D.Content, `
 
 `, D.Fields, `:
-  • Left/Right     - Navigate fields
-  • Enter          - Edit/Execute
+  • Left/Right     -`, D.Switch, D.Field, `
+  • Enter          -`, D.Edit, `/`, D.Execute, `
   • Esc            -`, D.Cancel, `
 
-Text Edit:
-  • Left/Right     -`, D.Move, `cursor
-  • Backspace      -`, D.Create, D.Space, `
-  • Space/Letters  -`, D.Insert, D.Character, `
+`, D.Edit, D.Text, `:
+  • `, D.Arrow, D.Left, `/`, D.Right, `   -`, D.Move, `cursor
+  • Backspace      			-`, D.Create, D.Space, `
+  • Space/Letters  			-`, D.Insert, D.Character, `
 
 Viewport:
-  • Up/Down        - Scroll line
-  • PgUp/PgDown    - Scroll`, D.Page, `
-  • Mouse Wheel    - Scroll`, D.Page, `
+  • `, D.Arrow, D.Up, "/", D.Down, `    - Scroll line
+  • PgUp/PgDown    			- Scroll`, D.Page, `
+  • Mouse Wheel    			- Scroll`, D.Page, `
 
 Scroll Status Icons:
   •  ■  - All content visible
@@ -93,5 +93,5 @@ Exit:
 
 Text selection enabled for copy/paste.
 
-`, D.Language, D.Supported, `: EN, ES, ZH, HI, AR, PT, FR, DE, RU`).String()
+`, D.Language, D.Supported, `: EN, ES, ZH, HI, AR, PT, FR, DE, RU`).Capitalize().String()
 }

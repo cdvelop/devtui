@@ -37,7 +37,7 @@ func (h *shortcutsInteractiveHandler) Label() string {
 func (h *shortcutsInteractiveHandler) GetLastOperationID() string   { return h.lastOpID }
 func (h *shortcutsInteractiveHandler) SetLastOperationID(id string) { h.lastOpID = id }
 
-func (h *shortcutsInteractiveHandler) Value() string { return h.lang }
+func (h *shortcutsInteractiveHandler) Value() string { return Convert(h.lang).Low().String() }
 
 // Change handles both content display and user input via progress()
 func (h *shortcutsInteractiveHandler) Change(newValue string, progress func(msgs ...any)) {
@@ -68,30 +68,27 @@ func (h *shortcutsInteractiveHandler) generateHelpContent() string {
   • Tab/Shift+Tab  -`, D.Switch, D.Content, `
 
 `, D.Fields, `:
-  • Left/Right     -`, D.Switch, D.Field, `
-  • Enter          -`, D.Edit, `/`, D.Execute, `
-  • Esc            -`, D.Cancel, `
+  • `, D.Arrow, D.Left, `/`, D.Right, `     -`, D.Switch, D.Field, `
+  • Enter          				-`, D.Edit, `/`, D.Execute, `
+  • Esc            				-`, D.Cancel, `
 
 `, D.Edit, D.Text, `:
   • `, D.Arrow, D.Left, `/`, D.Right, `   -`, D.Move, `cursor
   • Backspace      			-`, D.Create, D.Space, `
-  • Space/Letters  			-`, D.Insert, D.Character, `
 
 Viewport:
-  • `, D.Arrow, D.Up, "/", D.Down, `    - Scroll line
-  • PgUp/PgDown    			- Scroll`, D.Page, `
-  • Mouse Wheel    			- Scroll`, D.Page, `
+  • `, D.Arrow, D.Up, "/", D.Down, `    - Scroll`, D.Line, D.Text, `
+  • PgUp/PgDown    		- Scroll`, D.Page, `
+  • Mouse Wheel    		- Scroll`, D.Page, `
 
-Scroll Status Icons:
-  •  ■  - All content visible
-  •  ▼  - Can scroll down
-  •  ▲  - Can scroll up
-  • ▼ ▲ - Can scroll both ways
+Scroll `, D.Status, D.Icons, `:
+  •  ■  - `, D.All, D.Content, D.Visible, `
+  •  ▼  - `, D.Can, `scroll`, D.Down, `
+  •  ▲  - `, D.Can, `scroll`, D.Up, `
+  • ▼ ▲ - `, D.Can, `scroll`, D.Down, `/`, D.Up, `
 
-Exit:
-  • Ctrl+C         - Quit
+`, D.Quit, `:
+  • Ctrl+C         - `, D.Quit, `
 
-Text selection enabled for copy/paste.
-
-`, D.Language, D.Supported, `: EN, ES, ZH, HI, AR, PT, FR, DE, RU`).Capitalize().String()
+`, D.Language, D.Supported, `: en, es, zh, hi, ar, pt, fr, de, ru`).String()
 }

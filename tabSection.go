@@ -65,7 +65,7 @@ func (ts *tabSection) Write(p []byte) (n int, err error) {
 	msg := strings.TrimSpace(string(p))
 	if msg != "" {
 		// Detectar automáticamente el tipo de mensaje
-		message, msgType := T(msg).StringType()
+		message, msgType := Translate(msg).StringType()
 
 		// NEW: Determine handler name and operation ID from active writer
 		var handlerName string
@@ -128,7 +128,7 @@ type handlerWriter struct {
 func (hw *handlerWriter) Write(p []byte) (n int, err error) {
 	msg := strings.TrimSpace(string(p))
 	if msg != "" {
-		message, msgType := T(msg).StringType()
+		message, msgType := Translate(msg).StringType()
 
 		var operationID string
 		if handler := hw.tabSection.getWritingHandler(hw.handlerName); handler != nil {

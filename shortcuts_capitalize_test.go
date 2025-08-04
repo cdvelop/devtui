@@ -143,7 +143,7 @@ func TestTranslationWithCapitalize(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// This mimics the exact problem pattern from generateHelpContent
-			result := T("Test", D.Shortcuts, D.Keyboard, `("`+tt.lang+`"):
+			result := Translate("Test", D.Shortcuts, D.Keyboard, `("`+tt.lang+`"):
 
 Tabs:
   • Tab/Shift+Tab  -`, D.Switch, ` tabs`).Capitalize().String()

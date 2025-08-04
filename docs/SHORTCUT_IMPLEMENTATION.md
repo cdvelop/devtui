@@ -275,7 +275,7 @@ func (f *field) sendMessage(msgs ...any) {
     }
 
     // Unified message processing
-    message := tinystring.T(msgs...).String()
+    message := tinystring.Translate(msgs...).String()
     msgType := messagetype.DetectMessageType(message)
     f.parentTab.tui.sendMessageWithHandler(message, msgType, f.parentTab, handlerName, operationID)
 }
@@ -321,7 +321,7 @@ This allows the shortcuts to be displayed in the UI with meaningful descriptions
 ```go
 // NEW: Add to shortcutsInteractiveHandler
 func (h *shortcutsInteractiveHandler) generateHelpContent() string {
-    content := T(h.appName, D.Shortcuts, D.Keyboard, `:
+    content := Translate(h.appName, D.Shortcuts, D.Keyboard, `:
 
 `, D.Content, D.Tab, `:
   • Tab/Shift+Tab  -`, D.Switch, D.Content, `
@@ -361,7 +361,7 @@ Scroll `, D.Status, D.Icons, `:
         }
     }
 
-    content += "\n" + T(D.Language, D.Supported, `: en, es, zh, hi, ar, pt, fr, de, ru`).String()
+    content += "\n" + Translate(D.Language, D.Supported, `: en, es, zh, hi, ar, pt, fr, de, ru`).String()
     return content
 }
 

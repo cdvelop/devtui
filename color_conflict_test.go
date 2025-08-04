@@ -83,8 +83,8 @@ func TestCentralizedMessageProcessing(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.content, func(t *testing.T) {
-			// Test que T(content).StringType() funciona correctamente
-			_, detectedType := T(tc.content).StringType()
+			// Test que Translate(content).StringType() funciona correctamente
+			_, detectedType := Translate(tc.content).StringType()
 
 			if detectedType != tc.expectedType {
 				t.Errorf("FAIL: Expected %v, got %v for: %s", tc.expectedType, detectedType, tc.content)
@@ -141,7 +141,7 @@ func TestLastMessageColorFixed(t *testing.T) {
 			t.Logf("Formatted: %s", formattedMessage)
 
 			// Verificar detección automática de tipo
-			_, detectedType := T(tc.content).StringType()
+			_, detectedType := Translate(tc.content).StringType()
 			if detectedType != tc.expectedType {
 				t.Errorf("❌ DetectMessageType failed: Expected %v, got %v", tc.expectedType, detectedType)
 			} else {

@@ -166,21 +166,9 @@ type HandlerWriter interface {
     Name() string // Writer identifier
 }
 ```
-**[→ See complete implementation example](example/HandlerWriter.go)**
+**[→ See complete HandlerWriter implementation example](example/HandlerWriter.go)**
 
-### 6. HandlerWriterTracker - Advanced Logging (3 methods)
-```go
-type HandlerWriterTracker interface {
-    Name() string
-    MessageTracker
-}
-
-type MessageTracker interface {
-    GetLastOperationID() string
-    SetLastOperationID(id string)
-}
-```
-**[→ See complete implementation example](example/HandlerWriterTracker.go)**
+**[→ See complete HandlerWriterTracker implementation example](example/HandlerWriterTracker.go)**
 
 ## Registration Methods
 

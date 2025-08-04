@@ -46,11 +46,11 @@ This document outlines the planned changes to refactor the `HandlerEdit` and `Ha
 - Update all test cases to reflect the new method signatures and ensure compatibility.
 
 ### Progress Message Handling (New Instruction)
-- For all progress callbacks (e.g., in `field.go`), always join and translate all variadic arguments into a single string using the `T` function from the `tinystring` package before sending or displaying the message.
+- For all progress callbacks (e.g., in `field.go`), always join and translate all variadic arguments into a single string using the `Translate` function from the `tinystring` package before sending or displaying the message.
 - Example usage:
   ```go
   import "github.com/cdvelop/tinystring"
-  msg := tinystring.T(msgs...)
+  msg := tinystring.Translate(msgs...)
   ```
 - This ensures that all progress messages are properly composed, translated, and displayed as a single string, as described in the `TRANSLATE.md` documentation.
 - Update all relevant progress callback implementations to use this approach, replacing any logic that only uses the first argument or assumes a single string.

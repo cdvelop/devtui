@@ -34,7 +34,7 @@ func (h *shortcutsInteractiveHandler) Name() string {
 }
 
 func (h *shortcutsInteractiveHandler) Label() string {
-	return T(D.Language, ":").String()
+	return Translate(D.Language, ":").String()
 }
 
 // MessageTracker implementation for operation tracking
@@ -66,7 +66,7 @@ func (h *shortcutsInteractiveHandler) WaitingForUser() bool {
 
 // generateHelpContent creates the help content string
 func (h *shortcutsInteractiveHandler) generateHelpContent() string {
-	content := T(h.appName, D.Shortcuts, D.Keyboard, `:
+	content := Translate(h.appName, D.Shortcuts, D.Keyboard, `:
 
 `, D.Content, D.Tab, `:
   • Tab/Shift+Tab  -`, D.Switch, D.Content, `
@@ -106,7 +106,7 @@ Scroll `, D.Status, D.Icons, `:
 		}
 	}
 
-	content += "\n" + T(D.Language, D.Supported, `: en, es, zh, hi, ar, pt, fr, de, ru`).String()
+	content += "\n" + Translate(D.Language, D.Supported, `: en, es, zh, hi, ar, pt, fr, de, ru`).String()
 	return content
 }
 

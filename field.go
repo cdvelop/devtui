@@ -391,7 +391,7 @@ func (f *field) triggerContentDisplay() {
 		progressCallback := func(msgs ...any) {
 			if f.parentTab != nil && len(msgs) > 0 {
 				// For regular handlers, create timestamped messages with tracking
-				message, msgType := T(msgs...).StringType()
+				message, msgType := Translate(msgs...).StringType()
 				f.parentTab.tui.sendMessageWithHandler(message, msgType, f.parentTab, handlerName, operationID)
 			}
 		}
@@ -472,7 +472,7 @@ func (f *field) sendMessage(msgs ...any) {
 	}
 
 	// Convert and send message with automatic type detection
-	message, msgType := T(msgs...).StringType()
+	message, msgType := Translate(msgs...).StringType()
 	f.parentTab.tui.sendMessageWithHandler(message, msgType, f.parentTab, handlerName, operationID)
 }
 
@@ -531,7 +531,7 @@ func (f *field) executeAsyncChange(valueToSave any) {
 			}
 
 			// For regular handlers, create timestamped messages (normal behavior)
-			message := T(msgs...).String()
+			message := Translate(msgs...).String()
 			f.sendMessage(message)
 		}
 	}
@@ -607,7 +607,7 @@ func (f *field) executeChangeSyncWithValue(valueToSave any) {
 	// Create empty progress callback for sync test execution
 	progressCallback := func(msgs ...any) {
 		// In sync test mode, we don't send messages to avoid race conditions
-		_ = T(msgs...) // Ensure signature and translation are consistent
+		_ = Translate(msgs...) // Ensure signature and translation are consistent
 	}
 
 	f.handler.Change(valueToSave.(string), progressCallback)
@@ -645,7 +645,7 @@ func (f *field) executeChangeSyncWithTracking(valueToSave any) {
 			}
 
 			// For regular handlers, create timestamped messages with tracking
-			message, msgType := T(msgs...).StringType()
+			message, msgType := Translate(msgs...).StringType()
 			f.parentTab.tui.sendMessageWithHandler(message, msgType, f.parentTab, handlerName, operationID)
 		}
 	}
@@ -664,7 +664,7 @@ func (f *field) executeChangeSyncWithTracking(valueToSave any) {
 		} else {
 			// For regular handlers, send success message
 			result := f.handler.Value()
-			_, msgType := T(result).StringType()
+			_, msgType := Translate(result).StringType()
 			f.parentTab.tui.sendMessageWithHandler(result, msgType, f.parentTab, handlerName, operationID)
 		}
 	}

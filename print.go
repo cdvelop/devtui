@@ -6,7 +6,7 @@ import (
 
 // Print sends a normal Label or error to the tui in current tab
 func (h *DevTUI) Print(messages ...any) {
-	message, msgType := T(messages...).StringType()
+	message, msgType := Translate(messages...).StringType()
 	h.sendMessage(message, msgType, h.tabSections[h.activeTab])
 }
 

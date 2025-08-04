@@ -54,7 +54,7 @@ type BackupHandler struct {
 
 func (h *BackupHandler) Name() string  { return "SystemBackup" }
 func (h *BackupHandler) Label() string { return "Create System Backup" }
-func (h *BackupHandler) Execute(progress func(string)) {
+func (h *BackupHandler) Execute(progress func(msgs ...any)) {
     progress("Preparing backup...")
     time.Sleep(200 * time.Millisecond)
     progress("Backing up database...")
@@ -83,7 +83,7 @@ func main() {
 
     // Operations tab with ExecutionHandlers (action buttons)
     ops := tui.NewTabSection("Operations", "System Operations")
-    ops.AddExecutionHandlerTracking(&BackupHandler{}, 5*time.Second)
+    ops.AddExecutionHandler(&BackupHandler{}, 5*time.Second) // Automatic MessageTracker detection
 
     var wg sync.WaitGroup
     wg.Add(1)
@@ -117,42 +117,14 @@ type HandlerEdit interface {
 }
 ```
 
-**Optional Shortcut Support**: Add `Shortcuts() map[string]string` method to enable global keyboard shortcuts:
+**Optional Shortcut Support**: Add `Shortcuts() map[string]string` method to enable global keyboard shortcuts. The map key is the keyboard shortcut and the value passed to `Change()`. The map value is only for display/description:
 
 ```go
-type DatabaseHandler struct {
-    ConnectionString string
-    LastAction       string
-}
-
-func (h *DatabaseHandler) Name() string  { return "DatabaseConfig" }
-func (h *DatabaseHandler) Label() string { return "Database Connection" }
-func (h *DatabaseHandler) Value() string { return h.ConnectionString }
-
-func (h *DatabaseHandler) Change(newValue string, progress func(msgs ...any)) {
-    switch newValue {
-    case "t":
-        h.LastAction = "test"
-        progress("Testing database connection...")
-        time.Sleep(500 * time.Millisecond)
-        progress("Connection test completed successfully")
-    case "b":
-        h.LastAction = "backup"
-        progress("Starting database backup...")
-        time.Sleep(1000 * time.Millisecond)
-        progress("Database backup completed successfully")
-    default:
-        // Regular connection string update
-        h.ConnectionString = newValue
-        progress("Connection configured successfully")
-    }
-}
-
 // Shortcuts work from any tab and automatically navigate to this field
 func (h *DatabaseHandler) Shortcuts() map[string]string {
     return map[string]string{
-        "t": "test connection",
-        "b": "backup database",
+        "t": "test connection",  // Pressing 't' calls Change("t", progress)
+        "b": "backup database",  // Pressing 'b' calls Change("b", progress)
     }
 }
 ```
@@ -212,37 +184,48 @@ type MessageTracker interface {
 
 ## Registration Methods
 
+DevTUI uses **automatic MessageTracker detection** - simply implement the `MessageTracker` interface and DevTUI will automatically detect and use it for operation tracking:
+
 ```go
 // Display handlers (no timeout needed)
 tab.AddDisplayHandler(handler)
 
 // Edit handlers (timeout mandatory)
-tab.AddEditHandler(handler, 5*time.Second)
-tab.AddEditHandlerTracking(handlerWithTracker, 5*time.Second)
+tab.AddEditHandler(handler, 5*time.Second) // Automatic MessageTracker detection
 
 // Execution handlers (timeout mandatory)
-tab.AddExecutionHandler(handler, 10*time.Second)
-tab.AddExecutionHandlerTracking(handlerWithTracker, 10*time.Second)
+tab.AddExecutionHandler(handler, 10*time.Second) // Automatic MessageTracker detection
 
 // Interactive handlers (timeout mandatory)
-tab.AddInteractiveHandler(handler, 5*time.Second)
-tab.AddInteractiveHandlerTracking(handlerWithTracker, 5*time.Second)
+tab.AddInteractiveHandler(handler, 5*time.Second) // Automatic MessageTracker detection
 
 // Writers (returns io.Writer)
-type LogWriter struct{}
-func (w *LogWriter) Name() string { return "LogWriter" }
-
-writer := tab.RegisterWriterHandler(&LogWriter{}) // io.Writer
+writer := tab.NewWriter("LogWriter", false)        // Basic writer (new lines)
+writerWithTracker := tab.NewWriter("TrackedWriter", true) // Advanced writer (tracking)
 writer.Write([]byte("Log message 1"))
 writer.Write([]byte("Another log entry"))
 ```
+
+### Optional MessageTracker Implementation
+
+To enable **operation tracking** (updating existing messages instead of creating new ones), simply implement the `MessageTracker` interface:
+
+```go
+type MessageTracker interface {
+    GetLastOperationID() string
+    SetLastOperationID(id string)
+}
+```
+
+DevTUI automatically detects when a handler implements `MessageTracker` and enables operation tracking without any additional registration steps.
 
 ## Key Features
 
 - **Minimal Implementation**: 1-4 methods per handler
 - **Specialized Interfaces**: Clear separation by purpose (Display, Edit, Execution, Writing)
 - **Progress Callbacks**: Real-time feedback for long-running operations
-- **Message Tracking**: Update existing messages instead of creating new ones
+- **Automatic MessageTracker Detection**: Optionally implement `MessageTracker` interface for operation tracking
+- **Simple Registration**: Single method per handler type with automatic tracking detection
 - **Method Chaining**: All handler registration methods return `*tabSection` for chaining
 - **Thread-Safe**: Concurrent handler registration and execution
 
@@ -257,7 +240,9 @@ writer.Write([]byte("Another log entry"))
 - **Ctrl+C**: Exit
 - **Global Shortcuts**: Single key shortcuts (e.g., "t", "b") work from any tab when defined in handlers
 
-**Shortcut System**: Handlers implementing `Shortcuts() map[string]string` automatically register global keyboard shortcuts. When pressed, shortcuts navigate to the handler's tab/field and execute the `Change()` method with the shortcut key as value.
+**Shortcut System**: Handlers implementing `Shortcuts() map[string]string` automatically register global keyboard shortcuts. When pressed, shortcuts navigate to the handler's tab/field and execute the `Change()` method with the **map key** as the `newValue` parameter.
+
+**Example**: If shortcuts return `{"t": "test connection"}`, pressing 't' calls `Change("t", progress)`.
 
 
 **Note**: DevTUI automatically loads a built-in [ShortcutsHandler](shortcuts.go) at position 0 in the first tab, which displays detailed keyboard navigation commands. This handler demonstrates the `HandlerEdit` interface and provides interactive help within the application.

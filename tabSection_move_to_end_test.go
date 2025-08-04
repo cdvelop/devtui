@@ -29,7 +29,7 @@ func TestMessageTrackerMoveToEnd(t *testing.T) {
 	tab := tui.NewTabSection("TRACKER", "")
 
 	tracker := &testTracker{}
-	tab.AddEditHandlerTracking(tracker, 5*time.Second)
+	tab.AddEditHandler(tracker, 5*time.Second)
 
 	// Add a normal message
 	tab.addNewContent(Msg.Info, "Normal message")

@@ -41,10 +41,6 @@ func (ts *tabSection) AddEditHandler(handler HandlerEdit, timeout time.Duration)
 }
 
 // AddEditHandlerTracking registers a HandlerEditTracker with mandatory timeout
-func (ts *tabSection) AddEditHandlerTracking(handler HandlerEditTracker, timeout time.Duration) *tabSection {
-	return ts.AddEditHandler(handler, timeout) // HandlerEditTracker extends HandlerEdit
-}
-
 // AddExecutionHandler registers a HandlerExecution with mandatory timeout
 func (ts *tabSection) AddExecutionHandler(handler HandlerExecution, timeout time.Duration) *tabSection {
 	anyH := newExecutionHandler(handler, timeout)
@@ -58,10 +54,6 @@ func (ts *tabSection) AddExecutionHandler(handler HandlerExecution, timeout time
 }
 
 // AddExecutionHandlerTracking registers a HandlerExecutionTracker with mandatory timeout
-func (ts *tabSection) AddExecutionHandlerTracking(handler HandlerExecutionTracker, timeout time.Duration) *tabSection {
-	return ts.AddExecutionHandler(handler, timeout) // HandlerExecutionTracker extends HandlerExecution
-}
-
 // NewWriter creates a writer with the given name and tracking capability
 // enableTracking: true = can update existing lines, false = always creates new lines
 func (ts *tabSection) NewWriter(name string, enableTracking bool) io.Writer {
@@ -118,10 +110,6 @@ func (ts *tabSection) AddInteractiveHandler(handler HandlerInteractive, timeout 
 }
 
 // AddInteractiveHandlerTracking registers a HandlerInteractiveTracker with mandatory timeout
-func (ts *tabSection) AddInteractiveHandlerTracking(handler HandlerInteractiveTracker, timeout time.Duration) *tabSection {
-	return ts.AddInteractiveHandler(handler, timeout) // HandlerInteractiveTracker extends HandlerInteractive
-}
-
 // registerShortcutsIfSupported checks if handler implements shortcut interface and registers shortcuts
 func (ts *tabSection) registerShortcutsIfSupported(handler HandlerEdit, fieldIndex int) {
 	// Check if handler implements shortcut interface

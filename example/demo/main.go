@@ -35,7 +35,7 @@ func main() {
 	// Configuration tab with EditHandlers (interactive fields)
 	config := tui.NewTabSection("Config", "System Configuration")
 	config.AddEditHandler(&example.DatabaseHandler{ConnectionString: "postgres://localhost:5432/mydb"}, 2*time.Second)
-	config.AddExecutionHandlerTracking(&example.BackupHandler{}, 5*time.Second)
+	config.AddExecutionHandler(&example.BackupHandler{}, 5*time.Second)
 
 	// NEW: Chat tab with InteractiveHandler - Demonstrates interactive content management
 	chat := tui.NewTabSection("Chat", "AI Chat Assistant")
@@ -87,7 +87,6 @@ func main() {
 	// • HandlerExecution: Name() + Label() + Execute() - Action buttons
 	// • HandlerInteractive: Name() + Label() + Value() + Change() + WaitingForUser() - Interactive content
 	// • HandlerWriter: Name() - Basic logging (new lines)
-	// • HandlerWriterTracker: Name() + MessageTracker - Advanced logging (can update)
 
 	var wg sync.WaitGroup
 	wg.Add(1)

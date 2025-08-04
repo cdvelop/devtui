@@ -16,26 +16,12 @@ type HandlerEdit interface {
 	Change(newValue string, progress func(msgs ...any)) // Nueva firma: sin error, sin variádico, string
 }
 
-// HandlerEditTracker combines HandlerEdit with MessageTracker for advanced edit handlers
-// that need message tracking capabilities.
-type HandlerEditTracker interface {
-	HandlerEdit
-	MessageTracker
-}
-
 // HandlerExecution defines the interface for action buttons that execute operations.
 // These handlers trigger business logic when activated by the user.
 type HandlerExecution interface {
 	Name() string                       // Identificador para logging: "DeployProd", "BuildProject"
 	Label() string                      // Button label (e.g., "Deploy to Production", "Build Project")
 	Execute(progress func(msgs ...any)) // Nueva firma: sin error, sin variádico
-}
-
-// HandlerExecutionTracker combines HandlerExecution with MessageTracker for advanced execution handlers
-// that need message tracking capabilities.
-type HandlerExecutionTracker interface {
-	HandlerExecution
-	MessageTracker
 }
 
 // HandlerWriter defines the interface for basic writers that create new lines for each write.
@@ -59,13 +45,6 @@ type HandlerInteractive interface {
 	Value() string                                      // Current input value
 	Change(newValue string, progress func(msgs ...any)) // Handle user input + content display via progress
 	WaitingForUser() bool                               // Should edit mode be auto-activated?
-}
-
-// HandlerInteractiveTracker combines HandlerInteractive with MessageTracker
-// for advanced interactive handlers that need message tracking capabilities.
-type HandlerInteractiveTracker interface {
-	HandlerInteractive
-	MessageTracker
 }
 
 // MessageTracker provides optional interface for message tracking control.

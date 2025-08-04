@@ -80,7 +80,7 @@ func TestShortcutIntegration_NavigationBetweenTabs(t *testing.T) {
 	config.AddEditHandler(databaseHandler, 2*time.Second)
 
 	backupHandler := &example.BackupHandler{}
-	config.AddExecutionHandlerTracking(backupHandler, 5*time.Second)
+	config.AddExecutionHandler(backupHandler, 5*time.Second)
 
 	// Initially on first tab (shortcuts tab is index 0, Dashboard is index 1)
 	tui.activeTab = 1

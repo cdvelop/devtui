@@ -35,7 +35,7 @@ func TestShortcutBug(t *testing.T) {
 	config_tab.AddEditHandler(databaseHandler, 2*time.Second)
 
 	backupHandler := &example.BackupHandler{}
-	config_tab.AddExecutionHandlerTracking(backupHandler, 5*time.Second)
+	config_tab.AddExecutionHandler(backupHandler, 5*time.Second)
 
 	// Initialize viewport
 	tui.viewport.Width = 80

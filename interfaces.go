@@ -46,10 +46,9 @@ type HandlerWriter interface {
 
 // HandlerWriterTracker defines the interface for advanced writers that can update existing lines.
 // These writers support message tracking and can modify previously written content.
-type HandlerWriterTracker interface {
-	Name() string
-	MessageTracker
-}
+// HandlerWriterTracker defines the interface for advanced writers that can update existing lines.
+// These writers support message tracking and can modify previously written content.
+// This interface has been removed to limit public exposure.
 
 // HandlerInteractive defines the interface for interactive content handlers.
 // These handlers combine content display with user interaction capabilities.

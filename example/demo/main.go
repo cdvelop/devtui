@@ -50,7 +50,7 @@ func main() {
 	logs := tui.NewTabSection("Logs", "System Logs")
 
 	// Basic writer (always creates new lines)
-	systemWriter := logs.RegisterWriterHandler(&example.SystemLogWriter{})
+	systemWriter := logs.NewWriter("SystemLogWriter", false)
 	systemWriter.Write([]byte("System initialized"))
 	systemWriter.Write([]byte("API demo started"))
 	systemWriter.Write([]byte("Chat interface enabled"))
@@ -64,7 +64,7 @@ func main() {
 	}()
 
 	// Advanced writer (can update existing messages with tracking)
-	opWriter := logs.RegisterWriterHandler(&example.OperationLogWriter{})
+	opWriter := logs.NewWriter("OperationLogWriter", true)
 	opWriter.Write([]byte("Operation tracking enabled"))
 
 	// Generate more tracking entries to test Page Up/Page Down navigation

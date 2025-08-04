@@ -214,7 +214,11 @@ func newWriterHandler(h HandlerWriter) *anyHandler {
 	}
 }
 
-func newTrackerWriterHandler(h HandlerWriterTracker) *anyHandler {
+func newTrackerWriterHandler(h interface {
+	Name() string
+	GetLastOperationID() string
+	SetLastOperationID(string)
+}) *anyHandler {
 	return &anyHandler{
 		handlerType: handlerTypeTrackerWriter,
 		nameFunc:    h.Name,

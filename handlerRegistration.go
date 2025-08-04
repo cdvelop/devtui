@@ -35,12 +35,7 @@ func (ts *tabSection) AddEditHandler(handler HandlerEdit, timeout time.Duration)
 	// NEW: Check for shortcut support and register shortcuts
 	ts.registerShortcutsIfSupported(handler, len(ts.fieldHandlers)-1)
 
-	// Auto-register handler for writing if it implements HandlerWriterTracker
-	if _, ok := handler.(HandlerWriterTracker); ok {
-		if writerHandler, ok := handler.(HandlerWriter); ok {
-			ts.RegisterWriterHandler(writerHandler)
-		}
-	}
+	// REMOVED: Auto-register handler for writing if it implements HandlerWriterTracker (obsolete)
 
 	return ts
 }
@@ -67,9 +62,42 @@ func (ts *tabSection) AddExecutionHandlerTracking(handler HandlerExecutionTracke
 	return ts.AddExecutionHandler(handler, timeout) // HandlerExecutionTracker extends HandlerExecution
 }
 
-// RegisterWriterHandler registers a writer handler and returns io.Writer (kept from existing API)
-func (ts *tabSection) RegisterWriterHandler(handler HandlerWriter) io.Writer {
-	return ts.RegisterHandlerWriter(handler) // Delegate to existing implementation
+// NewWriter creates a writer with the given name and tracking capability
+// enableTracking: true = can update existing lines, false = always creates new lines
+func (ts *tabSection) NewWriter(name string, enableTracking bool) io.Writer {
+	if enableTracking {
+		handler := &simpleWriterTrackerHandler{name: name}
+		return ts.registerWriter(handler)
+	} else {
+		handler := &simpleWriterHandler{name: name}
+		return ts.registerWriter(handler)
+	}
+}
+
+// Internal simple handler implementations
+type simpleWriterHandler struct {
+	name string
+}
+
+func (w *simpleWriterHandler) Name() string {
+	return w.name
+}
+
+type simpleWriterTrackerHandler struct {
+	name            string
+	lastOperationID string
+}
+
+func (w *simpleWriterTrackerHandler) Name() string {
+	return w.name
+}
+
+func (w *simpleWriterTrackerHandler) GetLastOperationID() string {
+	return w.lastOperationID
+}
+
+func (w *simpleWriterTrackerHandler) SetLastOperationID(id string) {
+	w.lastOperationID = id
 }
 
 // AddInteractiveHandler registers a HandlerInteractive with mandatory timeout

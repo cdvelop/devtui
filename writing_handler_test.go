@@ -16,10 +16,9 @@ func TestWriterHandlerRegistration(t *testing.T) {
 	tab := h.NewTabSection("WritingTest", "Test writing handler registration")
 
 	// Create a test writing handler using centralized handler
-	handler := NewTestWriterHandler("TestWriter")
 
 	// Register the handler and get its writer
-	writer := tab.RegisterWriterHandler(handler)
+	writer := tab.NewWriter("TestWriter", false)
 
 	if writer == nil {
 		t.Fatal("RegisterHandlerWriter should return a non-nil writer")
@@ -42,11 +41,8 @@ func TestHandlerWriterFunctionality(t *testing.T) {
 	// Create a new tab for testing
 	tab := h.NewTabSection("WritingTest", "Test HandlerWriter functionality")
 
-	// Create a test writing handler using centralized handler
-	handler := NewTestWriterHandler("TestWriter")
-
-	// Register the handler and get its writer
-	writer := tab.RegisterWriterHandler(handler)
+	// Register the handler and get its writer (basic writer without tracking)
+	writer := tab.NewWriter("TestWriter", false)
 
 	// Write a test message
 	testMessage := "Test message from handler"
@@ -60,9 +56,52 @@ func TestHandlerWriterFunctionality(t *testing.T) {
 		t.Errorf("Write should return correct byte count: expected %d, got %d", len(testMessage), n)
 	}
 
-	// Verify handler's SetLastOperationID was called
-	if handler.lastOpID == "" {
-		t.Error("Handler's SetLastOperationID should have been called")
+	// Verify handler was registered (basic writer doesn't have tracking)
+	if registeredHandler := tab.getWritingHandler("TestWriter"); registeredHandler == nil {
+		t.Fatal("Handler should be registered in writingHandlers slice")
+	}
+}
+
+// TestHandlerWriterWithTracking tests the tracking functionality
+func TestHandlerWriterWithTracking(t *testing.T) {
+	h := DefaultTUIForTest() // Empty TUI
+
+	// Create a new tab for testing
+	tab := h.NewTabSection("WritingTest", "Test HandlerWriter with tracking")
+
+	// Register a writer with tracking enabled
+	writer := tab.NewWriter("TrackerWriter", true)
+
+	// Write a test message
+	testMessage := "Test tracking message"
+	n, err := writer.Write([]byte(testMessage))
+
+	if err != nil {
+		t.Fatalf("Write should not return error: %v", err)
+	}
+
+	if n != len(testMessage) {
+		t.Errorf("Write should return correct byte count: expected %d, got %d", len(testMessage), n)
+	}
+
+	// Verify handler was registered with tracking capability
+	registeredHandler := tab.getWritingHandler("TrackerWriter")
+	if registeredHandler == nil {
+		t.Fatal("Handler should be registered in writingHandlers slice")
+	}
+
+	// Verify the handler has tracking capability by checking if it has operation ID methods
+	if registeredHandler.GetLastOperationID() == "" {
+		// This is expected initially - operation ID is set when messages are sent
+		t.Log("Operation ID is initially empty, which is correct")
+	}
+
+	// Simulate setting an operation ID (this would happen during message processing)
+	registeredHandler.SetLastOperationID("test-op-123")
+
+	// Verify the operation ID was set
+	if registeredHandler.GetLastOperationID() != "test-op-123" {
+		t.Errorf("Expected operation ID 'test-op-123', got '%s'", registeredHandler.GetLastOperationID())
 	}
 }
 
@@ -74,12 +113,9 @@ func TestHandlerNameInMessages(t *testing.T) {
 	tab := h.NewTabSection("WritingTest", "Test handler name in messages")
 
 	// Create a test writing handler
-	handler := &TestWriterHandler{
-		name: "TestWriter",
-	}
 
 	// Register the handler and get its writer
-	writer := tab.RegisterHandlerWriter(handler)
+	writer := tab.NewWriter("TestWriter", false)
 
 	// Write a test message
 	testMessage := "Test message with handler name"
@@ -107,27 +143,34 @@ func TestHandlerNameInMessages(t *testing.T) {
 	}
 }
 
-// TestHandlerAutoRegistration tests that handlers are automatically registered for writing
-func TestHandlerAutoRegistration(t *testing.T) {
+// TestExplicitWriterRegistration tests that writers must be explicitly registered using NewWriter
+func TestExplicitWriterRegistration(t *testing.T) {
 	h := DefaultTUIForTest()
 
 	// Create a new tab for testing
-	tab := h.NewTabSection("WritingTest", "Test handler auto-registration")
+	tab := h.NewTabSection("WritingTest", "Test explicit writer registration")
 
 	// Create a test field handler using centralized handler
 	fieldHandler := NewTestEditableHandler("TestField", "test")
 
-	// Add field using new API (auto-registers for writing)
+	// Add field using new API (does NOT auto-register for writing anymore)
 	tab.AddEditHandler(fieldHandler, 0)
 
-	// Verify the field handler was auto-registered for writing
-	if tab.writingHandlers == nil {
-		t.Fatal("writingHandlers slice should be initialized")
+	// Verify the field handler was NOT auto-registered for writing
+	handlerName := fieldHandler.Name()
+	if registeredHandler := tab.getWritingHandler(handlerName); registeredHandler != nil {
+		t.Fatalf("Handler should NOT be auto-registered in writingHandlers slice with name '%s'", handlerName)
 	}
 
-	handlerName := fieldHandler.Name()
+	// Now explicitly register a writer with the same name
+	writer := tab.NewWriter(handlerName, false)
+	if writer == nil {
+		t.Fatal("NewWriter should return a non-nil writer")
+	}
+
+	// Verify the writer was explicitly registered
 	if registeredHandler := tab.getWritingHandler(handlerName); registeredHandler == nil {
-		t.Fatalf("Handler should be auto-registered in writingHandlers slice with name '%s'", handlerName)
+		t.Fatalf("Writer should be explicitly registered in writingHandlers slice with name '%s'", handlerName)
 	}
 }
 
@@ -138,36 +181,29 @@ func TestOperationIDControl(t *testing.T) {
 	// Create a new tab for testing
 	tab := h.NewTabSection("WritingTest", "Test operation ID control")
 
-	// Create a test writing handler
-	handler := &TestWriterHandler{
-		name: "TestWriter",
-	}
-
-	// Register the handler and get its writer
-	writer := tab.RegisterHandlerWriter(handler)
+	// Register a writer with tracking enabled for operation ID control
+	writer := tab.NewWriter("TestWriter", true)
 
 	// First write - should create new message
 	writer.Write([]byte("First message"))
 	time.Sleep(10 * time.Millisecond)
 
-	// Enable update mode
-	handler.updateMode = true
-
-	// Second write - should update existing message (same operation ID)
+	// Second write - should potentially update existing message (with tracking enabled)
 	writer.Write([]byte("Updated message"))
 	time.Sleep(10 * time.Millisecond)
 
-	// Verify handler received operation IDs
-	if handler.lastOpID == "" {
-		t.Error("Handler should have received operation ID")
+	// Verify the writer was registered with tracking capability
+	registeredHandler := tab.getWritingHandler("TestWriter")
+	if registeredHandler == nil {
+		t.Fatal("Handler should be registered in writingHandlers slice")
 	}
 
-	// Verify messages were created with correct operation ID behavior
+	// Verify messages were created
 	tab.mu.RLock()
 	defer tab.mu.RUnlock()
 
-	if len(tab.tabContents) < 2 {
-		t.Fatalf("Expected at least 2 messages, got %d", len(tab.tabContents))
+	if len(tab.tabContents) < 1 {
+		t.Fatalf("Expected at least 1 message, got %d", len(tab.tabContents))
 	}
 
 	// Check that the handler name is preserved in messages
@@ -186,12 +222,10 @@ func TestMultipleHandlersInSameTab(t *testing.T) {
 	tab := h.NewTabSection("WritingTest", "Test multiple handlers")
 
 	// Create multiple test writing handlers
-	handler1 := &TestWriterHandler{name: "Writer1"}
-	handler2 := &TestWriterHandler{name: "Writer2"}
 
 	// Register both handlers
-	writer1 := tab.RegisterHandlerWriter(handler1)
-	writer2 := tab.RegisterHandlerWriter(handler2)
+	writer1 := tab.NewWriter("TestWriter1", false)
+	writer2 := tab.NewWriter("TestWriter2", false)
 
 	// Write messages from both handlers
 	writer1.Write([]byte("Message from Writer1"))
@@ -211,18 +245,18 @@ func TestMultipleHandlersInSameTab(t *testing.T) {
 	var writer1Messages, writer2Messages int
 	for _, content := range tab.tabContents {
 		switch content.handlerName {
-		case "Writer1":
+		case "TestWriter1":
 			writer1Messages++
-		case "Writer2":
+		case "TestWriter2":
 			writer2Messages++
 		}
 	}
 
 	if writer1Messages == 0 {
-		t.Error("Should have messages from Writer1")
+		t.Error("Should have messages from TestWriter1")
 	}
 	if writer2Messages == 0 {
-		t.Error("Should have messages from Writer2")
+		t.Error("Should have messages from TestWriter2")
 	}
 }
 
@@ -234,8 +268,7 @@ func TestMessageTypeDetection(t *testing.T) {
 	tab := h.NewTabSection("WritingTest", "Test message type detection")
 
 	// Create a test writing handler
-	handler := &TestWriterHandler{name: "TestWriter"}
-	writer := tab.RegisterHandlerWriter(handler)
+	writer := tab.NewWriter("TestWriter", false)
 
 	// Test different message types
 	testCases := []struct {

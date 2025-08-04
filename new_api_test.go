@@ -71,8 +71,8 @@ func TestNewAPIHandlers(t *testing.T) {
 	tab.AddExecutionHandler(&testRunHandler{}, 10*time.Second) // Async
 
 	// Test Writer registration
-	basicWriter := tab.RegisterWriterHandler(&testWriterBasic{})
-	trackerWriter := tab.RegisterWriterHandler(&testWriterTracker{})
+	basicWriter := tab.NewWriter("testWriterBasic", false)
+	trackerWriter := tab.NewWriter("testWriterTracker", true)
 
 	// Verify field count (5 fields registered)
 	if len(tab.fieldHandlers) != 5 {

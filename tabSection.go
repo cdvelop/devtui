@@ -32,10 +32,10 @@ type tabContent struct {
 
 // tabSection represents a tab section in the TUI with configurable fields and content
 type tabSection struct {
-	index         int      // index of the tab
-	title         string   // eg: "BUILD", "TEST"
-	fieldHandlers []*field // Field actions configured for the section
-	sectionFooter string   // eg: "Press 't' to compile", "Press 'r' to run tests"
+	index              int      // index of the tab
+	title              string   // eg: "BUILD", "TEST"
+	fieldHandlers      []*field // Field actions configured for the section
+	sectionDescription string   // eg: "Press 't' to compile", "Press 'r' to run tests"
 	// internal use
 	tabContents          []tabContent // message contents
 	indexActiveEditField int          // Índice del campo de configuración seleccionado
@@ -88,17 +88,19 @@ func (ts *tabSection) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-// RegisterHandlerWriter registers a writer handler (basic or tracker) and returns a dedicated writer
-// Automatically detects if handler implements HandlerWriterTracker interface for tracking capabilities
-func (ts *tabSection) RegisterHandlerWriter(handler HandlerWriter) io.Writer {
+// registerWriter is the single internal method that handles both basic and tracking writers automatically
+func (ts *tabSection) registerWriter(handler HandlerWriter) io.Writer {
 	ts.mu.Lock()
 	defer ts.mu.Unlock()
 
 	var anyH *anyHandler
-
-	// Check if handler also implements HandlerWriterTracker interface
-	if trackerHandler, ok := handler.(HandlerWriterTracker); ok {
-		anyH = newTrackerWriterHandler(trackerHandler)
+	// Automatically detect if handler implements HandlerWriterTracker (Name + MessageTracker)
+	if tracker, ok := handler.(interface {
+		Name() string
+		GetLastOperationID() string
+		SetLastOperationID(string)
+	}); ok {
+		anyH = newTrackerWriterHandler(tracker)
 	} else {
 		anyH = newWriterHandler(handler)
 	}
@@ -202,12 +204,12 @@ func (ts *tabSection) SetTitle(title string) {
 
 // Footer returns the tab section footer text
 func (ts *tabSection) Footer() string {
-	return ts.sectionFooter
+	return ts.sectionDescription
 }
 
 // SetFooter sets the tab section footer text
 func (ts *tabSection) SetFooter(footer string) {
-	ts.sectionFooter = footer
+	ts.sectionDescription = footer
 }
 
 // FieldHandlers returns the field handlers slice
@@ -220,12 +222,12 @@ func (ts *tabSection) FieldHandlers() []*field {
 //
 // Example:
 //
-//	tab := tui.NewTabSection("BUILD", "Press enter to compile")
-func (t *DevTUI) NewTabSection(title, footer string) *tabSection {
+//	tab := tui.NewTabSection("BUILD", "Compiler Section")
+func (t *DevTUI) NewTabSection(title, description string) *tabSection {
 	tab := &tabSection{
-		title:         title,
-		sectionFooter: footer,
-		tui:           t,
+		title:              title,
+		sectionDescription: description,
+		tui:                t,
 	}
 
 	// Automatically add to tabSections and initialize
@@ -245,41 +247,6 @@ func (ts *tabSection) SetActiveEditField(idx int) {
 	ts.indexActiveEditField = idx
 }
 
-// AddTabSections adds one or more tabSections to the DevTUI
-// If a tab with title "DEFAULT" exists, it will be replaced by the first tab section
-// Deprecated: Use NewTabSection and append to tabSections directly
-func (t *DevTUI) AddTabSections(sections ...*tabSection) *DevTUI {
-	if len(sections) == 0 {
-		return t
-	}
-
-	// Check if there's a "DEFAULT" tab to replace
-	defaultTabIndex := -1
-	for i, tab := range t.tabSections {
-		if tab.Title() == defaultTabName {
-			defaultTabIndex = i
-			break
-		}
-	}
-
-	// Replace DEFAULT tab if found
-	if defaultTabIndex >= 0 && len(sections) > 0 {
-		// Initialize first section for replacement
-		t.initTabSection(sections[0], defaultTabIndex)
-		t.tabSections[defaultTabIndex] = sections[0]
-
-		// Add remaining sections
-		if len(sections) > 1 {
-			t.addNewTabSections(sections[1:]...)
-		}
-	} else {
-		// Just add all sections normally
-		t.addNewTabSections(sections...)
-	}
-
-	return t
-}
-
 // Helper method to initialize a single tabSection
 func (t *DevTUI) initTabSection(section *tabSection, index int) {
 	section.index = index
@@ -292,16 +259,6 @@ func (t *DevTUI) initTabSection(section *tabSection, index int) {
 		handlers[j].cursor = 0
 	}
 	section.setFieldHandlers(handlers)
-}
-
-// Helper method to add multiple tab sections
-func (t *DevTUI) addNewTabSections(sections ...*tabSection) {
-	startIdx := len(t.tabSections)
-	for i, section := range sections {
-		section.index = startIdx + i
-		section.tui = t
-		t.tabSections = append(t.tabSections, section)
-	}
 }
 
 // GetTotalTabSections returns the total number of tab sections

@@ -28,27 +28,6 @@ func TestNewTUI(t *testing.T) {
 	// The default tab should be titled "DEFAULT" according to new.go
 }
 
-func TestCustomTabs(t *testing.T) { // Create a custom configuration with custom tabs
-	customSection := NewTUI(&TuiConfig{}).NewTabSection("CUSTOM1", "custom footer")
-
-	// Create handler for testing
-	testHandler := NewTestEditableHandler("Test Field", "test value")
-
-	// Provide a dummy duration (e.g., 0) as required by AddEditHandler
-	customSection.AddEditHandler(testHandler, 0)
-
-	config := &TuiConfig{
-		ExitChan: make(chan bool),
-		Color:    &ColorStyle{},
-	}
-
-	// Add custom tab section
-	NewTUI(config).AddTabSections(customSection)
-
-	// Since internal fields are not accessible in real usage,
-	// we can only test that the TUI was modified successfully
-}
-
 func TestMultipleTabSections(t *testing.T) {
 	// Test that NewTUI correctly adds multiple tab sections
 	config := &TuiConfig{

@@ -214,6 +214,14 @@ func (h *DevTUI) handleNormalModeKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 			h.updateViewport()
 		}
 
+	case tea.KeyRunes: // NEW: Handle single character shortcuts
+		if len(msg.Runes) == 1 {
+			key := string(msg.Runes[0])
+			if entry, exists := h.shortcutRegistry.Get(key); exists {
+				return h.executeShortcut(entry)
+			}
+		}
+
 	case tea.KeyCtrlC:
 		close(h.ExitChan) // Cerrar el canal para señalizar a todas las goroutines
 		// Usar tea.Sequence para asegurar que ExitAltScreen se ejecute antes de Quit
@@ -241,4 +249,48 @@ func (h *DevTUI) checkAndTriggerInteractiveContent() {
 		// Trigger content display for interactive handlers when field is selected
 		activeField.triggerContentDisplay()
 	}
+}
+
+// executeShortcut executes a registered shortcut action
+func (h *DevTUI) executeShortcut(entry *ShortcutEntry) (bool, tea.Cmd) {
+	// Validate indexes are still valid
+	if entry.TabIndex >= len(h.tabSections) {
+		if h.LogToFile != nil {
+			h.LogToFile("Shortcut error: invalid tab index", entry.TabIndex)
+		}
+		return false, nil // Stop processing for invalid shortcuts
+	}
+
+	targetTab := h.tabSections[entry.TabIndex]
+	fieldHandlers := targetTab.FieldHandlers()
+	if entry.FieldIndex >= len(fieldHandlers) {
+		if h.LogToFile != nil {
+			h.LogToFile("Shortcut error: invalid field index", entry.FieldIndex)
+		}
+		return false, nil // Stop processing for invalid shortcuts
+	}
+
+	targetField := fieldHandlers[entry.FieldIndex]
+
+	// Navigate to target tab if not already there
+	if h.activeTab != entry.TabIndex {
+		h.activeTab = entry.TabIndex
+	}
+
+	// Set active field
+	targetTab.indexActiveEditField = entry.FieldIndex
+
+	// Execute the Change method with shortcut value
+	if targetField.handler != nil {
+		progress := func(msgs ...any) {
+			// Use the new unified sendMessage method
+			targetField.sendMessage(msgs...)
+		}
+		targetField.handler.Change(entry.Value, progress)
+	}
+
+	// Update viewport to show changes
+	h.updateViewport()
+
+	return false, nil // Stop further processing
 }

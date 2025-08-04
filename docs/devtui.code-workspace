@@ -29,9 +29,6 @@
 		},
 		{
 			"path": "../../devscripts"
-		},
-		{
-			"path": "../../../Archive/docpdf"
 		}
 	],
 	"settings": {}

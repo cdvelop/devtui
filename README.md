@@ -116,6 +116,47 @@ type HandlerEdit interface {
     Change(newValue string, progress func(msgs ...any))
 }
 ```
+
+**Optional Shortcut Support**: Add `Shortcuts() map[string]string` method to enable global keyboard shortcuts:
+
+```go
+type DatabaseHandler struct {
+    ConnectionString string
+    LastAction       string
+}
+
+func (h *DatabaseHandler) Name() string  { return "DatabaseConfig" }
+func (h *DatabaseHandler) Label() string { return "Database Connection" }
+func (h *DatabaseHandler) Value() string { return h.ConnectionString }
+
+func (h *DatabaseHandler) Change(newValue string, progress func(msgs ...any)) {
+    switch newValue {
+    case "t":
+        h.LastAction = "test"
+        progress("Testing database connection...")
+        time.Sleep(500 * time.Millisecond)
+        progress("Connection test completed successfully")
+    case "b":
+        h.LastAction = "backup"
+        progress("Starting database backup...")
+        time.Sleep(1000 * time.Millisecond)
+        progress("Database backup completed successfully")
+    default:
+        // Regular connection string update
+        h.ConnectionString = newValue
+        progress("Connection configured successfully")
+    }
+}
+
+// Shortcuts work from any tab and automatically navigate to this field
+func (h *DatabaseHandler) Shortcuts() map[string]string {
+    return map[string]string{
+        "t": "test connection",
+        "b": "backup database",
+    }
+}
+```
+
 **[→ See complete implementation example](example/HandlerEdit.go)**
 
 ### 3. HandlerExecution - Action Buttons (3 methods)
@@ -214,6 +255,9 @@ writer.Write([]byte("Another log entry"))
 - **Enter**: Edit/Execute
 - **Esc**: Cancel edit
 - **Ctrl+C**: Exit
+- **Global Shortcuts**: Single key shortcuts (e.g., "t", "b") work from any tab when defined in handlers
+
+**Shortcut System**: Handlers implementing `Shortcuts() map[string]string` automatically register global keyboard shortcuts. When pressed, shortcuts navigate to the handler's tab/field and execute the `Change()` method with the shortcut key as value.
 
 
 **Note**: DevTUI automatically loads a built-in [ShortcutsHandler](shortcuts.go) at position 0 in the first tab, which displays detailed keyboard navigation commands. This handler demonstrates the `HandlerEdit` interface and provides interactive help within the application.

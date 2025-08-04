@@ -15,12 +15,6 @@ func TestUIDisplayBug(t *testing.T) {
 		config := &TuiConfig{
 			AppName:  "DevTUI - Display Bug Test",
 			ExitChan: make(chan bool),
-			Color: &ColorStyle{
-				Foreground: "#F4F4F4",
-				Background: "#000000",
-				Highlight:  "#FF6600",
-				Lowlight:   "#666666",
-			},
 			LogToFile: func(messages ...any) {
 				t.Logf("DevTUI Log: %v", messages)
 			},

@@ -8,46 +8,43 @@ import (
 
 func TestCapitalizeWithMultilineTranslation(t *testing.T) {
 	tests := []struct {
-		name        string
-		appName     string
-		lang        string
-		expected    string
-		description string
+		name          string
+		appName       string
+		lang          string
+		shortcutsText string // Expected shortcuts text in the language
+		languageText  string // Expected language support text in the language
 	}{
 		{
-			name:        "Simple multiline with Capitalize",
-			appName:     "TestApp",
-			lang:        "EN",
-			expected:    "Testapp Shortcuts Keyboard (\"En\"):\n\nTabs:\n  • Tab/Shift+Tab  - Switch Tabs\n\nFields:\n  • Left/Right     - Navigate Fields\n  • Enter          - Edit/Execute\n  • Esc            - Cancel\n\nLanguage Supported: En, Es, Zh, Hi, Ar, Pt, Fr, De, Ru",
-			description: "Test that Capitalize preserves multiline structure",
+			name:          "English translation",
+			appName:       "TestApp",
+			lang:          "EN",
+			shortcutsText: "Shortcuts",
+			languageText:  "Language Supported",
 		},
 		{
-			name:        "Spanish translation multiline",
-			appName:     "TestApp",
-			lang:        "ES",
-			expected:    "Testapp Atajos Teclado (\"Es\"):\n\nPestañas:\n  • Tab/Shift+Tab  - Cambiar Pestañas\n\nCampos:\n  • Left/Right     - Navegar Campos\n  • Enter          - Editar/Ejecutar\n  • Esc            - Cancelar\n\nIdioma Soportado: En, Es, Zh, Hi, Ar, Pt, Fr, De, Ru",
-			description: "Test Spanish translation with multiline format preservation",
-		},
-		{
-			name:        "Complex format preservation",
-			appName:     "DevTUI",
-			lang:        "EN",
-			expected:    "Devtui Shortcuts Keyboard (\"En\"):\n\nTabs:\n  • Tab/Shift+Tab  - Switch Tabs\n\nFields:\n  • Left/Right     - Navigate Fields\n  • Enter          - Edit/Execute\n  • Esc            - Cancel\n\nText Edit:\n  • Left/Right     - Move Cursor\n  • Backspace      - Create Space\n  • Space/Letters  - Insert Character\n\nLanguage Supported: En, Es, Zh, Hi, Ar, Pt, Fr, De, Ru",
-			description: "Test complex multiline structure with indentation and bullets",
+			name:          "Spanish translation",
+			appName:       "TestApp",
+			lang:          "ES",
+			shortcutsText: "Atajos",
+			languageText:  "Idioma Soportado",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Simulate the generateHelpContent method but simplified
-			result := generateSimplifiedHelpContent(tt.appName, tt.lang)
+			// Set the language for tinystring translations
+			OutLang(tt.lang)
 
-			// Check if the result maintains proper formatting
-			if result != tt.expected {
-				t.Errorf("Test %s failed.\nExpected: %q\nGot:      %q", tt.name, tt.expected, result)
+			// Create handler and use the actual generateHelpContent method
+			handler := &shortcutsInteractiveHandler{
+				appName: tt.appName,
+				lang:    tt.lang,
+				tui:     nil, // No shortcuts registry for this test
 			}
 
-			// Additional checks for format preservation
+			result := handler.generateHelpContent()
+
+			// Basic validation checks
 			if !containsNewlines(result) {
 				t.Errorf("Test %s: Result should contain newlines for proper formatting", tt.name)
 			}
@@ -59,29 +56,20 @@ func TestCapitalizeWithMultilineTranslation(t *testing.T) {
 			if !containsIndentation(result) {
 				t.Errorf("Test %s: Result should preserve indentation spaces", tt.name)
 			}
+
+			// Verify the content contains expected sections in the correct language
+			if !Contains(result, tt.shortcutsText) {
+				t.Errorf("Test %s: Result should contain '%s' text", tt.name, tt.shortcutsText)
+			}
+
+			if !Contains(result, tt.languageText) {
+				t.Errorf("Test %s: Result should contain '%s' text", tt.name, tt.languageText)
+			}
+
+			// Log the actual result for debugging
+			t.Logf("Language: %s\nResult: %s", tt.lang, result)
 		})
 	}
-}
-
-// generateSimplifiedHelpContent simulates the corrected method without Capitalize
-func generateSimplifiedHelpContent(appName, lang string) string {
-	// Fixed version: NOT using Capitalize() to preserve multiline formatting
-	return T(appName, D.Shortcuts, D.Keyboard, `("`+lang+`"):
-
-Tabs:
-  • Tab/Shift+Tab  -`, D.Switch, ` tabs
-
-`, D.Fields, `:
-  • Left/Right     - Navigate fields
-  • Enter          - Edit/Execute
-  • Esc            -`, D.Cancel, `
-
-Text Edit:
-  • Left/Right     -`, D.Move, `cursor
-  • Backspace      -`, D.Create, D.Space, `
-  • Space/Letters  -`, D.Insert, D.Character, `
-
-`, D.Language, D.Supported, `: EN, ES, ZH, HI, AR, PT, FR, DE, RU`).String()
 }
 
 // Helper functions to verify format preservation

@@ -32,6 +32,8 @@ type DevTUI struct {
 	activeTab         int           // current tab index
 	editModeActivated bool          // global flag to edit config
 
+	shortcutRegistry *ShortcutRegistry // NEW: Global shortcut key registry
+
 	currentTime     string
 	tabContentsChan chan tabContent
 	tea             *tea.Program
@@ -84,14 +86,15 @@ func NewTUI(c *TuiConfig) *DevTUI {
 	}
 
 	tui := &DevTUI{
-		TuiConfig:       c,
-		focused:         true, // assume the app is focused
-		tabSections:     []*tabSection{},
-		activeTab:       0, // Will be adjusted in Start() method
-		tabContentsChan: make(chan tabContent, 100),
-		currentTime:     time.Now().Format("15:04:05"),
-		tuiStyle:        newTuiStyle(c.Color),
-		id:              id, // Set the ID here
+		TuiConfig:        c,
+		focused:          true, // assume the app is focused
+		tabSections:      []*tabSection{},
+		activeTab:        0, // Will be adjusted in Start() method
+		tabContentsChan:  make(chan tabContent, 100),
+		currentTime:      time.Now().Format("15:04:05"),
+		tuiStyle:         newTuiStyle(c.Color),
+		id:               id,                    // Set the ID here
+		shortcutRegistry: newShortcutRegistry(), // NEW: Initialize shortcut registry
 	}
 
 	// Always add SHORTCUTS tab first

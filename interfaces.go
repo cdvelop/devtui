@@ -75,3 +75,9 @@ type MessageTracker interface {
 	GetLastOperationID() string
 	SetLastOperationID(id string)
 }
+
+// ShortcutProvider defines the optional interface for handlers that provide global shortcuts.
+// HandlerEdit implementations can implement this interface to enable global shortcut keys.
+type ShortcutProvider interface {
+	Shortcuts() map[string]string // Returns shortcut keys with descriptions (e.g., {"c": "coding mode", "d": "debug mode", "p": "production mode"})
+}

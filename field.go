@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/cdvelop/messagetype"
-	"github.com/cdvelop/tinystring"
+	. "github.com/cdvelop/tinystring"
 )
 
 // ============================================================================
@@ -389,7 +389,7 @@ func (f *field) triggerContentDisplay() {
 		progressCallback := func(msgs ...any) {
 			if f.parentTab != nil && len(msgs) > 0 {
 				// For regular handlers, create timestamped messages with tracking
-				message := tinystring.T(msgs...).String()
+				message := T(msgs...).String()
 				msgType := messagetype.DetectMessageType(message)
 				f.parentTab.tui.sendMessageWithHandler(message, msgType, f.parentTab, handlerName, operationID)
 			}
@@ -445,64 +445,35 @@ func (f *field) getCurrentValue() any {
 	}
 }
 
-// sendProgressMessage sends a progress message through parent tab
-func (f *field) sendProgressMessage(content string) {
-	if f.parentTab != nil && f.parentTab.tui != nil && f.asyncState != nil {
-		handlerName := ""
-		if f.handler != nil {
-			handlerName = f.handler.Name()
-		}
-
-		// NEW: If handler has Content() method, refresh display instead of creating messages
-		if f.hasContentMethod() {
-			// For content-capable handlers, trigger view refresh to call Content() again
-			// This ensures the handler's custom formatting is preserved
-			f.parentTab.tui.updateViewport()
-			return
-		}
-
-		// SOLUCIÓN: Usar detección centralizada como Writers
-		msgType := messagetype.DetectMessageType(content)
-		f.parentTab.tui.sendMessageWithHandler(content, msgType, f.parentTab, handlerName, f.asyncState.operationID)
+// sendMessage sends a message through parent tab with automatic type detection
+// REFACTORIZADO: Reemplaza sendProgressMessage, sendErrorMessage, sendSuccessMessage
+func (f *field) sendMessage(msgs ...any) {
+	if f.parentTab == nil || f.parentTab.tui == nil || len(msgs) == 0 {
+		return
 	}
-}
 
-// sendErrorMessage sends an error message through parent tab
-func (f *field) sendErrorMessage(content string) {
-	if f.parentTab != nil && f.parentTab.tui != nil {
-		var operationID string
-		if f.asyncState != nil {
-			operationID = f.asyncState.operationID
-		}
-
-		handlerName := ""
-		if f.handler != nil {
-			handlerName = f.handler.Name()
-		}
-
-		// SOLUCIÓN: Usar detección centralizada como sendProgressMessage
-		msgType := messagetype.DetectMessageType(content)
-		f.parentTab.tui.sendMessageWithHandler(content, msgType, f.parentTab, handlerName, operationID)
+	// Get operation ID from async state or use empty string
+	var operationID string
+	if f.asyncState != nil && f.asyncState.operationID != "" {
+		operationID = f.asyncState.operationID
 	}
-}
 
-// sendSuccessMessage sends a success message through parent tab
-func (f *field) sendSuccessMessage(content string) {
-	if f.parentTab != nil && f.parentTab.tui != nil {
-		var operationID string
-		if f.asyncState != nil {
-			operationID = f.asyncState.operationID
-		}
-
-		handlerName := ""
-		if f.handler != nil {
-			handlerName = f.handler.Name()
-		}
-
-		// SOLUCIÓN: Usar detección centralizada como sendProgressMessage
-		msgType := messagetype.DetectMessageType(content)
-		f.parentTab.tui.sendMessageWithHandler(content, msgType, f.parentTab, handlerName, operationID)
+	// Get handler name
+	handlerName := ""
+	if f.handler != nil {
+		handlerName = f.handler.Name()
 	}
+
+	// NEW: If handler has Content() method, refresh display instead of creating messages
+	if f.hasContentMethod() {
+		f.parentTab.tui.updateViewport()
+		return
+	}
+
+	// Convert and send message with automatic type detection
+	message := T(msgs...).String()
+	msgType := messagetype.DetectMessageType(message)
+	f.parentTab.tui.sendMessageWithHandler(message, msgType, f.parentTab, handlerName, operationID)
 }
 
 // executeAsyncChange executes the handler's Change method asynchronously
@@ -560,8 +531,8 @@ func (f *field) executeAsyncChange(valueToSave any) {
 			}
 
 			// For regular handlers, create timestamped messages (normal behavior)
-			message := tinystring.T(msgs...).String()
-			f.sendProgressMessage(message)
+			message := T(msgs...).String()
+			f.sendMessage(message)
 		}
 	}
 
@@ -591,7 +562,7 @@ func (f *field) executeAsyncChange(valueToSave any) {
 
 		if res.err != nil {
 			// Handler decides error message content
-			f.sendErrorMessage(res.err.Error())
+			f.sendMessage(res.err.Error())
 		} else {
 			switch f.handler.handlerType {
 			case handlerTypeEdit:
@@ -599,12 +570,12 @@ func (f *field) executeAsyncChange(valueToSave any) {
 				if f.hasContentMethod() {
 					f.parentTab.tui.updateViewport()
 				} else {
-					f.sendSuccessMessage(res.result)
+					f.sendMessage(res.result)
 				}
 			case handlerTypeExecution:
 				// Only send if handler explicitly implements Value()
 				if _, ok := f.handler.origHandler.(interface{ Value() string }); ok {
-					f.sendSuccessMessage(res.result)
+					f.sendMessage(res.result)
 				}
 				// Other handler types: do not send success message
 			}
@@ -615,9 +586,9 @@ func (f *field) executeAsyncChange(valueToSave any) {
 		f.asyncState.isRunning = false
 
 		if ctx.Err() == context.DeadlineExceeded {
-			f.sendErrorMessage(fmt.Sprintf("Operation timed out after %v", timeout))
+			f.sendMessage(fmt.Sprintf("Operation timed out after %v", timeout))
 		} else {
-			f.sendErrorMessage("Operation was cancelled")
+			f.sendMessage("Operation was cancelled")
 		}
 	}
 
@@ -636,7 +607,7 @@ func (f *field) executeChangeSyncWithValue(valueToSave any) {
 	// Create empty progress callback for sync test execution
 	progressCallback := func(msgs ...any) {
 		// In sync test mode, we don't send messages to avoid race conditions
-		_ = tinystring.T(msgs...) // Ensure signature and translation are consistent
+		_ = T(msgs...) // Ensure signature and translation are consistent
 	}
 
 	f.handler.Change(valueToSave.(string), progressCallback)
@@ -674,7 +645,7 @@ func (f *field) executeChangeSyncWithTracking(valueToSave any) {
 			}
 
 			// For regular handlers, create timestamped messages with tracking
-			message := tinystring.T(msgs...).String()
+			message := T(msgs...).String()
 			msgType := messagetype.DetectMessageType(message)
 			f.parentTab.tui.sendMessageWithHandler(message, msgType, f.parentTab, handlerName, operationID)
 		}

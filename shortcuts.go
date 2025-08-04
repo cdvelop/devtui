@@ -2,6 +2,8 @@ package devtui
 
 // createShortcutsTab creates and registers the shortcuts tab with its handler
 import (
+	"fmt"
+
 	. "github.com/cdvelop/tinystring"
 )
 
@@ -12,6 +14,7 @@ func createShortcutsTab(tui *DevTUI) {
 		appName:            tui.AppName,
 		lang:               OutLang(), // Get current language automatically
 		needsLanguageInput: false,     // Initially show help content
+		tui:                tui,       // NEW: Reference to TUI for shortcut registry access
 	}
 	// Use AddInteractiveHandler instead of AddEditHandler
 	shortcutsTab.AddInteractiveHandler(handler, 0)
@@ -20,9 +23,10 @@ func createShortcutsTab(tui *DevTUI) {
 // shortcutsInteractiveHandler - Interactive handler for language selection and help display
 type shortcutsInteractiveHandler struct {
 	appName            string
-	lang               string // e.g. "EN", "ES", etc.
-	needsLanguageInput bool   // Controls when to activate edit mode
-	lastOpID           string // Operation ID for tracking
+	lang               string  // e.g. "EN", "ES", etc.
+	needsLanguageInput bool    // Controls when to activate edit mode
+	lastOpID           string  // Operation ID for tracking
+	tui                *DevTUI // NEW: Reference to TUI for shortcut registry access
 }
 
 func (h *shortcutsInteractiveHandler) Name() string {
@@ -37,7 +41,7 @@ func (h *shortcutsInteractiveHandler) Label() string {
 func (h *shortcutsInteractiveHandler) GetLastOperationID() string   { return h.lastOpID }
 func (h *shortcutsInteractiveHandler) SetLastOperationID(id string) { h.lastOpID = id }
 
-func (h *shortcutsInteractiveHandler) Value() string { return Convert(h.lang).Low().String() }
+func (h *shortcutsInteractiveHandler) Value() string { return h.lang }
 
 // Change handles both content display and user input via progress()
 func (h *shortcutsInteractiveHandler) Change(newValue string, progress func(msgs ...any)) {
@@ -62,7 +66,7 @@ func (h *shortcutsInteractiveHandler) WaitingForUser() bool {
 
 // generateHelpContent creates the help content string
 func (h *shortcutsInteractiveHandler) generateHelpContent() string {
-	return T(h.appName, D.Shortcuts, D.Keyboard, `:
+	content := T(h.appName, D.Shortcuts, D.Keyboard, `:
 
 `, D.Content, D.Tab, `:
   • Tab/Shift+Tab  -`, D.Switch, D.Content, `
@@ -89,6 +93,31 @@ Scroll `, D.Status, D.Icons, `:
 
 `, D.Quit, `:
   • Ctrl+C         - `, D.Quit, `
+`).String()
 
-`, D.Language, D.Supported, `: en, es, zh, hi, ar, pt, fr, de, ru`).String()
+	// NEW: Add registered shortcuts section
+	if h.tui != nil && h.tui.shortcutRegistry != nil {
+		shortcuts := h.getRegisteredShortcuts()
+		if len(shortcuts) > 0 {
+			content += "\n\nRegistered Shortcuts:\n"
+			for key, description := range shortcuts {
+				content += fmt.Sprintf("  • %s - %s\n", key, description)
+			}
+		}
+	}
+
+	content += "\n" + T(D.Language, D.Supported, `: en, es, zh, hi, ar, pt, fr, de, ru`).String()
+	return content
+}
+
+// getRegisteredShortcuts returns all registered shortcuts with descriptions
+func (h *shortcutsInteractiveHandler) getRegisteredShortcuts() map[string]string {
+	shortcuts := make(map[string]string)
+	if h.tui != nil && h.tui.shortcutRegistry != nil {
+		allEntries := h.tui.shortcutRegistry.GetAll()
+		for key, entry := range allEntries {
+			shortcuts[key] = entry.Description
+		}
+	}
+	return shortcuts
 }

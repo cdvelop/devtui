@@ -32,6 +32,9 @@ func (ts *tabSection) AddEditHandler(handler HandlerEdit, timeout time.Duration)
 	}
 	ts.addFields(f)
 
+	// NEW: Check for shortcut support and register shortcuts
+	ts.registerShortcutsIfSupported(handler, len(ts.fieldHandlers)-1)
+
 	// Auto-register handler for writing if it implements HandlerWriterTracker
 	if _, ok := handler.(HandlerWriterTracker); ok {
 		if writerHandler, ok := handler.(HandlerWriter); ok {
@@ -89,4 +92,23 @@ func (ts *tabSection) AddInteractiveHandler(handler HandlerInteractive, timeout 
 // AddInteractiveHandlerTracking registers a HandlerInteractiveTracker with mandatory timeout
 func (ts *tabSection) AddInteractiveHandlerTracking(handler HandlerInteractiveTracker, timeout time.Duration) *tabSection {
 	return ts.AddInteractiveHandler(handler, timeout) // HandlerInteractiveTracker extends HandlerInteractive
+}
+
+// registerShortcutsIfSupported checks if handler implements shortcut interface and registers shortcuts
+func (ts *tabSection) registerShortcutsIfSupported(handler HandlerEdit, fieldIndex int) {
+	// Check if handler implements shortcut interface
+	if shortcutProvider, hasShortcuts := handler.(ShortcutProvider); hasShortcuts {
+		shortcuts := shortcutProvider.Shortcuts()
+		for key, description := range shortcuts {
+			entry := &ShortcutEntry{
+				Key:         key,
+				Description: description,
+				TabIndex:    ts.index,
+				FieldIndex:  fieldIndex,
+				HandlerName: handler.Name(),
+				Value:       key, // Use the key as the value by default
+			}
+			ts.tui.shortcutRegistry.Register(key, entry)
+		}
+	}
 }

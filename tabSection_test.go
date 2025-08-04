@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cdvelop/messagetype"
+	. "github.com/cdvelop/tinystring"
 )
 
 func TestTabSectionWriter(t *testing.T) {
@@ -71,13 +71,13 @@ func TestTabContentsIncrementWhenSendingMessages(t *testing.T) {
 	messages := []struct {
 		rawText      string // Text sent via Fprintln
 		expectedText string // Text stored in tabContents (might be same or trimmed)
-		expectedType messagetype.Type
+		expectedType MessageType
 	}{
-		{"First message", "First message", 0}, // Normal message
-		{"INFO: Second message", "INFO: Second message", messagetype.Info},
-		{"ERROR: Third message", "ERROR: Third message", messagetype.Error},
-		{"WARNING: Fourth message", "WARNING: Fourth message", messagetype.Warning},
-		{"Fifth message", "Fifth message", 0}, // Normal message again
+		{"First message", "First message", Msg.Normal}, // Normal message
+		{"INFO: Second message", "INFO: Second message", Msg.Info},
+		{"ERROR: Third message", "ERROR: Third message", Msg.Error},
+		{"WARNING: Fourth message", "WARNING: Fourth message", Msg.Warning},
+		{"Fifth message", "Fifth message", Msg.Normal}, // Normal message again
 	}
 
 	// Send messages and verify increment

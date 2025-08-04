@@ -1,28 +1,17 @@
 package devtui
 
 import (
-	"fmt"
-
-	"github.com/cdvelop/messagetype"
+	. "github.com/cdvelop/tinystring"
 )
 
 // Print sends a normal Label or error to the tui in current tab
 func (h *DevTUI) Print(messages ...any) {
-	msgType := messagetype.DetectMessageType(messages...)
-	h.sendMessage(joinMessages(messages...), msgType, h.tabSections[h.activeTab])
-}
-
-func joinMessages(messages ...any) (Label string) {
-	var space string
-	for _, m := range messages {
-		Label += space + fmt.Sprint(m)
-		space = " "
-	}
-	return
+	message, msgType := T(messages...).StringType()
+	h.sendMessage(message, msgType, h.tabSections[h.activeTab])
 }
 
 // sendMessage envía un mensaje al tui por el canal de mensajes
-func (d *DevTUI) sendMessage(content string, mt messagetype.Type, tabSection *tabSection, operationID ...string) {
+func (d *DevTUI) sendMessage(content string, mt MessageType, tabSection *tabSection, operationID ...string) {
 	var opID string
 	if len(operationID) > 0 {
 		opID = operationID[0]
@@ -38,7 +27,7 @@ func (d *DevTUI) sendMessage(content string, mt messagetype.Type, tabSection *ta
 }
 
 // NEW: sendMessageWithHandler sends a message with handler identification
-func (d *DevTUI) sendMessageWithHandler(content string, mt messagetype.Type, tabSection *tabSection, handlerName string, operationID string) {
+func (d *DevTUI) sendMessageWithHandler(content string, mt MessageType, tabSection *tabSection, handlerName string, operationID string) {
 	// Use update or add function that handles operationID reuse
 	_, newContent := tabSection.updateOrAddContentWithHandler(mt, content, handlerName, operationID)
 
@@ -65,10 +54,10 @@ func (d *DevTUI) sendMessageWithHandler(content string, mt messagetype.Type, tab
 	} else {
 		// DEBUG: Log when handler is not found (temporary for debugging)
 		if tabSection.tui != nil && tabSection.tui.LogToFile != nil {
-			tabSection.tui.LogToFile(fmt.Sprintf("DEBUG: Handler not found for '%s'. Available field handlers:", handlerName))
+			tabSection.tui.LogToFile(Fmt("DEBUG: Handler not found for '%s'. Available field handlers:", handlerName))
 			for i, field := range tabSection.FieldHandlers() {
 				if field.handler != nil {
-					tabSection.tui.LogToFile(fmt.Sprintf("  [%d] %s", i, field.handler.Name()))
+					tabSection.tui.LogToFile(Fmt("  [%d] %s", i, field.handler.Name()))
 				}
 			}
 		}
@@ -92,25 +81,25 @@ func (t *DevTUI) formatMessage(msg tabContent) string {
 	// Check if message comes from interactive handler - clean format with timestamp only
 	if msg.handlerName != "" && t.isInteractiveHandler(msg.handlerName) {
 		// Interactive handlers: timestamp + content (no handler name for cleaner UX)
-		return fmt.Sprintf("%s %s", timeStr, styledContent)
+		return Fmt("%s %s", timeStr, styledContent)
 	}
 
 	// Default format for other handlers (Edit, Execution, Writers)
 	handlerName := t.formatHandlerName(msg.handlerName)
-	return fmt.Sprintf("%s %s%s", timeStr, handlerName, styledContent)
+	return Fmt("%s %s%s", timeStr, handlerName, styledContent)
 }
 
 // Helper methods to reduce code duplication
 
-func (t *DevTUI) applyMessageTypeStyle(content string, msgType messagetype.Type) string {
+func (t *DevTUI) applyMessageTypeStyle(content string, msgType MessageType) string {
 	switch msgType {
-	case messagetype.Error:
+	case Msg.Error:
 		return t.errStyle.Render(content)
-	case messagetype.Warning:
+	case Msg.Warning:
 		return t.warnStyle.Render(content)
-	case messagetype.Info:
+	case Msg.Info:
 		return t.infoStyle.Render(content)
-	case messagetype.Success:
+	case Msg.Success:
 		return t.okStyle.Render(content)
 	default:
 		return content
@@ -129,7 +118,7 @@ func (t *DevTUI) formatHandlerName(handlerName string) string {
 		return ""
 	}
 	// Aplicar estilo completo a [handlerName] como una unidad
-	styledName := t.infoStyle.Render(fmt.Sprintf("[%s]", handlerName))
+	styledName := t.infoStyle.Render(Fmt("[%s]", handlerName))
 	return styledName + " "
 }
 
@@ -158,7 +147,7 @@ func (t *DevTUI) isInteractiveHandler(handlerName string) bool {
 }
 
 // createTabContent creates tabContent with unified logic (replaces newContent and newContentWithHandler)
-func (h *DevTUI) createTabContent(content string, mt messagetype.Type, tabSection *tabSection, handlerName string, operationID string) tabContent {
+func (h *DevTUI) createTabContent(content string, mt MessageType, tabSection *tabSection, handlerName string, operationID string) tabContent {
 	// Timestamp SIEMPRE nuevo usando GetNewID - Handle gracefully if unixid failed to initialize
 	var timestamp string
 	if h.id != nil {

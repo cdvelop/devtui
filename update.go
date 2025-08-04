@@ -3,7 +3,7 @@ package devtui
 import (
 	"time"
 
-	"github.com/cdvelop/messagetype"
+	. "github.com/cdvelop/tinystring"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -119,7 +119,7 @@ func (h *DevTUI) editingConfigOpen(open bool, currentField *field, msg string) {
 
 	if msg != "" {
 		tabSection := h.tabSections[h.activeTab]
-		tabSection.addNewContent(messagetype.Warning, msg)
+		tabSection.addNewContent(Msg.Warning, msg)
 	}
 
 }

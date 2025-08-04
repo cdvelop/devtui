@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cdvelop/messagetype"
+	. "github.com/cdvelop/tinystring"
 )
 
 const defaultTabName = "DEFAULT"
@@ -18,7 +18,7 @@ type tabContent struct {
 	Id         string // unix number id eg: "1234567890" - INMUTABLE
 	Timestamp  string // unix nano timestamp - MUTABLE (se actualiza en cada cambio)
 	Content    string
-	Type       messagetype.Type
+	Type       MessageType
 	tabSection *tabSection
 
 	// NEW: Async fields (always present, nil when not async)
@@ -65,7 +65,7 @@ func (ts *tabSection) Write(p []byte) (n int, err error) {
 	msg := strings.TrimSpace(string(p))
 	if msg != "" {
 		// Detectar automáticamente el tipo de mensaje
-		msgType := messagetype.DetectMessageType(msg)
+		message, msgType := T(msg).StringType()
 
 		// NEW: Determine handler name and operation ID from active writer
 		var handlerName string
@@ -78,9 +78,9 @@ func (ts *tabSection) Write(p []byte) (n int, err error) {
 			}
 		}
 
-		ts.tui.sendMessageWithHandler(msg, msgType, ts, handlerName, operationID)
+		ts.tui.sendMessageWithHandler(message, msgType, ts, handlerName, operationID)
 		// Si es un error, escribirlo en el archivo de log
-		if msgType == messagetype.Error {
+		if msgType == Msg.Error {
 			ts.tui.LogToFile(msg)
 		}
 
@@ -126,23 +126,23 @@ type handlerWriter struct {
 func (hw *handlerWriter) Write(p []byte) (n int, err error) {
 	msg := strings.TrimSpace(string(p))
 	if msg != "" {
-		msgType := messagetype.DetectMessageType(msg)
+		message, msgType := T(msg).StringType()
 
 		var operationID string
 		if handler := hw.tabSection.getWritingHandler(hw.handlerName); handler != nil {
 			operationID = handler.GetLastOperationID()
 		}
 
-		hw.tabSection.tui.sendMessageWithHandler(msg, msgType, hw.tabSection, hw.handlerName, operationID)
+		hw.tabSection.tui.sendMessageWithHandler(message, msgType, hw.tabSection, hw.handlerName, operationID)
 
-		if msgType == messagetype.Error {
+		if msgType == Msg.Error {
 			hw.tabSection.tui.LogToFile(msg)
 		}
 	}
 	return len(p), nil
 }
 
-func (t *tabSection) addNewContent(msgType messagetype.Type, content string) {
+func (t *tabSection) addNewContent(msgType MessageType, content string) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	t.tabContents = append(t.tabContents, t.tui.createTabContent(content, msgType, t, "", ""))
@@ -150,7 +150,7 @@ func (t *tabSection) addNewContent(msgType messagetype.Type, content string) {
 
 // NEW: updateOrAddContentWithHandler updates existing content by operationID or adds new if not found
 // Returns true if content was updated, false if new content was added
-func (t *tabSection) updateOrAddContentWithHandler(msgType messagetype.Type, content string, handlerName string, operationID string) (updated bool, newContent tabContent) {
+func (t *tabSection) updateOrAddContentWithHandler(msgType MessageType, content string, handlerName string, operationID string) (updated bool, newContent tabContent) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 

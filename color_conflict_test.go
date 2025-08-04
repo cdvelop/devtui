@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cdvelop/messagetype"
+	. "github.com/cdvelop/tinystring"
 )
 
 // TestOpcionA_RequirementsValidation validates the core requirements from BETTER_VIEW.md
@@ -23,17 +23,17 @@ func TestOpcionA_RequirementsValidation(t *testing.T) {
 	testCases := []struct {
 		handler  string
 		content  string
-		msgType  messagetype.Type
+		msgType  MessageType
 		expected string // Expected format pattern
 	}{
-		{"DatabaseConfig", "postgres://localhost:5432/mydb", messagetype.Info, "[DatabaseConfig] postgres://localhost:5432/mydb"},
-		{"SystemBackup", "Create System Backup", messagetype.Success, "[SystemBackup] Create System Backup"},
-		{"ErrorHandler", "Connection failed", messagetype.Error, "[ErrorHandler] Connection failed"},
-		{"WarningHandler", "Deprecated function", messagetype.Warning, "[WarningHandler] Deprecated function"},
+		{"DatabaseConfig", "postgres://localhost:5432/mydb", Msg.Info, "[DatabaseConfig] postgres://localhost:5432/mydb"},
+		{"SystemBackup", "Create System Backup", Msg.Success, "[SystemBackup] Create System Backup"},
+		{"ErrorHandler", "Connection failed", Msg.Error, "[ErrorHandler] Connection failed"},
+		{"WarningHandler", "Deprecated function", Msg.Warning, "[WarningHandler] Deprecated function"},
 	}
 
 	for _, tc := range testCases {
-		t.Run(fmt.Sprintf("%s_%s", tc.handler, tc.msgType), func(t *testing.T) {
+		t.Run(fmt.Sprintf("%s_%s", tc.handler, tc.msgType.String()), func(t *testing.T) {
 			tabContent := tui.createTabContent(tc.content, tc.msgType, tab, tc.handler, "")
 			formattedMessage := tui.formatMessage(tabContent)
 
@@ -69,22 +69,22 @@ func TestCentralizedMessageProcessing(t *testing.T) {
 	// Test cases que deberían detectar tipo automáticamente
 	testCases := []struct {
 		content      string
-		expectedType messagetype.Type
+		expectedType MessageType
 		description  string
 	}{
-		{"Database connection configured successfully", messagetype.Success, "Success word detected correctly"},
-		{"ERROR: Connection failed", messagetype.Error, "Error prefix detected correctly"},
-		{"WARNING: Deprecated function", messagetype.Warning, "Warning prefix detected correctly"},
-		{"SUCCESS: Operation completed", messagetype.Success, "Success prefix detected correctly"},
-		{"System initialized", messagetype.Normal, "Normal message detected correctly"},
-		{"Backup completed successfully", messagetype.Success, "Success word detected correctly"},
-		{"Preparing backup...", messagetype.Normal, "Normal progress message"},
+		{"Database connection configured successfully", Msg.Success, "Success word detected correctly"},
+		{"ERROR: Connection failed", Msg.Error, "Error prefix detected correctly"},
+		{"WARNING: Deprecated function", Msg.Warning, "Warning prefix detected correctly"},
+		{"SUCCESS: Operation completed", Msg.Success, "Success prefix detected correctly"},
+		{"System initialized", Msg.Normal, "Normal message detected correctly"},
+		{"Backup completed successfully", Msg.Success, "Success word detected correctly"},
+		{"Preparing backup...", Msg.Normal, "Normal progress message"},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.content, func(t *testing.T) {
-			// Test que messagetype.DetectMessageType funciona correctamente
-			detectedType := messagetype.DetectMessageType(tc.content)
+			// Test que T(content).StringType() funciona correctamente
+			_, detectedType := T(tc.content).StringType()
 
 			if detectedType != tc.expectedType {
 				t.Errorf("FAIL: Expected %v, got %v for: %s", tc.expectedType, detectedType, tc.content)
@@ -116,17 +116,17 @@ func TestLastMessageColorFixed(t *testing.T) {
 	// Test casos que simulan el final de una operación
 	finalMessages := []struct {
 		content       string
-		expectedType  messagetype.Type
+		expectedType  MessageType
 		expectedColor string
 		context       string
 	}{
 		// Casos que antes fallaban - ahora deberían funcionar
-		{"Operation completed successfully", messagetype.Success, "HIGHLIGHT (#FF6600)", "Success con palabra 'successfully'"},
-		{"Backup completed successfully", messagetype.Success, "HIGHLIGHT (#FF6600)", "Success con 'completed successfully'"},
-		{"ERROR: Operation failed", messagetype.Error, "RED (#FF0000)", "Error con prefijo 'ERROR:'"},
-		{"WARNING: Operation completed with warnings", messagetype.Warning, "YELLOW (#FFFF00)", "Warning con prefijo 'WARNING:'"},
-		{"Database connection established", messagetype.Normal, "NORMAL", "Normal message sin keywords especiales"},
-		{"SUCCESS: All tasks completed", messagetype.Success, "HIGHLIGHT (#FF6600)", "Success con prefijo 'SUCCESS:'"},
+		{"Operation completed successfully", Msg.Success, "HIGHLIGHT (#FF6600)", "Success con palabra 'successfully'"},
+		{"Backup completed successfully", Msg.Success, "HIGHLIGHT (#FF6600)", "Success con 'completed successfully'"},
+		{"ERROR: Operation failed", Msg.Error, "RED (#FF0000)", "Error con prefijo 'ERROR:'"},
+		{"WARNING: Operation completed with warnings", Msg.Warning, "YELLOW (#FFFF00)", "Warning con prefijo 'WARNING:'"},
+		{"Database connection established", Msg.Normal, "NORMAL", "Normal message sin keywords especiales"},
+		{"SUCCESS: All tasks completed", Msg.Success, "HIGHLIGHT (#FF6600)", "Success con prefijo 'SUCCESS:'"},
 	}
 
 	for _, tc := range finalMessages {
@@ -141,7 +141,7 @@ func TestLastMessageColorFixed(t *testing.T) {
 			t.Logf("Formatted: %s", formattedMessage)
 
 			// Verificar detección automática de tipo
-			detectedType := messagetype.DetectMessageType(tc.content)
+			_, detectedType := T(tc.content).StringType()
 			if detectedType != tc.expectedType {
 				t.Errorf("❌ DetectMessageType failed: Expected %v, got %v", tc.expectedType, detectedType)
 			} else {

@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cdvelop/messagetype"
+	. "github.com/cdvelop/tinystring"
 )
 
 type testTracker struct {
@@ -32,9 +32,9 @@ func TestMessageTrackerMoveToEnd(t *testing.T) {
 	tab.AddEditHandlerTracking(tracker, 5*time.Second)
 
 	// Add a normal message
-	tab.addNewContent(messagetype.Info, "Normal message")
+	tab.addNewContent(Msg.Info, "Normal message")
 	// Add a tracker message (first time, operationID empty)
-	updated, _ := tab.updateOrAddContentWithHandler(messagetype.Info, "Tracker message 1", tracker.Name(), "op-1")
+	updated, _ := tab.updateOrAddContentWithHandler(Msg.Info, "Tracker message 1", tracker.Name(), "op-1")
 	tracker.SetLastOperationID("op-1") // simulate tracker storing op id after first message
 	if updated {
 		t.Fatal("First tracker message should not be an update")
@@ -44,13 +44,13 @@ func TestMessageTrackerMoveToEnd(t *testing.T) {
 	}
 
 	// Add another normal message
-	tab.addNewContent(messagetype.Info, "Another normal message")
+	tab.addNewContent(Msg.Info, "Another normal message")
 	if tab.tabContents[len(tab.tabContents)-1].Content != "Another normal message" {
 		t.Fatal("Another normal message should be at the end")
 	}
 
 	// Update tracker message (should move to end)
-	updated, _ = tab.updateOrAddContentWithHandler(messagetype.Info, "Tracker message UPDATED", tracker.Name(), tracker.GetLastOperationID())
+	updated, _ = tab.updateOrAddContentWithHandler(Msg.Info, "Tracker message UPDATED", tracker.Name(), tracker.GetLastOperationID())
 	if !updated {
 		t.Fatal("Tracker message update should return updated=true")
 	}

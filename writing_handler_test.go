@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cdvelop/messagetype"
+	. "github.com/cdvelop/tinystring"
 )
 
 // TestWriterHandlerRegistration tests the registration of writing handlers
@@ -240,12 +240,12 @@ func TestMessageTypeDetection(t *testing.T) {
 	// Test different message types
 	testCases := []struct {
 		message      string
-		expectedType messagetype.Type
+		expectedType MessageType
 	}{
-		{"Error occurred", messagetype.Error},
-		{"Success! Operation completed", messagetype.Success},
-		{"Warning: This is a warning", messagetype.Warning},
-		{"Info: This is information", messagetype.Info},
+		{"Error occurred", Msg.Error},
+		{"Success! Operation completed", Msg.Success},
+		{"Warning: This is a warning", Msg.Warning},
+		{"Info: This is information", Msg.Info},
 	}
 
 	for _, tc := range testCases {

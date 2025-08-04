@@ -2,11 +2,9 @@ package devtui
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"time"
 
-	"github.com/cdvelop/messagetype"
 	. "github.com/cdvelop/tinystring"
 )
 
@@ -389,8 +387,7 @@ func (f *field) triggerContentDisplay() {
 		progressCallback := func(msgs ...any) {
 			if f.parentTab != nil && len(msgs) > 0 {
 				// For regular handlers, create timestamped messages with tracking
-				message := T(msgs...).String()
-				msgType := messagetype.DetectMessageType(message)
+				message, msgType := T(msgs...).StringType()
 				f.parentTab.tui.sendMessageWithHandler(message, msgType, f.parentTab, handlerName, operationID)
 			}
 		}
@@ -471,8 +468,7 @@ func (f *field) sendMessage(msgs ...any) {
 	}
 
 	// Convert and send message with automatic type detection
-	message := T(msgs...).String()
-	msgType := messagetype.DetectMessageType(message)
+	message, msgType := T(msgs...).StringType()
 	f.parentTab.tui.sendMessageWithHandler(message, msgType, f.parentTab, handlerName, operationID)
 }
 
@@ -586,7 +582,7 @@ func (f *field) executeAsyncChange(valueToSave any) {
 		f.asyncState.isRunning = false
 
 		if ctx.Err() == context.DeadlineExceeded {
-			f.sendMessage(fmt.Sprintf("Operation timed out after %v", timeout))
+			f.sendMessage(Fmt("Operation timed out after %v", timeout))
 		} else {
 			f.sendMessage("Operation was cancelled")
 		}
@@ -645,8 +641,7 @@ func (f *field) executeChangeSyncWithTracking(valueToSave any) {
 			}
 
 			// For regular handlers, create timestamped messages with tracking
-			message := T(msgs...).String()
-			msgType := messagetype.DetectMessageType(message)
+			message, msgType := T(msgs...).StringType()
 			f.parentTab.tui.sendMessageWithHandler(message, msgType, f.parentTab, handlerName, operationID)
 		}
 	}
@@ -665,7 +660,7 @@ func (f *field) executeChangeSyncWithTracking(valueToSave any) {
 		} else {
 			// For regular handlers, send success message
 			result := f.handler.Value()
-			msgType := messagetype.DetectMessageType(result)
+			_, msgType := T(result).StringType()
 			f.parentTab.tui.sendMessageWithHandler(result, msgType, f.parentTab, handlerName, operationID)
 		}
 	}

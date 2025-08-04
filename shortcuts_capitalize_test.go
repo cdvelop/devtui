@@ -7,6 +7,7 @@ import (
 )
 
 func TestCapitalizeWithMultilineTranslation(t *testing.T) {
+
 	tests := []struct {
 		name          string
 		appName       string

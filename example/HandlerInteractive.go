@@ -2,14 +2,24 @@ package example
 
 import (
 	"strings"
+	"sync"
 	"time"
 )
 
 type SimpleChatHandler struct {
+	mu                 sync.RWMutex // Thread-safety for all fields
 	Messages           []ChatMessage
 	CurrentInput       string
 	WaitingForUserFlag bool
 	IsProcessing       bool
+}
+
+// NewSimpleChatHandler creates a new thread-safe chat handler
+func NewSimpleChatHandler() *SimpleChatHandler {
+	return &SimpleChatHandler{
+		WaitingForUserFlag: true, // Start in waiting state
+		Messages:           make([]ChatMessage, 0),
+	}
 }
 
 type ChatMessage struct {
@@ -21,6 +31,9 @@ type ChatMessage struct {
 func (h *SimpleChatHandler) Name() string { return "SimpleChat" }
 
 func (h *SimpleChatHandler) Label() string {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+
 	if h.IsProcessing {
 		return "Processing..."
 	}
@@ -30,16 +43,31 @@ func (h *SimpleChatHandler) Label() string {
 	return "Chat (Press Enter)"
 }
 
-func (h *SimpleChatHandler) Value() string        { return h.CurrentInput }
-func (h *SimpleChatHandler) WaitingForUser() bool { return h.WaitingForUserFlag && !h.IsProcessing }
+func (h *SimpleChatHandler) Value() string {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	return h.CurrentInput
+}
+
+func (h *SimpleChatHandler) WaitingForUser() bool {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	return h.WaitingForUserFlag && !h.IsProcessing
+}
 
 func (h *SimpleChatHandler) Change(newValue string, progress func(msgs ...any)) {
 	// Display content when field selected
-	if newValue == "" && !h.WaitingForUserFlag && !h.IsProcessing {
-		if len(h.Messages) == 0 {
+	if newValue == "" && !h.getWaitingForUserFlag() && !h.getIsProcessing() {
+		h.mu.RLock()
+		messagesCount := len(h.Messages)
+		messages := make([]ChatMessage, len(h.Messages))
+		copy(messages, h.Messages)
+		h.mu.RUnlock()
+
+		if messagesCount == 0 {
 			progress("Welcome")
 		} else {
-			for _, msg := range h.Messages {
+			for _, msg := range messages {
 				if msg.IsUser {
 					progress("U: " + msg.Text)
 				} else {
@@ -54,6 +82,7 @@ func (h *SimpleChatHandler) Change(newValue string, progress func(msgs ...any)) 
 	if newValue != "" && strings.TrimSpace(newValue) != "" {
 		userMsg := strings.TrimSpace(newValue)
 
+		h.mu.Lock()
 		h.Messages = append(h.Messages, ChatMessage{
 			IsUser: true,
 			Text:   userMsg,
@@ -63,6 +92,7 @@ func (h *SimpleChatHandler) Change(newValue string, progress func(msgs ...any)) 
 		h.WaitingForUserFlag = false
 		h.IsProcessing = true
 		h.CurrentInput = ""
+		h.mu.Unlock()
 
 		progress("U: " + userMsg)
 		progress("Processing...")
@@ -72,7 +102,7 @@ func (h *SimpleChatHandler) Change(newValue string, progress func(msgs ...any)) 
 	}
 
 	// Empty input while waiting
-	if newValue == "" && h.WaitingForUserFlag && !h.IsProcessing {
+	if newValue == "" && h.getWaitingForUserFlag() && !h.getIsProcessing() {
 		progress("Type message")
 		return
 	}
@@ -93,6 +123,7 @@ func (h *SimpleChatHandler) generateAIResponse(userMessage string, progress func
 		response = "Response: " + userMessage
 	}
 
+	h.mu.Lock()
 	h.Messages = append(h.Messages, ChatMessage{
 		IsUser: false,
 		Text:   response,
@@ -101,6 +132,20 @@ func (h *SimpleChatHandler) generateAIResponse(userMessage string, progress func
 
 	h.IsProcessing = false
 	h.WaitingForUserFlag = true
+	h.mu.Unlock()
 
 	progress("A: " + response)
+}
+
+// Thread-safe helper methods
+func (h *SimpleChatHandler) getWaitingForUserFlag() bool {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	return h.WaitingForUserFlag
+}
+
+func (h *SimpleChatHandler) getIsProcessing() bool {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	return h.IsProcessing
 }

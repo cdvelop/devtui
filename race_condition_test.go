@@ -152,3 +152,76 @@ func TestAnyHandlerConcurrentAccess(t *testing.T) {
 
 	wg.Wait()
 }
+
+// TestChatHandlerRaceCondition reproduces the specific race condition found in SimpleChatHandler
+// This test targets the exact race condition reported by the race detector:
+// Write at generateAIResponse() vs Read at TestChatHandlerRealScenario
+// DISABLED: This test intentionally creates race conditions and should not be run with -race
+/*
+func TestChatHandlerRaceCondition(t *testing.T) {
+	t.Skip("Skipping intentional race condition test - use only for debugging race conditions")
+
+	t.Log("Testing race condition in SimpleChatHandler fields")
+
+	// Creating a local handler that reproduces the same race condition pattern
+	type RacyChatHandler struct {
+		IsProcessing       bool
+		WaitingForUserFlag bool
+		Messages           []string
+		CurrentInput       string
+	}
+
+	handler := &RacyChatHandler{
+		WaitingForUserFlag: true,
+	}
+
+	var wg sync.WaitGroup
+	stopFlag := make(chan bool)
+
+	// Goroutine 1: Simulates the test reading handler state (like TestChatHandlerRealScenario)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		for {
+			select {
+			case <-stopFlag:
+				return
+			default:
+				// These reads race with writes in the generateAIResponse equivalent
+				_ = handler.IsProcessing       // Read that races with write
+				_ = handler.WaitingForUserFlag // Read that races with write
+				_ = len(handler.Messages)      // Read that races with write
+
+				// Tiny delay to increase race probability
+				time.Sleep(time.Microsecond)
+			}
+		}
+	}()
+
+	// Goroutine 2: Simulates generateAIResponse writing to the same fields
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		for i := 0; i < 1000; i++ {
+			// Simulate the writes that happen in generateAIResponse
+			handler.Messages = append(handler.Messages, "response")
+			handler.IsProcessing = false      // Write that races with read
+			handler.WaitingForUserFlag = true // Write that races with write
+
+			time.Sleep(time.Microsecond * 10)
+		}
+	}()
+
+	// Let the race condition develop
+	time.Sleep(time.Millisecond * 100)
+
+	// Stop the reader goroutine
+	close(stopFlag)
+	wg.Wait()
+
+	t.Logf("Race condition test completed. Final state: Processing=%v, Messages=%d",
+		handler.IsProcessing, len(handler.Messages))
+}
+*/

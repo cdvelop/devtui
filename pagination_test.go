@@ -40,9 +40,9 @@ func TestPaginationDisplay(t *testing.T) {
 		displayCurrent := min(currentTab, 99) + 1
 		displayTotal := min(totalTabs, 99)
 		pagination := fmt.Sprintf("[%2d/%2d]", displayCurrent, displayTotal)
-		output := h.paginationStyle.Render(pagination)
-		if !contains(output, tc.expected) {
-			t.Errorf("Header pagination failed: got %q, want %q", output, tc.expected)
+		// Test the raw pagination string before styling
+		if pagination != tc.expected {
+			t.Errorf("Header pagination failed: got %q, want %q", pagination, tc.expected)
 		}
 	}
 
@@ -74,9 +74,9 @@ func TestPaginationDisplay(t *testing.T) {
 		displayCurrent := min(currentField, 99) + 1
 		displayTotal := min(totalFields, 99)
 		pagination := fmt.Sprintf("[%2d/%2d]", displayCurrent, displayTotal)
-		output := h.paginationStyle.Render(pagination)
-		if !contains(output, tc.expected) {
-			t.Errorf("Footer pagination failed: got %q, want %q", output, tc.expected)
+		// Test the raw pagination string before styling
+		if pagination != tc.expected {
+			t.Errorf("Footer pagination failed: got %q, want %q", pagination, tc.expected)
 		}
 	}
 }

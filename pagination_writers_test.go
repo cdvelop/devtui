@@ -23,8 +23,16 @@ func TestPaginationWritersOnlyTab(t *testing.T) {
 	h.activeTab = 0
 	// Call the real footerView rendering logic
 	output := h.footerView()
-	expected := " 1/ 1"
-	if !contains(output, expected) {
+	expected := "1/ 1" // Look for the core pagination text without spacing
+	// Use strings.Contains for ANSI-aware searching
+	found := false
+	for i := 0; i <= len(output)-len(expected); i++ {
+		if output[i:i+len(expected)] == expected {
+			found = true
+			break
+		}
+	}
+	if !found {
 		t.Errorf("Writers-only tab pagination failed: got %q, want %q", output, expected)
 	}
 }

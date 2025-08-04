@@ -28,10 +28,10 @@ func TestShortcutKeyboard_SingleCharacterHandling(t *testing.T) {
 	tui.editModeActivated = false
 	tui.activeTab = 1 // TinyWasm tab (shortcuts tab is 0)
 
-	// Create keyboard message for shortcut 'c'
+	// Create keyboard message for shortcut 't' (test connection)
 	keyMsg := tea.KeyMsg{
 		Type:  tea.KeyRunes,
-		Runes: []rune{'c'},
+		Runes: []rune{'t'},
 	}
 
 	// Handle keyboard input
@@ -40,9 +40,12 @@ func TestShortcutKeyboard_SingleCharacterHandling(t *testing.T) {
 		t.Error("Expected shortcut handling to return false (stop processing)")
 	}
 
-	// Verify handler was executed
-	if handler.Value() != "coding" {
-		t.Errorf("Expected handler value to be 'coding', got '%s'", handler.Value())
+	// Verify handler LastAction was set to 'test' and connection string remains unchanged
+	if handler.LastAction != "test" {
+		t.Errorf("Expected handler LastAction to be 'test', got '%s'", handler.LastAction)
+	}
+	if handler.Value() != "postgres://localhost:5432/testdb" {
+		t.Errorf("Expected handler value to remain unchanged, got '%s'", handler.Value())
 	}
 }
 

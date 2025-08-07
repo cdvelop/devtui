@@ -7,9 +7,6 @@
 			"path": "../../godev"
 		},
 		{
-			"path": "../../unixid"
-		},
-		{
 			"path": "../../tinywasm"
 		},
 		{
@@ -17,12 +14,6 @@
 		},
 		{
 			"path": "../../gobuild"
-		},
-		{
-			"path": "../../tinystring"
-		},
-		{
-			"path": "../../tinyreflect"
 		},
 		{
 			"path": "../../godepfind"

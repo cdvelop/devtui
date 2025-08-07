@@ -23,7 +23,7 @@ func TestChangeFuncControlsEmptyFieldBehavior(t *testing.T) {
 		h.viewport.Height = 24
 
 		// Get the field from the test tab
-		field := tab.FieldHandlers()[0]
+		field := tab.fieldHandlers[0]
 
 		// Switch to test tab and enter editing mode
 		h.activeTab = len(h.tabSections) - 1 // Use the last added tab
@@ -39,7 +39,7 @@ func TestChangeFuncControlsEmptyFieldBehavior(t *testing.T) {
 		field.cursor = 0
 
 		// Press Enter - changeFunc should reject the empty value
-		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
+		h.handleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
 
 		// The field should still have the original value because changeFunc rejected the empty value
 		expectedValue := "initial value"
@@ -67,7 +67,7 @@ func TestChangeFuncControlsEmptyFieldBehavior(t *testing.T) {
 		h.viewport.Height = 24
 
 		// Get the field from the test tab
-		field := tab.FieldHandlers()[0]
+		field := tab.fieldHandlers[0]
 
 		// Switch to test tab and enter editing mode
 		h.activeTab = len(h.tabSections) - 1 // Use the last added tab
@@ -83,7 +83,7 @@ func TestChangeFuncControlsEmptyFieldBehavior(t *testing.T) {
 		field.cursor = 0
 
 		// Press Enter - changeFunc should accept and transform the empty value
-		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
+		h.handleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
 
 		// The field should have the transformed value from changeFunc
 		expectedValue := "Default Value"
@@ -106,7 +106,7 @@ func TestChangeFuncControlsEmptyFieldBehavior(t *testing.T) {
 		h.viewport.Height = 24
 
 		// Get the field from the test tab
-		field := tab.FieldHandlers()[0]
+		field := tab.fieldHandlers[0]
 
 		// Switch to test tab and enter editing mode
 		h.activeTab = len(h.tabSections) - 1 // Use the last added tab
@@ -122,7 +122,7 @@ func TestChangeFuncControlsEmptyFieldBehavior(t *testing.T) {
 		field.cursor = 0
 
 		// Press Enter - changeFunc should preserve the empty value
-		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
+		h.handleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
 
 		// The field should be empty
 		expectedValue := ""

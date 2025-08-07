@@ -22,13 +22,13 @@ func (h *DevTUI) footerView() string {
 	}
 
 	// Si hay campos disponibles, mostrar el input (independiente de si estamos en modo edición)
-	if len(h.tabSections[h.activeTab].FieldHandlers()) > 0 {
+	if len(h.tabSections[h.activeTab].fieldHandlers) > 0 {
 		return h.renderFooterInput()
 	}
 
 	// Si no hay campos, mostrar paginación de writers-only y scrollbar estándar
 	tabSection := h.tabSections[h.activeTab]
-	fieldHandlers := tabSection.FieldHandlers()
+	fieldHandlers := tabSection.fieldHandlers
 	currentField := tabSection.indexActiveEditField
 	totalFields := len(fieldHandlers)
 	if currentField > 99 || totalFields > 99 {
@@ -87,7 +87,7 @@ func (h *DevTUI) renderFooterInput() string {
 	tabSection := h.tabSections[h.activeTab]
 
 	// Verificar que el índice activo esté en rango
-	fieldHandlers := tabSection.FieldHandlers()
+	fieldHandlers := tabSection.fieldHandlers
 	if tabSection.indexActiveEditField >= len(fieldHandlers) {
 		tabSection.indexActiveEditField = 0 // Reiniciar a 0 si está fuera de rango
 	}
@@ -115,7 +115,7 @@ func (h *DevTUI) renderFooterInput() string {
 		displayStyle := lipgloss.NewStyle().
 			Width(remainingWidth).
 			Padding(0, horizontalPadding).
-			Background(lipgloss.Color(h.Lowlight)).
+			Background(lipgloss.Color(h.Secondary)).
 			Foreground(lipgloss.Color(h.Foreground))
 		styledLabel := displayStyle.Render(labelText)
 		spacerStyle := lipgloss.NewStyle().Width(horizontalPadding).Render("")
@@ -229,7 +229,7 @@ func (h *DevTUI) renderFooterInput() string {
 	valueText = tinystring.Convert(valueText).Truncate(textWidth, 0).String()
 
 	// Mostrar cursor solo si estamos en modo edición y el campo es editable
-	if h.editModeActivated && field.Editable() {
+	if h.editModeActivated && field.editable() {
 		showCursor = true
 	}
 
@@ -239,15 +239,15 @@ func (h *DevTUI) renderFooterInput() string {
 		Padding(0, horizontalPadding)
 
 	// Aplicar estilos para Edit handlers según el estado
-	if h.editModeActivated && field.Editable() {
+	if h.editModeActivated && field.editable() {
 		// Edit en modo edición activa
 		inputValueStyle = inputValueStyle.
-			Background(lipgloss.Color(h.Lowlight)).
+			Background(lipgloss.Color(h.Secondary)).
 			Foreground(lipgloss.Color(h.Foreground))
 	} else {
 		// Edit en modo no edición
 		inputValueStyle = inputValueStyle.
-			Background(lipgloss.Color(h.Lowlight)).
+			Background(lipgloss.Color(h.Secondary)).
 			Foreground(lipgloss.Color(h.Background))
 	}
 

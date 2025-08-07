@@ -12,7 +12,7 @@ func TestTabSectionWriter(t *testing.T) {
 
 	config := &TuiConfig{
 		ExitChan: make(chan bool),
-		Color:    &ColorStyle{}, // Usando un ColorStyle vacío
+		Color:    &ColorPalette{}, // Usando un ColorPalette vacío
 		LogToFile: func(messages ...any) {
 			// Mock function for logging
 		},
@@ -54,7 +54,7 @@ func TestTabContentsIncrementWhenSendingMessages(t *testing.T) {
 
 	config := &TuiConfig{
 		ExitChan: make(chan bool),
-		Color:    &ColorStyle{}, // Usando un ColorStyle vacío
+		Color:    &ColorPalette{}, // Usando un ColorPalette vacío
 		LogToFile: func(messages ...any) {
 			// Mock function for logging
 		},

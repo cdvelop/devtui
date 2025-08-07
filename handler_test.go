@@ -43,7 +43,7 @@ func (h *TestEditableHandler) Value() string {
 	return h.currentValue
 }
 
-func (h *TestEditableHandler) Editable() bool         { return true }
+func (h *TestEditableHandler) editable() bool         { return true }
 func (h *TestEditableHandler) Timeout() time.Duration { return 0 }
 
 func (h *TestEditableHandler) Change(newValue string, progress func(msgs ...any)) {
@@ -104,7 +104,7 @@ func (h *TestNonEditableHandler) Value() string {
 	return h.actionText
 }
 
-func (h *TestNonEditableHandler) Editable() bool         { return false }
+func (h *TestNonEditableHandler) editable() bool         { return false }
 func (h *TestNonEditableHandler) Timeout() time.Duration { return 0 }
 
 func (h *TestNonEditableHandler) Change(newValue string, progress func(msgs ...any)) {

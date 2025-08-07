@@ -62,7 +62,7 @@ func TestShortcutBug(t *testing.T) {
 	// 2. Execute ONLY DatabaseHandler (not BackupHandler)
 	t.Logf("Step 4: Pressing 't' shortcut from Dashboard tab...")
 
-	tui.HandleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'t'}})
+	tui.handleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'t'}})
 
 	// Give time for async operations
 	time.Sleep(1 * time.Second)

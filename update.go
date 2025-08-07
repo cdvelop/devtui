@@ -33,7 +33,7 @@ func (h *DevTUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg: // Al presionar una tecla
-		continueProcessing, keyCmd := h.HandleKeyboard(msg)
+		continueProcessing, keyCmd := h.handleKeyboard(msg)
 		if !continueProcessing {
 			if keyCmd != nil {
 				return h, keyCmd
@@ -114,7 +114,7 @@ func (h *DevTUI) editingConfigOpen(open bool, currentField *field, msg string) {
 	}
 
 	if currentField != nil {
-		currentField.SetCursorAtEnd()
+		currentField.setCursorAtEnd()
 	}
 
 	if msg != "" {
@@ -123,5 +123,3 @@ func (h *DevTUI) editingConfigOpen(open bool, currentField *field, msg string) {
 	}
 
 }
-
-// Add this helper function

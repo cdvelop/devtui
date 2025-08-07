@@ -17,7 +17,11 @@ func (ts *tabSection) AddDisplayHandler(handler HandlerDisplay) *tabSection {
 	return ts
 }
 
-// AddEditHandler registers a HandlerEdit with mandatory timeout
+// AddEditHandler registers a HandlerEdit with mandatory timeout.
+//
+// Example:
+//
+//	ts.AddEditHandler(myEditHandler, 2*time.Second)
 func (ts *tabSection) AddEditHandler(handler HandlerEdit, timeout time.Duration) *tabSection {
 	var tracker MessageTracker
 	if t, ok := handler.(MessageTracker); ok {

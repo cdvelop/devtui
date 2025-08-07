@@ -41,7 +41,7 @@ func (h *shortcutsInteractiveHandler) Label() string {
 func (h *shortcutsInteractiveHandler) GetLastOperationID() string   { return h.lastOpID }
 func (h *shortcutsInteractiveHandler) SetLastOperationID(id string) { h.lastOpID = id }
 
-func (h *shortcutsInteractiveHandler) Value() string { return h.lang }
+func (h *shortcutsInteractiveHandler) Value() string { return Convert(h.lang).Low().String() }
 
 // Change handles both content display and user input via progress()
 func (h *shortcutsInteractiveHandler) Change(newValue string, progress func(msgs ...any)) {

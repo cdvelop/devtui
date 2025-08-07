@@ -23,7 +23,7 @@ func TestEmptyFieldEnterBehavior(t *testing.T) {
 
 		// Use centralized function to get correct tab index
 		testTabIndex := GetFirstTestTabIndex()
-		field := h.tabSections[testTabIndex].FieldHandlers()[0]
+		field := h.tabSections[testTabIndex].fieldHandlers[0]
 
 		// The field already has "initial test value" from DefaultTUIForTest
 		// No need to set it again as SetValue is deprecated
@@ -31,20 +31,20 @@ func TestEmptyFieldEnterBehavior(t *testing.T) {
 		// Switch to the test tab and enter editing mode
 		h.activeTab = testTabIndex
 		// Realistic: User enters edit mode by pressing Enter
-		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
+		h.handleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
 
 		t.Logf("Initial state - Value: '%s', tempEditValue: '%s'", field.Value(), field.tempEditValue)
 
 		// Realistic: User clears the entire field with backspace
 		// Clear existing text (should be "initial test value" = 18 chars)
 		for i := 0; i < 25; i++ { // More backspaces to ensure complete clearing
-			h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyBackspace})
+			h.handleKeyboard(tea.KeyMsg{Type: tea.KeyBackspace})
 		}
 
 		t.Logf("After clearing - Value: '%s', tempEditValue: '%s'", field.Value(), field.tempEditValue)
 
 		// User presses Enter to save the empty field
-		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
+		h.handleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
 
 		t.Logf("After pressing Enter - Value: '%s', tempEditValue: '%s'", field.Value(), field.tempEditValue)
 
@@ -85,21 +85,21 @@ func TestEmptyFieldEnterBehavior(t *testing.T) {
 		testTabIndex := GetFirstTestTabIndex()
 		tabSection := h.tabSections[testTabIndex]
 
-		field := tabSection.FieldHandlers()[0]
+		field := tabSection.fieldHandlers[0]
 
 		// Switch to test tab and enter editing mode
 		h.activeTab = testTabIndex
 		// Realistic: User enters edit mode by pressing Enter
-		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
+		h.handleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
 
 		// Realistic: Clear the field with backspace
 		// Clear existing text ("original value" = ~14 chars)
 		for i := 0; i < 25; i++ { // Enough backspaces to ensure complete clearing
-			h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyBackspace})
+			h.handleKeyboard(tea.KeyMsg{Type: tea.KeyBackspace})
 		}
 
 		// Press Enter
-		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
+		h.handleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
 
 		// The changeFunc should have received an empty string
 		if receivedValue != "" {

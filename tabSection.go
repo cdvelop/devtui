@@ -9,8 +9,6 @@ import (
 	. "github.com/cdvelop/tinystring"
 )
 
-const defaultTabName = "DEFAULT"
-
 // Interface for handling tab field sectionFields
 
 // tabContent imprime contenido en la tui con id único
@@ -109,16 +107,6 @@ func (ts *tabSection) registerWriter(handler HandlerWriter) io.Writer {
 	return &handlerWriter{tabSection: ts, handlerName: anyH.Name()}
 }
 
-// RegisterHandlerWriterTracker registers an advanced writer handler with message tracking and returns a dedicated writer
-// DEPRECATED: Use RegisterHandlerWriter instead - it automatically detects tracker capabilities
-
-// Removed RegisterHandlerWriterTracker function as per refactoring plan
-
-// NEW: SetActiveWriter sets the current active writer for general io.Writer calls
-func (ts *tabSection) SetActiveWriter(handlerName string) {
-	ts.activeWriter = handlerName
-}
-
 // HandlerWriter wraps tabSection with handler identification
 type handlerWriter struct {
 	tabSection  *tabSection
@@ -192,31 +180,6 @@ func (t *tabSection) updateOrAddContentWithHandler(msgType MessageType, content 
 	return false, newContent
 }
 
-// Title returns the tab section title
-func (ts *tabSection) Title() string {
-	return ts.title
-}
-
-// SetTitle sets the tab section title
-func (ts *tabSection) SetTitle(title string) {
-	ts.title = title
-}
-
-// Footer returns the tab section footer text
-func (ts *tabSection) Footer() string {
-	return ts.sectionDescription
-}
-
-// SetFooter sets the tab section footer text
-func (ts *tabSection) SetFooter(footer string) {
-	ts.sectionDescription = footer
-}
-
-// FieldHandlers returns the field handlers slice
-func (ts *tabSection) FieldHandlers() []*field {
-	return ts.fieldHandlers
-}
-
 // NewTabSection creates and initializes a new tabSection with the given title and footer
 // NewTabSection creates a new tab section and automatically adds it to the TUI
 //
@@ -237,13 +200,8 @@ func (t *DevTUI) NewTabSection(title, description string) *tabSection {
 	return tab
 }
 
-// SetIndex sets the index of the tab section
-func (ts *tabSection) SetIndex(idx int) {
-	ts.index = idx
-}
-
-// SetActiveEditField sets the active edit field index
-func (ts *tabSection) SetActiveEditField(idx int) {
+// setActiveEditField sets the active edit field index
+func (ts *tabSection) setActiveEditField(idx int) {
 	ts.indexActiveEditField = idx
 }
 
@@ -253,15 +211,10 @@ func (t *DevTUI) initTabSection(section *tabSection, index int) {
 	section.tui = t
 
 	// Initialize field handlers
-	handlers := section.FieldHandlers()
+	handlers := section.fieldHandlers
 	for j := range handlers {
 		handlers[j].index = j
 		handlers[j].cursor = 0
 	}
 	section.setFieldHandlers(handlers)
-}
-
-// GetTotalTabSections returns the total number of tab sections
-func (t *DevTUI) GetTotalTabSections() int {
-	return len(t.tabSections)
 }

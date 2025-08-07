@@ -1,16 +1,14 @@
-package devtui_test
+package devtui
 
 import (
 	"testing"
-
-	. "github.com/cdvelop/devtui"
 )
 
 func TestNewTUI(t *testing.T) {
 	// Test configuration with default tabs
 	config := &TuiConfig{
 		ExitChan: make(chan bool),
-		Color:    &ColorStyle{}, // Usando un ColorStyle vacío
+		Color:    &ColorPalette{}, // Usando un ColorPalette vacío
 		LogToFile: func(messages ...any) {
 			// Mock function for logging
 		},
@@ -31,7 +29,7 @@ func TestNewTUI(t *testing.T) {
 func TestMultipleTabSections(t *testing.T) {
 	// Test that NewTUI correctly adds multiple tab sections
 	config := &TuiConfig{
-		Color: &ColorStyle{},
+		Color: &ColorPalette{},
 	}
 
 	tui := NewTUI(config)
@@ -43,7 +41,7 @@ func TestMultipleTabSections(t *testing.T) {
 	tui.NewTabSection("Tab1", "Description 1")
 	tui.NewTabSection("Tab2", "Description 2")
 
-	totalSections := tui.GetTotalTabSections()
+	totalSections := len(tui.tabSections)
 
 	// Expected: 1 (SHORTCUTS) + 2 (Tab1, Tab2) = 3
 	expected := 3
@@ -59,7 +57,7 @@ func TestChannelFunctionality(t *testing.T) {
 	// This test should be modified to test observable behavior or removed
 
 	config := &TuiConfig{
-		Color: &ColorStyle{},
+		Color: &ColorPalette{},
 	}
 
 	tui := NewTUI(config)

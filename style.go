@@ -4,20 +4,30 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-type ColorStyle struct {
-	Foreground string // eg: #F4F4F4
-	Background string // eg: #000000
-	Highlight  string // eg: #FF6600
-	Lowlight   string // eg: #666666
+type ColorPalette struct {
+	// Base (2 colores)
+	Foreground string // #F4F4F4
+	Background string // #000000
+
+	// Accent (2 colores)
+	Primary   string // #FF6600 (tu actual Primary)
+	Secondary string // #666666 (tu actual Secondary)
+
+	// Semantic (4 colores)
+	Success string // #00FF00
+	Warning string // #FFFF00
+	Error   string // #FF0000
+	Info    string // #00FFFF
+
+	// UI (2-4 colores adicionales)
+	Border   string // #444444
+	Muted    string // #999999
+	Selected string // Derivado de Primary
+	Hover    string // Derivado de Primary
 }
 
-const (
-	warnColor = "#FFFF00" // Amarillo brillante
-	errColor  = "#FF0000" // Rojo brillante
-)
-
 type tuiStyle struct {
-	*ColorStyle
+	*ColorPalette
 
 	contentBorder    lipgloss.Border
 	headerTitleStyle lipgloss.Style
@@ -35,28 +45,22 @@ type tuiStyle struct {
 	lineHeadFootStyle lipgloss.Style // header right and footer left line
 
 	// Estilos globales mensajes
-	okStyle   lipgloss.Style
-	errStyle  lipgloss.Style
-	warnStyle lipgloss.Style
-	infoStyle lipgloss.Style
-	normStyle lipgloss.NoColor
-	timeStyle lipgloss.Style
+	successStyle lipgloss.Style
+	errStyle     lipgloss.Style
+	warnStyle    lipgloss.Style
+	infoStyle    lipgloss.Style
+	normStyle    lipgloss.NoColor
+	timeStyle    lipgloss.Style
 }
 
-func newTuiStyle(cs *ColorStyle) *tuiStyle {
-	// check if color is nil
-	if cs == nil {
-		cs = &ColorStyle{
-			Foreground: "#F4F4F4",
-			Background: "#000000",
-			Highlight:  "#FF6600",
-			Lowlight:   "#666666",
-		}
+func newTuiStyle(palette *ColorPalette) *tuiStyle {
+	if palette == nil {
+		palette = DefaultPalette()
 	}
 
 	t := &tuiStyle{
-		ColorStyle: cs,
-		labelWidth: 18, // Definir un ancho estándar en caracteres para etiquetas
+		ColorPalette: palette,
+		labelWidth:   18, // Definir un ancho estándar en caracteres para etiquetas
 	}
 
 	t.labelStyle = lipgloss.NewStyle().
@@ -78,16 +82,16 @@ func newTuiStyle(cs *ColorStyle) *tuiStyle {
 
 	t.headerTitleStyle = lipgloss.NewStyle().
 		Padding(0, 1).
-		BorderForeground(lipgloss.Color(t.Highlight)).
-		Background(lipgloss.Color(t.Highlight)).
-		Foreground(lipgloss.Color(t.Foreground))
+		BorderForeground(lipgloss.Color(palette.Primary)).
+		Background(lipgloss.Color(palette.Primary)).
+		Foreground(lipgloss.Color(palette.Foreground))
 
 	t.footerInfoStyle = t.headerTitleStyle
 
 	t.paginationStyle = lipgloss.NewStyle().
 		Padding(0, 1).
-		Background(lipgloss.Color(t.Highlight)).
-		Foreground(lipgloss.Color(t.Foreground))
+		Background(lipgloss.Color(palette.Primary)).
+		Foreground(lipgloss.Color(palette.Foreground))
 
 	t.fieldLineStyle = lipgloss.NewStyle().
 		Padding(0, 2)
@@ -95,48 +99,63 @@ func newTuiStyle(cs *ColorStyle) *tuiStyle {
 	t.fieldSelectedStyle = t.fieldLineStyle
 	t.fieldSelectedStyle = t.fieldSelectedStyle.
 		Bold(true).
-		Background(lipgloss.Color(t.Highlight)).
-		Foreground(lipgloss.Color(t.Foreground))
+		Background(lipgloss.Color(palette.Primary)).
+		Foreground(lipgloss.Color(palette.Foreground))
 
 	t.fieldEditingStyle = t.fieldSelectedStyle.
-		Foreground(lipgloss.Color(t.Background))
+		Foreground(lipgloss.Color(palette.Background))
 
 	// NEW: Readonly style - highlight background with clear text for readonly fields (empty label)
 	t.fieldReadOnlyStyle = t.fieldSelectedStyle.
-		Background(lipgloss.Color(t.Highlight)).
-		Foreground(lipgloss.Color(t.Foreground))
+		Background(lipgloss.Color(palette.Primary)).
+		Foreground(lipgloss.Color(palette.Foreground))
 
 	// Estilo para los mensajes - VISUAL UPGRADE: Padding interno para mejor legibilidad
 	t.textContentStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color(t.Foreground)).
+		Foreground(lipgloss.Color(palette.Foreground)).
 		PaddingLeft(1).
 		PaddingRight(1)
 
 	t.lineHeadFootStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color(t.Highlight))
+		Foreground(lipgloss.Color(palette.Primary))
 
 	// Inicializar los estilos que antes eran globales
-	t.okStyle = lipgloss.NewStyle().
+	t.successStyle = lipgloss.NewStyle().
 		Bold(true).
-		Foreground(lipgloss.Color(t.Highlight)) // Usa el color Highlight de la configuración
+		Foreground(lipgloss.Color(palette.Success))
 
 	t.errStyle = lipgloss.NewStyle().
 		Bold(true).
-		Foreground(lipgloss.Color(errColor)) // Rojo brillante
+		Foreground(lipgloss.Color(palette.Error))
 
 	t.warnStyle = lipgloss.NewStyle().
 		Bold(true).
-		Foreground(lipgloss.Color(warnColor)) // Amarillo brillante
+		Foreground(lipgloss.Color(palette.Warning))
 
 	t.infoStyle = lipgloss.NewStyle().
 		Bold(true).
-		Foreground(lipgloss.Color(t.Highlight)) // Usa el color Highlight de la configuración
+		Foreground(lipgloss.Color(palette.Info))
 
 	t.normStyle = lipgloss.NoColor{}
 
 	t.timeStyle = lipgloss.NewStyle().Foreground(
-		lipgloss.Color(t.Lowlight),
+		lipgloss.Color(palette.Secondary),
 	)
 
 	return t
+}
+
+func DefaultPalette() *ColorPalette {
+	return &ColorPalette{
+		Foreground: "#F4F4F4",
+		Background: "#000000",
+		Primary:    "#00ADD8", // Gopher blue oficial de Go
+		Secondary:  "#666666",
+		Success:    "#00AA00",
+		Warning:    "#FFAA00",
+		Error:      "#FF0000",
+		Info:       "#0088FF",
+		Border:     "#444444",
+		Muted:      "#999999",
+	}
 }

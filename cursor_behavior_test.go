@@ -20,14 +20,14 @@ func TestCursorBehaviorInEditMode(t *testing.T) {
 
 		serverTabIndex := len(h.tabSections) - 1
 		h.activeTab = serverTabIndex
-		field := h.tabSections[serverTabIndex].FieldHandlers()[0]
+		field := h.tabSections[serverTabIndex].fieldHandlers[0]
 
 		// Enter edit mode
-		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
+		h.handleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
 
 		// Test insertion at beginning
 		field.cursor = 0
-		h.HandleKeyboard(tea.KeyMsg{
+		h.handleKeyboard(tea.KeyMsg{
 			Type:  tea.KeyRunes,
 			Runes: []rune{'9'},
 		})
@@ -40,7 +40,7 @@ func TestCursorBehaviorInEditMode(t *testing.T) {
 		field.tempEditValue = "8080"
 		field.cursor = len([]rune(field.tempEditValue))
 
-		h.HandleKeyboard(tea.KeyMsg{
+		h.handleKeyboard(tea.KeyMsg{
 			Type:  tea.KeyRunes,
 			Runes: []rune{'9'},
 		})

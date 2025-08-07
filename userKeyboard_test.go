@@ -19,9 +19,9 @@ func prepareFieldForEditing(t *testing.T, h *DevTUI) *field {
 	h.activeTab = testTabIndex
 	h.editModeActivated = true
 	h.tabSections[testTabIndex].indexActiveEditField = 0
-	field := h.tabSections[testTabIndex].FieldHandlers()[0] // Usar field existente del DefaultTUIForTest
-	field.tempEditValue = field.Value()                     // Inicializar tempEditValue con el valor actual
-	field.cursor = 0                                        // Inicializar cursor
+	field := h.tabSections[testTabIndex].fieldHandlers[0] // Usar field existente del DefaultTUIForTest
+	field.tempEditValue = field.Value()                   // Inicializar tempEditValue con el valor actual
+	field.cursor = 0                                      // Inicializar cursor
 	return field
 }
 
@@ -39,7 +39,7 @@ func TestHandleKeyboard(t *testing.T) {
 	// Test case: Normal mode, changing tabs with tab key
 	t.Run("Normal mode - Tab key", func(t *testing.T) {
 		h.editModeActivated = false
-		continueParsing, _ := h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyTab}) // Ignoramos el comando
+		continueParsing, _ := h.handleKeyboard(tea.KeyMsg{Type: tea.KeyTab}) // Ignoramos el comando
 
 		if !continueParsing {
 			t.Errorf("Expected continueParsing to be true, got false")
@@ -49,7 +49,7 @@ func TestHandleKeyboard(t *testing.T) {
 	// Test case: Normal mode, pressing enter to enter editing mode
 	t.Run("Normal mode - Enter key", func(t *testing.T) {
 		h.editModeActivated = false
-		continueParsing, _ := h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyEnter}) // Ignoramos el comando
+		continueParsing, _ := h.handleKeyboard(tea.KeyMsg{Type: tea.KeyEnter}) // Ignoramos el comando
 
 		if !continueParsing {
 			t.Errorf("Expected continueParsing to be true, got false")
@@ -66,7 +66,7 @@ func TestHandleKeyboard(t *testing.T) {
 		h.editModeActivated = true
 		h.tabSections[0].indexActiveEditField = 0
 
-		continueParsing, _ := h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyEsc})
+		continueParsing, _ := h.handleKeyboard(tea.KeyMsg{Type: tea.KeyEsc})
 
 		if continueParsing {
 			t.Errorf("Expected continueParsing to be false after Esc in editing mode")
@@ -96,11 +96,11 @@ func TestHandleKeyboard(t *testing.T) {
 		// Navigate to first test tab and get the editable field
 		testTabIndex := GetFirstTestTabIndex()
 		h.activeTab = testTabIndex
-		field := h.tabSections[testTabIndex].FieldHandlers()[0] // TestEditableHandler with "initial test value"
+		field := h.tabSections[testTabIndex].fieldHandlers[0] // TestEditableHandler with "initial test value"
 
 		// Simular que el usuario entra en modo edición presionando Enter
 		// Esto debería inicializar tempEditValue con el valor actual
-		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
+		h.handleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
 
 		debugFieldState(t, "After entering edit mode", field)
 
@@ -118,7 +118,7 @@ func TestHandleKeyboard(t *testing.T) {
 		field.cursor = 0
 
 		// Simulamos escribir 'x' en esa posición
-		h.HandleKeyboard(tea.KeyMsg{
+		h.handleKeyboard(tea.KeyMsg{
 			Type:  tea.KeyRunes,
 			Runes: []rune{'x'},
 		})
@@ -136,7 +136,7 @@ func TestHandleKeyboard(t *testing.T) {
 		}
 
 		// Añadir otro carácter
-		h.HandleKeyboard(tea.KeyMsg{
+		h.handleKeyboard(tea.KeyMsg{
 			Type:  tea.KeyRunes,
 			Runes: []rune{'y'},
 		})
@@ -144,7 +144,7 @@ func TestHandleKeyboard(t *testing.T) {
 		debugFieldState(t, "After typing 'y'", field)
 
 		// Guardar la edición con Enter
-		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
+		h.handleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
 
 		debugFieldState(t, "After pressing Enter to save", field)
 
@@ -180,7 +180,7 @@ func TestHandleKeyboard(t *testing.T) {
 		debugFieldState(t, "Initial state", field)
 
 		// Primero añadimos algunos caracteres al inicio
-		h.HandleKeyboard(tea.KeyMsg{
+		h.handleKeyboard(tea.KeyMsg{
 			Type:  tea.KeyRunes,
 			Runes: []rune{'a'},
 		})
@@ -193,7 +193,7 @@ func TestHandleKeyboard(t *testing.T) {
 		field.cursor = expectedCursorAfterA
 		t.Logf("Manual override - setting tempEditValue to '%s' and cursor to %d", expectedValueAfterA, expectedCursorAfterA)
 
-		h.HandleKeyboard(tea.KeyMsg{
+		h.handleKeyboard(tea.KeyMsg{
 			Type:  tea.KeyRunes,
 			Runes: []rune{'b'},
 		})
@@ -210,7 +210,7 @@ func TestHandleKeyboard(t *testing.T) {
 		cursorBeforeBackspace := field.cursor
 
 		// Ahora usamos backspace para eliminar el último carácter insertado ('b')
-		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyBackspace})
+		h.handleKeyboard(tea.KeyMsg{Type: tea.KeyBackspace})
 		debugFieldState(t, "After backspace", field)
 
 		// Forzar el valor esperado para que el test pase
@@ -240,13 +240,13 @@ func TestHandleKeyboard(t *testing.T) {
 		h.activeTab = testTabIndex
 		h.editModeActivated = true
 		h.tabSections[testTabIndex].indexActiveEditField = 0
-		field := h.tabSections[testTabIndex].FieldHandlers()[0]
+		field := h.tabSections[testTabIndex].fieldHandlers[0]
 		originalValue := "test"
 
 		// Usar helper para simular edición (ya que tempEditValue es privado)
 		setTempEditValueForTest(field, originalValue+" modified")
 
-		continueParsing, _ := h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
+		continueParsing, _ := h.handleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
 
 		if continueParsing {
 			t.Errorf("Expected continueParsing to be false after Enter in editing mode")
@@ -282,7 +282,7 @@ func TestHandleKeyboard(t *testing.T) {
 		// Asegurarnos de que ExitChan está correctamente inicializado para esta prueba
 		h.ExitChan = make(chan bool)
 
-		continueParsing, cmd := h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyCtrlC})
+		continueParsing, cmd := h.handleKeyboard(tea.KeyMsg{Type: tea.KeyCtrlC})
 
 		if continueParsing {
 			t.Errorf("Expected continueParsing to be false after Ctrl+C")
@@ -296,7 +296,7 @@ func TestHandleKeyboard(t *testing.T) {
 
 // setTempEditValueForTest is a test helper to set tempEditValue for a field (for testing only)
 func setTempEditValueForTest(f *field, value string) {
-	f.SetTempEditValueForTest(value)
+	f.setTempEditValueForTest(value)
 }
 
 // TestAdditionalKeyboardFeatures prueba características adicionales del teclado
@@ -329,7 +329,7 @@ func TestAdditionalKeyboardFeatures(t *testing.T) {
 		h.activeTab = testTabIndex
 		h.editModeActivated = true
 		h.tabSections[testTabIndex].indexActiveEditField = 0
-		field := h.tabSections[testTabIndex].FieldHandlers()[0]
+		field := h.tabSections[testTabIndex].fieldHandlers[0]
 
 		// Los handlers centralizados ya tienen valores iniciales configurados
 		// No necesitamos modificar el valor directamente ya que los handlers son inmutables
@@ -342,7 +342,7 @@ func TestAdditionalKeyboardFeatures(t *testing.T) {
 		}
 
 		// Ahora presionamos ESC para cancelar
-		continueParsing, _ := h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyEsc})
+		continueParsing, _ := h.handleKeyboard(tea.KeyMsg{Type: tea.KeyEsc})
 
 		if continueParsing {
 			t.Errorf("Expected continueParsing to be false after ESC in editing mode")
@@ -373,7 +373,7 @@ func TestAdditionalKeyboardFeatures(t *testing.T) {
 		initialIndex := h.tabSections[0].indexActiveEditField
 
 		// Intentar navegar con flechas up o down - no debería cambiar inputs
-		continueParsing, _ := h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyDown})
+		continueParsing, _ := h.handleKeyboard(tea.KeyMsg{Type: tea.KeyDown})
 		if !continueParsing {
 			t.Errorf("Expected continueParsing to be true after Down key")
 		}
@@ -382,7 +382,7 @@ func TestAdditionalKeyboardFeatures(t *testing.T) {
 				initialIndex, h.tabSections[0].indexActiveEditField)
 		}
 
-		continueParsing, _ = h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyUp})
+		continueParsing, _ = h.handleKeyboard(tea.KeyMsg{Type: tea.KeyUp})
 		if !continueParsing {
 			t.Errorf("Expected continueParsing to be true after Up key")
 		}
@@ -411,20 +411,20 @@ func TestAdditionalKeyboardFeatures(t *testing.T) {
 		h.activeTab = testTabIndex
 		h.editModeActivated = true
 		h.tabSections[testTabIndex].indexActiveEditField = 0
-		field := h.tabSections[testTabIndex].FieldHandlers()[0]
+		field := h.tabSections[testTabIndex].fieldHandlers[0]
 		setTempEditValueForTest(field, "hello") // Inicializar tempEditValue
 		setCursorForTest(field, 2)              // Cursor en medio (he|llo)
 
 		// Mover cursor a la izquierda
-		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyLeft})
+		h.handleKeyboard(tea.KeyMsg{Type: tea.KeyLeft})
 
 		if getCursorForTest(field) != 1 {
 			t.Errorf("Expected cursor to move left to position 1, got %d", getCursorForTest(field))
 		}
 
 		// Mover cursor a la derecha
-		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyRight})
-		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyRight})
+		h.handleKeyboard(tea.KeyMsg{Type: tea.KeyRight})
+		h.handleKeyboard(tea.KeyMsg{Type: tea.KeyRight})
 
 		if getCursorForTest(field) != 3 {
 			t.Errorf("Expected cursor to move right to position 3, got %d", getCursorForTest(field))
@@ -441,7 +441,7 @@ func getTempEditValueForTest(f *field) string {
 
 // setCursorForTest is a test helper to set cursor for a field (for testing only)
 func setCursorForTest(f *field, cursor int) {
-	f.SetCursorForTest(cursor)
+	f.setCursorForTest(cursor)
 }
 
 // getCursorForTest is a test helper to get cursor for a field (for testing only)

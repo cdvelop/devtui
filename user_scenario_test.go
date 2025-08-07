@@ -27,7 +27,7 @@ func TestUserScenarioExactReplication(t *testing.T) {
 		h.viewport.Height = 24
 
 		// Get the first field from the default configuration
-		field := h.tabSections[GetFirstTestTabIndex()].FieldHandlers()[0]
+		field := h.tabSections[GetFirstTestTabIndex()].fieldHandlers[0]
 
 		// Step 1: Field shows "initial test value" (this is the initial state)
 		expectedInitialValue := "initial test value"
@@ -63,7 +63,7 @@ func TestUserScenarioExactReplication(t *testing.T) {
 		// Step 3: User types "g"
 		// The bug was: this would result in "g initial test value"
 		// The fix: this should result in just "g"
-		h.HandleKeyboard(tea.KeyMsg{
+		h.handleKeyboard(tea.KeyMsg{
 			Type:  tea.KeyRunes,
 			Runes: []rune{'g'},
 		})
@@ -83,17 +83,17 @@ func TestUserScenarioExactReplication(t *testing.T) {
 		}
 
 		// Additional verification: type more characters to ensure continued functionality
-		h.HandleKeyboard(tea.KeyMsg{
+		h.handleKeyboard(tea.KeyMsg{
 			Type:  tea.KeyRunes,
 			Runes: []rune{'o'},
 		})
 
-		h.HandleKeyboard(tea.KeyMsg{
+		h.handleKeyboard(tea.KeyMsg{
 			Type:  tea.KeyRunes,
 			Runes: []rune{'o'},
 		})
 
-		h.HandleKeyboard(tea.KeyMsg{
+		h.handleKeyboard(tea.KeyMsg{
 			Type:  tea.KeyRunes,
 			Runes: []rune{'d'},
 		})
@@ -126,7 +126,7 @@ func TestBackspaceAfterClear(t *testing.T) {
 		h.viewport.Width = 80
 		h.viewport.Height = 24
 
-		field := h.tabSections[GetFirstTestTabIndex()].FieldHandlers()[0]
+		field := h.tabSections[GetFirstTestTabIndex()].fieldHandlers[0]
 
 		// Enter editing mode
 		h.editModeActivated = true
@@ -142,22 +142,22 @@ func TestBackspaceAfterClear(t *testing.T) {
 		field.cursor = 0
 
 		// Type some text
-		h.HandleKeyboard(tea.KeyMsg{
+		h.handleKeyboard(tea.KeyMsg{
 			Type:  tea.KeyRunes,
 			Runes: []rune{'t'},
 		})
 
-		h.HandleKeyboard(tea.KeyMsg{
+		h.handleKeyboard(tea.KeyMsg{
 			Type:  tea.KeyRunes,
 			Runes: []rune{'e'},
 		})
 
-		h.HandleKeyboard(tea.KeyMsg{
+		h.handleKeyboard(tea.KeyMsg{
 			Type:  tea.KeyRunes,
 			Runes: []rune{'s'},
 		})
 
-		h.HandleKeyboard(tea.KeyMsg{
+		h.handleKeyboard(tea.KeyMsg{
 			Type:  tea.KeyRunes,
 			Runes: []rune{'t'},
 		})
@@ -168,7 +168,7 @@ func TestBackspaceAfterClear(t *testing.T) {
 		}
 
 		// Use backspace to remove last character
-		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyBackspace})
+		h.handleKeyboard(tea.KeyMsg{Type: tea.KeyBackspace})
 
 		// Should have "tes"
 		if field.tempEditValue != "tes" {

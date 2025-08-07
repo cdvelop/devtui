@@ -29,7 +29,7 @@ func setupTestWithEditableField(t *testing.T) (*DevTUI, *field) {
 		t.Fatalf("Expected at least %d tab sections, got %d", testTabIndex+1, len(h.tabSections))
 	}
 
-	field := h.tabSections[testTabIndex].FieldHandlers()[0]
+	field := h.tabSections[testTabIndex].fieldHandlers[0]
 
 	// Enter editing mode on the correct tab
 	h.activeTab = testTabIndex
@@ -49,29 +49,29 @@ func TestSpaceKeyInEditMode(t *testing.T) {
 		h, field := setupTestWithEditableField(t)
 
 		// Type "hello" - one character at a time
-		h.HandleKeyboard(tea.KeyMsg{
+		h.handleKeyboard(tea.KeyMsg{
 			Type:  tea.KeyRunes,
 			Runes: []rune{'h'},
 		})
 
 		t.Logf("After typing 'h' - tempEditValue: '%s', cursor: %d", field.tempEditValue, field.cursor)
 
-		h.HandleKeyboard(tea.KeyMsg{
+		h.handleKeyboard(tea.KeyMsg{
 			Type:  tea.KeyRunes,
 			Runes: []rune{'e'},
 		})
 
-		h.HandleKeyboard(tea.KeyMsg{
+		h.handleKeyboard(tea.KeyMsg{
 			Type:  tea.KeyRunes,
 			Runes: []rune{'l'},
 		})
 
-		h.HandleKeyboard(tea.KeyMsg{
+		h.handleKeyboard(tea.KeyMsg{
 			Type:  tea.KeyRunes,
 			Runes: []rune{'l'},
 		})
 
-		h.HandleKeyboard(tea.KeyMsg{
+		h.handleKeyboard(tea.KeyMsg{
 			Type:  tea.KeyRunes,
 			Runes: []rune{'o'},
 		})
@@ -82,7 +82,7 @@ func TestSpaceKeyInEditMode(t *testing.T) {
 		}
 
 		// Now try to add a space using KeySpace
-		h.HandleKeyboard(tea.KeyMsg{
+		h.handleKeyboard(tea.KeyMsg{
 			Type: tea.KeySpace,
 		})
 
@@ -95,27 +95,27 @@ func TestSpaceKeyInEditMode(t *testing.T) {
 		}
 
 		// Continue typing "world"
-		h.HandleKeyboard(tea.KeyMsg{
+		h.handleKeyboard(tea.KeyMsg{
 			Type:  tea.KeyRunes,
 			Runes: []rune{'w'},
 		})
 
-		h.HandleKeyboard(tea.KeyMsg{
+		h.handleKeyboard(tea.KeyMsg{
 			Type:  tea.KeyRunes,
 			Runes: []rune{'o'},
 		})
 
-		h.HandleKeyboard(tea.KeyMsg{
+		h.handleKeyboard(tea.KeyMsg{
 			Type:  tea.KeyRunes,
 			Runes: []rune{'r'},
 		})
 
-		h.HandleKeyboard(tea.KeyMsg{
+		h.handleKeyboard(tea.KeyMsg{
 			Type:  tea.KeyRunes,
 			Runes: []rune{'l'},
 		})
 
-		h.HandleKeyboard(tea.KeyMsg{
+		h.handleKeyboard(tea.KeyMsg{
 			Type:  tea.KeyRunes,
 			Runes: []rune{'d'},
 		})
@@ -131,13 +131,13 @@ func TestSpaceKeyInEditMode(t *testing.T) {
 		h, field := setupTestWithEditableField(t)
 
 		// Type "hello" using Runes
-		h.HandleKeyboard(tea.KeyMsg{
+		h.handleKeyboard(tea.KeyMsg{
 			Type:  tea.KeyRunes,
 			Runes: []rune{'h', 'e', 'l', 'l', 'o'},
 		})
 
 		// Add space using Runes
-		h.HandleKeyboard(tea.KeyMsg{
+		h.handleKeyboard(tea.KeyMsg{
 			Type:  tea.KeyRunes,
 			Runes: []rune{' '},
 		})
@@ -145,7 +145,7 @@ func TestSpaceKeyInEditMode(t *testing.T) {
 		t.Logf("After adding space via Runes - tempEditValue: '%s', cursor: %d", field.tempEditValue, field.cursor)
 
 		// Add "world" using Runes
-		h.HandleKeyboard(tea.KeyMsg{
+		h.handleKeyboard(tea.KeyMsg{
 			Type:  tea.KeyRunes,
 			Runes: []rune{'w', 'o', 'r', 'l', 'd'},
 		})
@@ -162,25 +162,25 @@ func TestSpaceKeyInEditMode(t *testing.T) {
 
 		// Type a complete sentence with spaces
 		// "Hello world from Go"
-		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'H'}})
-		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'e'}})
-		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'l'}})
-		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'l'}})
-		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'o'}})
-		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeySpace}) // First space
-		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'w'}})
-		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'o'}})
-		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'r'}})
-		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'l'}})
-		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
-		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeySpace}) // Second space
-		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'f'}})
-		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'r'}})
-		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'o'}})
-		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'m'}})
-		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeySpace}) // Third space
-		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'G'}})
-		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'o'}})
+		h.handleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'H'}})
+		h.handleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'e'}})
+		h.handleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'l'}})
+		h.handleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'l'}})
+		h.handleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'o'}})
+		h.handleKeyboard(tea.KeyMsg{Type: tea.KeySpace}) // First space
+		h.handleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'w'}})
+		h.handleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'o'}})
+		h.handleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'r'}})
+		h.handleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'l'}})
+		h.handleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
+		h.handleKeyboard(tea.KeyMsg{Type: tea.KeySpace}) // Second space
+		h.handleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'f'}})
+		h.handleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'r'}})
+		h.handleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'o'}})
+		h.handleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'m'}})
+		h.handleKeyboard(tea.KeyMsg{Type: tea.KeySpace}) // Third space
+		h.handleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'G'}})
+		h.handleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'o'}})
 
 		expectedText := "Hello world from Go"
 		if field.tempEditValue != expectedText {

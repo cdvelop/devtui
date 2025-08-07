@@ -1,10 +1,7 @@
 package devtui
 
 import (
-	"fmt"
-	"strings"
-
-	"github.com/cdvelop/tinystring"
+	. "github.com/cdvelop/tinystring"
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -12,8 +9,8 @@ func (h *DevTUI) View() string {
 	if !h.ready {
 		return "\n  Initializing..."
 	}
-	return fmt.Sprintf("%s\n%s\n%s", h.headerView(), h.viewport.View(), h.footerView())
-	// return fmt.Sprintf("%s\n%s\n%s", h.headerView(), h.ContentView(), h.footerView())
+	return Fmt("%s\n%s\n%s", h.headerView(), h.viewport.View(), h.footerView())
+	// return Fmt("%s\n%s\n%s", h.headerView(), h.ContentView(), h.footerView())
 }
 
 // ContentView renderiza los mensajes para una sección de contenido
@@ -35,14 +32,14 @@ func (h *DevTUI) ContentView() string {
 	var contentLines []string
 
 	// NEW: Add display handler content if active field is a Display handler
-	fieldHandlers := section.FieldHandlers()
+	fieldHandlers := section.fieldHandlers
 	if len(fieldHandlers) > 0 && section.indexActiveEditField < len(fieldHandlers) {
 		activeField := fieldHandlers[section.indexActiveEditField]
 		if activeField.hasContentMethod() {
 			displayContent := activeField.getDisplayContent()
 			if displayContent != "" {
-				// Add display content at the top of the content view with Highlight color
-				highlightStyle := h.textContentStyle.Foreground(lipgloss.Color(h.Highlight))
+				// Add display content at the top of the content view with Primary color
+				highlightStyle := h.textContentStyle.Foreground(lipgloss.Color(h.Primary))
 				contentLines = append(contentLines, highlightStyle.Render(displayContent))
 				// Add separator line if there are also tab messages
 				if len(tabContent) > 0 {
@@ -57,7 +54,7 @@ func (h *DevTUI) ContentView() string {
 		formattedMsg := h.formatMessage(content)
 		contentLines = append(contentLines, h.textContentStyle.Render(formattedMsg))
 	}
-	return strings.Join(contentLines, "\n")
+	return Convert(contentLines).Join("\n").String()
 }
 
 func (h *DevTUI) headerView() string {
@@ -71,8 +68,8 @@ func (h *DevTUI) headerView() string {
 	tab := h.tabSections[h.activeTab]
 
 	// Truncar el título si es necesario
-	headerText := h.AppName + "/" + tab.Title()
-	truncatedHeader := tinystring.Convert(headerText).Truncate(h.labelWidth, 0).String()
+	headerText := h.AppName + "/" + tab.title
+	truncatedHeader := Convert(headerText).Truncate(h.labelWidth, 0).String()
 
 	// Aplicar el estilo base para garantizar un ancho fijo
 	fixedWidthHeader := h.labelStyle.Render(truncatedHeader)
@@ -90,9 +87,9 @@ func (h *DevTUI) headerView() string {
 	}
 	displayCurrent := min(currentTab, 99) + 1 // 1-based for display
 	displayTotal := min(totalTabs, 99)
-	pagination := fmt.Sprintf("%2d/%2d", displayCurrent, displayTotal)
+	pagination := Fmt("%2d/%2d", displayCurrent, displayTotal)
 	paginationStyled := h.paginationStyle.Render(pagination)
 	lineWidth := h.viewport.Width - lipgloss.Width(title) - lipgloss.Width(paginationStyled)
-	line := h.lineHeadFootStyle.Render(strings.Repeat("─", max(0, lineWidth)))
+	line := h.lineHeadFootStyle.Render(Convert("─").Repeat(max(0, lineWidth)).String())
 	return lipgloss.JoinHorizontal(lipgloss.Center, title, line, paginationStyled)
 }

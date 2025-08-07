@@ -28,7 +28,7 @@ func TestManualScenarioValueUpdate(t *testing.T) {
 		tui.activeTab = serverTabIndex
 
 		// Get the port field
-		portField := tui.tabSections[serverTabIndex].FieldHandlers()[0]
+		portField := tui.tabSections[serverTabIndex].fieldHandlers[0]
 
 		// Verify initial state
 		initialValue := portField.Value()
@@ -43,7 +43,7 @@ func TestManualScenarioValueUpdate(t *testing.T) {
 		t.Logf("STEP 2: User presses Enter to edit field...")
 
 		// Simulate pressing Enter on the port field (like in manual scenario)
-		tui.HandleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
+		tui.handleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
 
 		// Verify we're in edit mode
 		if !tui.editModeActivated {
@@ -64,17 +64,17 @@ func TestManualScenarioValueUpdate(t *testing.T) {
 		// Realistic: Clear field completely with backspace
 		// Clear existing "8080" (4 characters)
 		for i := 0; i < 5; i++ { // 4 chars + buffer
-			tui.HandleKeyboard(tea.KeyMsg{Type: tea.KeyBackspace})
+			tui.handleKeyboard(tea.KeyMsg{Type: tea.KeyBackspace})
 		}
 
 		// Type "8"
-		tui.HandleKeyboard(tea.KeyMsg{
+		tui.handleKeyboard(tea.KeyMsg{
 			Type:  tea.KeyRunes,
 			Runes: []rune{'8'},
 		})
 
 		// Type "0"
-		tui.HandleKeyboard(tea.KeyMsg{
+		tui.handleKeyboard(tea.KeyMsg{
 			Type:  tea.KeyRunes,
 			Runes: []rune{'0'},
 		})
@@ -95,7 +95,7 @@ func TestManualScenarioValueUpdate(t *testing.T) {
 		// STEP 4: User presses Enter to confirm the change
 		t.Logf("STEP 4: User presses Enter to confirm change...")
 
-		tui.HandleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
+		tui.handleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
 
 		// CRITICAL TEST: After pressing Enter, field.Value() should return the new value
 		newValue := portField.Value()
@@ -125,7 +125,7 @@ func TestManualScenarioValueUpdate(t *testing.T) {
 		// STEP 6: Simulate entering edit mode again to verify the value persists
 		t.Logf("STEP 6: Enter edit mode again to verify value persists...")
 
-		tui.HandleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
+		tui.handleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
 
 		// The tempEditValue should now be initialized with the NEW value
 		t.Logf("Re-entering edit mode - tempEditValue: '%s', field.Value(): '%s'",
@@ -160,21 +160,21 @@ func TestDisplayedValueInUI(t *testing.T) {
 		serverTabIndex := len(tui.tabSections) - 1
 		tui.activeTab = serverTabIndex
 
-		portField := tui.tabSections[serverTabIndex].FieldHandlers()[0]
+		portField := tui.tabSections[serverTabIndex].fieldHandlers[0]
 
 		// Simulate the editing process realistically
 		// 1. Enter edit mode
-		tui.HandleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
+		tui.handleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
 
 		// 2. Clear field and type new value
 		for i := 0; i < 5; i++ { // Clear existing "8080"
-			tui.HandleKeyboard(tea.KeyMsg{Type: tea.KeyBackspace})
+			tui.handleKeyboard(tea.KeyMsg{Type: tea.KeyBackspace})
 		}
-		tui.HandleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'8'}})
-		tui.HandleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'0'}})
+		tui.handleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'8'}})
+		tui.handleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'0'}})
 
 		// 3. Press Enter to confirm
-		tui.HandleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
+		tui.handleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
 
 		// 4. Check what the UI renders
 		// Get the content that would be displayed

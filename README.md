@@ -70,11 +70,11 @@ func main() {
     tui := devtui.NewTUI(&devtui.TuiConfig{
         AppName:  "Demo",
         ExitChan: make(chan bool),
-        Color: &devtui.ColorStyle{
+        Color: &devtui.ColorPalette{
             Foreground: "#F4F4F4",
             Background: "#000000",
-            Highlight:  "#FF6600",
-            Lowlight:   "#666666",
+            Primary:  "#FF6600",
+            Secondary:   "#666666",
         },
         LogToFile: func(messages ...any) {
             // Replace with actual logging implementation

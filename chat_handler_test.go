@@ -187,7 +187,7 @@ func TestChatHandlerRealScenario(t *testing.T) {
 
 		chatTabIndex := len(tui.tabSections) - 1
 		tui.activeTab = chatTabIndex
-		chatField := tui.tabSections[chatTabIndex].FieldHandlers()[0]
+		chatField := tui.tabSections[chatTabIndex].fieldHandlers[0]
 
 		t.Logf("=== TESTING UI RENDERING AND EDIT MODE ===")
 
@@ -196,7 +196,7 @@ func TestChatHandlerRealScenario(t *testing.T) {
 		t.Logf("Phase 1 - Initial UI:\n%s", content1)
 
 		// Phase 2: Enter to activate input mode
-		tui.HandleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
+		tui.handleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
 
 		content2 := tui.ContentView()
 		t.Logf("Phase 2 - After Enter (should be in edit mode):\n%s", content2)
@@ -208,13 +208,13 @@ func TestChatHandlerRealScenario(t *testing.T) {
 		}
 
 		// Phase 3: Type message
-		tui.HandleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("hello")})
+		tui.handleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("hello")})
 
 		content3 := tui.ContentView()
 		t.Logf("Phase 3 - After typing 'hello':\n%s", content3)
 
 		// Phase 4: Send message
-		tui.HandleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
+		tui.handleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
 
 		content4 := tui.ContentView()
 		t.Logf("Phase 4 - After sending message:\n%s", content4)

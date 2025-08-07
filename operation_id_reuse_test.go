@@ -23,7 +23,7 @@ func TestOperationIDReuse(t *testing.T) {
 		testTab := h.NewTabSection("Test Tab", "Test description")
 		testTab.AddEditHandler(handler, 0)
 
-		field := testTab.FieldHandlers()[0]
+		field := testTab.fieldHandlers[0]
 
 		// First execution - should create new message with the fixed operationID
 		field.executeChangeSyncWithTracking(field.Value())
@@ -77,8 +77,8 @@ func TestOperationIDReuse(t *testing.T) {
 		testTab.AddEditHandler(handler1, 0)
 		testTab.AddEditHandler(handler2, 0)
 
-		field1 := testTab.FieldHandlers()[0]
-		field2 := testTab.FieldHandlers()[1]
+		field1 := testTab.fieldHandlers[0]
+		field2 := testTab.fieldHandlers[1]
 
 		// Execute both handlers
 		field1.executeChangeSyncWithTracking(field1.Value())
@@ -113,7 +113,7 @@ func TestOperationIDReuse(t *testing.T) {
 		testTab := h.NewTabSection("Test Tab 3", "Test description for new operation ID")
 		testTab.AddEditHandler(handler, 0)
 
-		field := testTab.FieldHandlers()[0]
+		field := testTab.fieldHandlers[0]
 
 		// First execution
 		field.executeChangeSyncWithTracking(field.Value())

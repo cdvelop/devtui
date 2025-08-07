@@ -15,7 +15,7 @@ func TestDemoMessageDuplication(t *testing.T) {
 		h.activeTab = 0
 		h.tabSections[0].indexActiveEditField = 0
 
-		field := h.tabSections[0].FieldHandlers()[0]
+		field := h.tabSections[0].fieldHandlers[0]
 
 		// Clear messages like demo start
 		h.tabSections[0].tabContents = nil

@@ -167,14 +167,14 @@ return lipgloss.JoinHorizontal(lipgloss.Left, paginationStyled, spacerStyle, pad
 **Changes**:
 - Add `paginationStyle` field to `tuiStyle` struct
 - Create new pagination style specifically for pagination indicators
-- Background: `Highlight` color 
+- Background: `Primary` color 
 - Foreground: `Foreground` color
 - Avoid confusion with existing styles
 
 ```go
 // Add to tuiStyle struct
 type tuiStyle struct {
-    *ColorStyle
+    *ColorPalette
     // ... existing fields ...
     footerInfoStyle  lipgloss.Style
     paginationStyle  lipgloss.Style // NEW: For pagination indicators
@@ -184,7 +184,7 @@ type tuiStyle struct {
 // Add in newTuiStyle function
 t.paginationStyle = lipgloss.NewStyle().
     Padding(0, 0).
-    Background(lipgloss.Color(t.Highlight)).
+    Background(lipgloss.Color(t.Primary)).
     Foreground(lipgloss.Color(t.Foreground))
 ```
 
@@ -198,7 +198,7 @@ t.paginationStyle = lipgloss.NewStyle().
 
 #### Field Navigation Context
 - Current field: `tabSection.indexActiveEditField` (0-based)
-- Total fields: `len(tabSection.FieldHandlers())`
+- Total fields: `len(tabSection.fieldHandlers)`
 - Field types: HandlerDisplay, HandlerEdit, HandlerExecution
 - **Limits**: Maximum 99 field handlers per tab, log error if exceeded
 
@@ -230,7 +230,7 @@ To fix the bug, update the footer pagination logic so that when there are no fie
 - **Test error logging**: Verify `LogToFile` is called when limits exceeded
 
 ### Visual Style Consistency
-- **Both paginations**: New `paginationStyle` (Highlight background + Foreground text)
+- **Both paginations**: New `paginationStyle` (Primary background + Foreground text)
 - **Distinct from scroll%**: Different style to avoid confusion with existing elements
 - **Header layout**: Title + Line (no spaces) + Pagination
 - **Footer layout**: Pagination + Space + Elements + Space + Scroll%

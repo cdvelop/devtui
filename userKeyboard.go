@@ -6,9 +6,9 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-// HandleKeyboard processes keyboard input and updates the model state
+// handleKeyboard processes keyboard input and updates the model state
 // returns whether the update function should continue processing or return early
-func (h *DevTUI) HandleKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
+func (h *DevTUI) handleKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 	if h.editModeActivated { // EDITING CONFIG IN SECTION
 		return h.handleEditingConfigKeyboard(msg)
 	} else {
@@ -19,10 +19,10 @@ func (h *DevTUI) HandleKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 // handleEditingConfigKeyboard handles keyboard input while in config editing mode
 func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 	currentTab := h.tabSections[h.activeTab]
-	fieldHandlers := currentTab.FieldHandlers()
+	fieldHandlers := currentTab.fieldHandlers
 	currentField := fieldHandlers[currentTab.indexActiveEditField]
 
-	if currentField.Editable() { // Si el campo es editable, permitir la edición
+	if currentField.editable() { // Si el campo es editable, permitir la edición
 		// Calcular el ancho máximo disponible para el texto
 		// Esto sigue la misma lógica que en footerInput.go
 		_, availableTextWidth := h.calculateInputWidths(currentField.handler.Label())
@@ -152,7 +152,7 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 // handleNormalModeKeyboard handles keyboard input in normal mode (not editing config)
 func (h *DevTUI) handleNormalModeKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 	currentTab := h.tabSections[h.activeTab]
-	fieldHandlers := currentTab.FieldHandlers()
+	fieldHandlers := currentTab.fieldHandlers
 	totalFields := len(fieldHandlers)
 
 	switch msg.Type {
@@ -197,9 +197,9 @@ func (h *DevTUI) handleNormalModeKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 
 	case tea.KeyEnter: //Enter para entrar en modo edición, ejecuta la acción directamente si el campo no es editable
 		if totalFields > 0 {
-			fieldHandlers := currentTab.FieldHandlers()
+			fieldHandlers := currentTab.fieldHandlers
 			field := fieldHandlers[currentTab.indexActiveEditField]
-			if !field.Editable() {
+			if !field.editable() {
 				// Trigger async operation for non-editable fields
 				if field.handler != nil {
 					field.handleEnter()
@@ -238,7 +238,7 @@ func (h *DevTUI) checkAndTriggerInteractiveContent() {
 	}
 
 	activeTab := h.tabSections[h.activeTab]
-	fieldHandlers := activeTab.FieldHandlers()
+	fieldHandlers := activeTab.fieldHandlers
 
 	if len(fieldHandlers) == 0 || activeTab.indexActiveEditField >= len(fieldHandlers) {
 		return
@@ -262,7 +262,7 @@ func (h *DevTUI) executeShortcut(entry *ShortcutEntry) (bool, tea.Cmd) {
 	}
 
 	targetTab := h.tabSections[entry.TabIndex]
-	fieldHandlers := targetTab.FieldHandlers()
+	fieldHandlers := targetTab.fieldHandlers
 	if entry.FieldIndex >= len(fieldHandlers) {
 		if h.LogToFile != nil {
 			h.LogToFile("Shortcut error: invalid field index", entry.FieldIndex)

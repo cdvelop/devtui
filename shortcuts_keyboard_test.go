@@ -35,7 +35,7 @@ func TestShortcutKeyboard_SingleCharacterHandling(t *testing.T) {
 	}
 
 	// Handle keyboard input
-	handled, _ := tui.HandleKeyboard(keyMsg)
+	handled, _ := tui.handleKeyboard(keyMsg)
 	if handled {
 		t.Error("Expected shortcut handling to return false (stop processing)")
 	}
@@ -79,7 +79,7 @@ func TestShortcutKeyboard_NonExistentShortcut(t *testing.T) {
 	}
 
 	// Handle keyboard input
-	handled, _ := tui.HandleKeyboard(keyMsg)
+	handled, _ := tui.handleKeyboard(keyMsg)
 	if !handled {
 		t.Error("Expected non-shortcut key to return true (continue processing)")
 	}
@@ -120,7 +120,7 @@ func TestShortcutKeyboard_EditModeIgnoresShortcuts(t *testing.T) {
 	}
 
 	// Handle keyboard input (should go to edit mode handler, not shortcuts)
-	_, _ = tui.HandleKeyboard(keyMsg)
+	_, _ = tui.handleKeyboard(keyMsg)
 
 	// In edit mode, shortcuts should not be processed
 	// The exact return value depends on edit mode handling, but handler should not be triggered
@@ -164,7 +164,7 @@ func TestShortcutKeyboard_MultipleCharacterIgnored(t *testing.T) {
 	}
 
 	// Handle keyboard input
-	handled, _ := tui.HandleKeyboard(keyMsg)
+	handled, _ := tui.handleKeyboard(keyMsg)
 	if !handled {
 		t.Error("Expected multi-character input to return true (continue processing)")
 	}
@@ -208,7 +208,7 @@ func TestShortcutKeyboard_InvalidTabIndex(t *testing.T) {
 	}
 
 	// Handle keyboard input (should handle gracefully)
-	handled, _ := tui.HandleKeyboard(keyMsg)
+	handled, _ := tui.handleKeyboard(keyMsg)
 	if handled {
 		t.Error("Expected invalid shortcut to return false and stop processing")
 	}

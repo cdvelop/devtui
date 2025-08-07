@@ -40,7 +40,7 @@ func TestExecutionHandlerFooterBug(t *testing.T) {
 	tab.AddExecutionHandler(&ExecHandler{}, 50*time.Millisecond)
 
 	// Simulate Enter key (async)
-	fields := tab.FieldHandlers()
+	fields := tab.fieldHandlers
 	if len(fields) == 0 {
 		t.Fatal("No field handlers registered")
 	}

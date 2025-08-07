@@ -22,7 +22,7 @@ func TestHandlerInteractiveInterface(t *testing.T) {
 		h.tabSections[0].indexActiveEditField = 0
 
 		// Get the shortcuts field that was automatically created
-		fields := h.tabSections[0].FieldHandlers()
+		fields := h.tabSections[0].fieldHandlers
 		if len(fields) == 0 {
 			t.Fatal("No shortcuts field found - createShortcutsTab() should create one automatically")
 		}
@@ -142,7 +142,7 @@ func TestMessageTrackerRealProblem(t *testing.T) {
 		h.activeTab = 0
 		h.tabSections[0].indexActiveEditField = 0
 
-		field := h.tabSections[0].FieldHandlers()[0]
+		field := h.tabSections[0].fieldHandlers[0]
 
 		// Clear any existing messages
 		h.tabSections[0].tabContents = nil

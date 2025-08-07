@@ -8,7 +8,7 @@ The current `FieldHandler` interface only supports two visual states:
 
 However, there's a need for a third state: **Readonly/Information-only fields** that:
 - Show information without requiring user interaction
-- Should have a distinct visual appearance (using Highlight color) to indicate readonly state
+- Should have a distinct visual appearance (using Primary color) to indicate readonly state
 - Don't need "Press Enter" prompts since they're purely informational
 - Display cleaner content without timestamps in message area
 
@@ -53,14 +53,14 @@ type tuiStyle struct {
 
 // In newTuiStyle() - Copy fieldSelectedStyle but use clear text on highlight
 t.fieldReadOnlyStyle = t.fieldSelectedStyle.
-    Background(lipgloss.Color(t.Highlight)).
+    Background(lipgloss.Color(t.Primary)).
     Foreground(lipgloss.Color(t.Foreground))  // Clear text on highlight background
 ```
 
 **Color Scheme Consistency:**
-- `fieldSelectedStyle`: Highlight background + Foreground text (current selection)
-- `fieldEditingStyle`: Highlight background + Background text (dark on highlight - editing)
-- `fieldReadOnlyStyle`: Highlight background + Foreground text (clear on highlight - readonly info)
+- `fieldSelectedStyle`: Primary background + Foreground text (current selection)
+- `fieldEditingStyle`: Primary background + Background text (dark on highlight - editing)
+- `fieldReadOnlyStyle`: Primary background + Foreground text (clear on highlight - readonly info)
 
 This maintains the footer's existing visual hierarchy while adding the new readonly state.
 
@@ -72,14 +72,14 @@ This maintains the footer's existing visual hierarchy while adding the new reado
 if field.isDisplayOnly() {  // NEW: Empty label detection (exactly "")
     // Use fieldReadOnlyStyle - highlight background with clear text
     inputValueStyle = inputValueStyle.
-        Background(lipgloss.Color(h.Highlight)).
+        Background(lipgloss.Color(h.Primary)).
         Foreground(lipgloss.Color(h.Foreground))  // Clear text on highlight
     // No cursor allowed, no interaction
         
 } else if h.editModeActivated && field.Editable() {
     // EXISTING: Estilo para edición activa (current editing style)
     inputValueStyle = inputValueStyle.
-        Background(lipgloss.Color(h.Lowlight)).
+        Background(lipgloss.Color(h.Secondary)).
         Foreground(lipgloss.Color(h.Foreground))
         
 } else if !field.Editable() {
@@ -91,7 +91,7 @@ if field.isDisplayOnly() {  // NEW: Empty label detection (exactly "")
 } else {
     // EXISTING: Estilo para campos editables pero no en modo edición
     inputValueStyle = inputValueStyle.
-        Background(lipgloss.Color(h.Lowlight)).
+        Background(lipgloss.Color(h.Secondary)).
         Foreground(lipgloss.Color(h.Background))
 }
 ```
@@ -209,18 +209,18 @@ func (h *WelcomeHandler) Change(newValue any, progress ...func(string)) (string,
 
 ### Visual Result:
 - **Footer Structure**: Completely unchanged - maintains current layout and proportions
-- **Readonly Fields Color**: Highlight background (orange) with clear text - visually consistent with header
+- **Readonly Fields Color**: Primary background (orange) with clear text - visually consistent with header
 - **No Interaction**: Readonly fields don't respond to any keyboard input (no cursor, no Enter)
 - **Navigation**: Users can navigate between fields normally, readonly fields can be "selected" but not edited
 - **Clean Messages**: Content from readonly handlers displays without timestamps
 - **Empty Label Space**: No label displayed, giving more space for information content
 
 ### Color Scheme Summary:
-1. **Normal Editable**: Lowlight background + Background text
-2. **Selected Editable**: Highlight background + Foreground text  
-3. **Editing Active**: Lowlight background + Foreground text
+1. **Normal Editable**: Secondary background + Background text
+2. **Selected Editable**: Primary background + Foreground text  
+3. **Editing Active**: Secondary background + Foreground text
 4. **Action Button**: Foreground background + Background text
-5. **Readonly Display** (NEW): Highlight background + Foreground text
+5. **Readonly Display** (NEW): Primary background + Foreground text
 
 ### Example Comparison:
 **Before (misleading action):**

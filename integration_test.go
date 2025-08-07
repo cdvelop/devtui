@@ -12,11 +12,11 @@ func TestRealWorldScenario(t *testing.T) {
 	tui := NewTUI(&TuiConfig{
 		AppName:  "Ejemplo DevTUI",
 		ExitChan: make(chan bool),
-		Color: &ColorStyle{
+		Color: &ColorPalette{
 			Foreground: "#F4F4F4",
 			Background: "#000000",
-			Highlight:  "#FF6600",
-			Lowlight:   "#666666",
+			Primary:    "#FF6600",
+			Secondary:  "#666666",
 		},
 		LogToFile: func(messages ...any) {
 			t.Logf("Log: %v", messages)

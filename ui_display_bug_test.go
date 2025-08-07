@@ -36,7 +36,7 @@ func TestUIDisplayBug(t *testing.T) {
 
 		// Navigate to Server tab
 		tui.activeTab = 1 // Skip SHORTCUTS tab
-		portField := tui.tabSections[1].FieldHandlers()[0]
+		portField := tui.tabSections[1].fieldHandlers[0]
 
 		t.Logf("=== REPRODUCING UI DISPLAY BUG ===")
 		t.Logf("Step 1: Initial value - field.Value(): '%s'", portField.Value())
@@ -49,21 +49,21 @@ func TestUIDisplayBug(t *testing.T) {
 		t.Logf("Step 3: User enters edit mode and changes to '8080'...")
 
 		// Enter edit mode
-		tui.HandleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
+		tui.handleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
 
 		// Realistic: Clear field with backspace and type new value
 		// Clear existing text first
 		for i := 0; i < 5; i++ { // Clear any existing text
-			tui.HandleKeyboard(tea.KeyMsg{Type: tea.KeyBackspace})
+			tui.handleKeyboard(tea.KeyMsg{Type: tea.KeyBackspace})
 		}
 		// Type "8080"
 		for _, char := range "8080" {
-			tui.HandleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{char}})
+			tui.handleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{char}})
 		}
 
 		// Press Enter to save
 		t.Logf("About to press Enter - tempEditValue: '%s'", portField.tempEditValue)
-		tui.HandleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
+		tui.handleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
 
 		// Give some time for async operation to complete
 		time.Sleep(200 * time.Millisecond)
@@ -115,7 +115,7 @@ func TestUIDisplayBug(t *testing.T) {
 		tui.viewport.Height = 24
 		tui.activeTab = 1
 
-		portField := tui.tabSections[1].FieldHandlers()[0]
+		portField := tui.tabSections[1].fieldHandlers[0]
 
 		// Manually update the handler (simulating successful change)
 		t.Logf("Before manual update - field.Value(): '%s'", portField.Value())

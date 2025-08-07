@@ -12,7 +12,7 @@ func TestPaginationDisplay(t *testing.T) {
 	h := DefaultTUIForTest(func(messages ...any) {})
 	h.viewport.Width = 80
 	h.viewport.Height = 24
-	h.paginationStyle = lipgloss.NewStyle().Background(lipgloss.Color(h.Lowlight)).Foreground(lipgloss.Color(h.Foreground))
+	h.paginationStyle = lipgloss.NewStyle().Background(lipgloss.Color(h.Secondary)).Foreground(lipgloss.Color(h.Foreground))
 
 	// Tab pagination cases
 	tabCases := []struct {
@@ -66,11 +66,11 @@ func TestPaginationDisplay(t *testing.T) {
 			tab.AddEditHandler(NewTestEditableHandler(fmt.Sprintf("Field%d", i), "val"), 0)
 		}
 		h.activeTab = 0
-		if tc.activeField < len(tab.FieldHandlers()) {
-			tab.SetActiveEditField(tc.activeField)
+		if tc.activeField < len(tab.fieldHandlers) {
+			tab.setActiveEditField(tc.activeField)
 		}
 		currentField := tc.activeField
-		totalFields := len(tab.FieldHandlers())
+		totalFields := len(tab.fieldHandlers)
 		displayCurrent := min(currentField, 99) + 1
 		displayTotal := min(totalFields, 99)
 		pagination := fmt.Sprintf("[%2d/%2d]", displayCurrent, displayTotal)

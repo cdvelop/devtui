@@ -2,7 +2,7 @@
 
 ## Problema Identificado
 
-Basado en las imágenes proporcionadas y el análisis del código, se ha identificado un **bug de duplicación de contenido** en el renderizado del `ShortcutsHandler` (que se carga automáticamente por defecto). El contenido aparece dos veces con colores diferentes cuando debería aparecer solo una vez con el color `Highlight`.
+Basado en las imágenes proporcionadas y el análisis del código, se ha identificado un **bug de duplicación de contenido** en el renderizado del `ShortcutsHandler` (que se carga automáticamente por defecto). El contenido aparece dos veces con colores diferentes cuando debería aparecer solo una vez con el color `Primary`.
 
 ## Análisis Técnico
 
@@ -28,10 +28,10 @@ if !c.TestMode {
 Para el `ShortcutsHandler`, el contenido aparece **dos veces debido a un renderizado dual**:
 
 1. **Content Area** (línea 118): Se envía manualmente el contenido usando `sendMessageWithHandler()` - aparece con color normal y timestamp
-2. **Content Area** (automático): El sistema de `HandlerDisplay` automáticamente muestra `Content()` cuando se selecciona el campo - aparece con color `Highlight`
+2. **Content Area** (automático): El sistema de `HandlerDisplay` automáticamente muestra `Content()` cuando se selecciona el campo - aparece con color `Primary`
 
 Además:
-3. **Footer**: Se muestra `Label()` ("Help") con color `Highlight`
+3. **Footer**: Se muestra `Label()` ("Help") con color `Primary`
 
 ### Comportamiento Observado en las Imágenes
 
@@ -92,20 +92,20 @@ shortcutsTab.NewDisplayHandler(shortcutsHandler).Register()
 
 **Resultado:**
 - El contenido aparece **solo una vez** automáticamente cuando se selecciona el field
-- Se muestra con color `Highlight` como debe ser para `HandlerDisplay`
+- Se muestra con color `Primary` como debe ser para `HandlerDisplay`
 - El footer muestra el `Label()` ("Help")
 - No hay duplicación
 
-### Opción 2: Aplicar Color Highlight al Contenido Automático
+### Opción 2: Aplicar Color Primary al Contenido Automático
 
-Si se prefiere mantener ambos, aplicar color `Highlight` al contenido automático en `view.go`:
+Si se prefiere mantener ambos, aplicar color `Primary` al contenido automático en `view.go`:
 
 ```go
 if activeField.isDisplayOnly() {
     displayContent := activeField.getDisplayContent()
     if displayContent != "" {
-        // Apply Highlight color to display content
-        highlightStyle := h.textContentStyle.Foreground(lipgloss.Color(h.Highlight))
+        // Apply Primary color to display content
+        highlightStyle := h.textContentStyle.Foreground(lipgloss.Color(h.Primary))
         contentLines = append(contentLines, highlightStyle.Render(displayContent))
     }
 }
@@ -124,7 +124,7 @@ Para validar la corrección:
 2. **Navegar al tab "SHORTCUTS"** (cargado automáticamente)
 3. **Verificar que**:
    - El contenido aparece UNA sola vez en el content area
-   - El color del contenido es `Highlight` (#FF6600)
+   - El color del contenido es `Primary` (#FF6600)
    - El footer muestra "Help"
    - No hay duplicación de "Keyboard Navigation Commands:"
 

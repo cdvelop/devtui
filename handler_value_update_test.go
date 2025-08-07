@@ -82,7 +82,7 @@ func TestHandlerValueUpdateAfterEdit(t *testing.T) {
 		h.activeTab = testTabIndex
 
 		// Get the field
-		field := h.tabSections[testTabIndex].FieldHandlers()[0]
+		field := h.tabSections[testTabIndex].fieldHandlers[0]
 
 		// Verify initial state
 		initialValue := field.Value()
@@ -94,7 +94,7 @@ func TestHandlerValueUpdateAfterEdit(t *testing.T) {
 		t.Logf("Initial field value: '%s'", field.Value())
 
 		// Realistic: User presses Enter to enter edit mode
-		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
+		h.handleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
 
 		// Verify edit mode was activated
 		if !h.editModeActivated {
@@ -104,16 +104,16 @@ func TestHandlerValueUpdateAfterEdit(t *testing.T) {
 		// Realistic: User clears the field with multiple backspaces then types "80"
 		// First, simulate moving cursor to end and then backspace to clear
 		for i := 0; i < 5; i++ { // Clear existing "8080" (4 chars + buffer)
-			h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyBackspace})
+			h.handleKeyboard(tea.KeyMsg{Type: tea.KeyBackspace})
 		}
-		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'8'}})
-		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'0'}})
+		h.handleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'8'}})
+		h.handleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'0'}})
 
 		t.Logf("Before pressing Enter - tempEditValue: '%s', handler Value(): '%s'",
 			field.tempEditValue, field.Value())
 
 		// User presses Enter to save the change
-		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
+		h.handleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
 
 		t.Logf("After pressing Enter - tempEditValue: '%s', handler Value(): '%s'",
 			field.tempEditValue, field.Value())
@@ -163,19 +163,19 @@ func TestHandlerValueUpdateAfterEdit(t *testing.T) {
 		h.activeTab = testTabIndex
 
 		// Get the field
-		field := h.tabSections[testTabIndex].FieldHandlers()[0]
+		field := h.tabSections[testTabIndex].fieldHandlers[0]
 
 		// Realistic: User presses Enter to enter edit mode
-		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
+		h.handleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
 
 		// Realistic: User clears field with backspace then types invalid value "99999"
 		// Clear existing text
 		for i := 0; i < 5; i++ { // Clear existing "8080" (4 chars + buffer)
-			h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyBackspace})
+			h.handleKeyboard(tea.KeyMsg{Type: tea.KeyBackspace})
 		}
 		// Type "99999"
 		for _, char := range "99999" {
-			h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{char}})
+			h.handleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{char}})
 		}
 
 		originalValue := field.Value()
@@ -183,7 +183,7 @@ func TestHandlerValueUpdateAfterEdit(t *testing.T) {
 			field.tempEditValue, originalValue)
 
 		// User presses Enter to save the invalid change
-		h.HandleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
+		h.handleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
 
 		t.Logf("After pressing Enter with invalid value - tempEditValue: '%s', handler Value(): '%s'",
 			field.tempEditValue, field.Value())

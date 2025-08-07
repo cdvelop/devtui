@@ -88,15 +88,15 @@ func TestNewAPIHandlers(t *testing.T) {
 	}
 
 	// Second and third fields should be HandlerEdit (editable)
-	if !fields[1].Editable() {
+	if !fields[1].editable() {
 		t.Error("Second field should be editable")
 	}
-	if !fields[2].Editable() {
+	if !fields[2].editable() {
 		t.Error("Third field should be editable")
 	}
 
 	// Fourth and fifth fields should be HandlerExecution (not editable, but not display-only)
-	if fields[3].Editable() {
+	if fields[3].editable() {
 		t.Error("Fourth field should not be editable")
 	}
 	if fields[3].isDisplayOnly() {

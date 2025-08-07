@@ -26,7 +26,7 @@ func TestFieldEditingBugReplication(t *testing.T) {
 
 		// Use centralized function to get correct tab index
 		testTabIndex := GetFirstTestTabIndex()
-		field := h.tabSections[testTabIndex].FieldHandlers()[0]
+		field := h.tabSections[testTabIndex].fieldHandlers[0]
 		// The field already has "initial test value" from DefaultTUIForTest
 
 		// Switch to the test tab and enter editing mode
@@ -55,7 +55,7 @@ func TestFieldEditingBugReplication(t *testing.T) {
 
 		// Step 2: User types a new character 'g'
 		// This should now work correctly and only show 'g'
-		h.HandleKeyboard(tea.KeyMsg{
+		h.handleKeyboard(tea.KeyMsg{
 			Type:  tea.KeyRunes,
 			Runes: []rune{'g'},
 		})
@@ -95,7 +95,7 @@ func TestFieldEditingCorrectBehavior(t *testing.T) {
 
 		// Use centralized function to get correct tab index
 		testTabIndex := GetFirstTestTabIndex()
-		field := h.tabSections[testTabIndex].FieldHandlers()[0]
+		field := h.tabSections[testTabIndex].fieldHandlers[0]
 
 		// The field already has "initial test value" from DefaultTUIForTest
 		// No need to set it again as SetValue is deprecated
@@ -110,27 +110,27 @@ func TestFieldEditingCorrectBehavior(t *testing.T) {
 		field.cursor = 0
 
 		// Type multiple characters
-		h.HandleKeyboard(tea.KeyMsg{
+		h.handleKeyboard(tea.KeyMsg{
 			Type:  tea.KeyRunes,
 			Runes: []rune{'h'},
 		})
 
-		h.HandleKeyboard(tea.KeyMsg{
+		h.handleKeyboard(tea.KeyMsg{
 			Type:  tea.KeyRunes,
 			Runes: []rune{'e'},
 		})
 
-		h.HandleKeyboard(tea.KeyMsg{
+		h.handleKeyboard(tea.KeyMsg{
 			Type:  tea.KeyRunes,
 			Runes: []rune{'l'},
 		})
 
-		h.HandleKeyboard(tea.KeyMsg{
+		h.handleKeyboard(tea.KeyMsg{
 			Type:  tea.KeyRunes,
 			Runes: []rune{'l'},
 		})
 
-		h.HandleKeyboard(tea.KeyMsg{
+		h.handleKeyboard(tea.KeyMsg{
 			Type:  tea.KeyRunes,
 			Runes: []rune{'o'},
 		})

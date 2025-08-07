@@ -18,7 +18,7 @@ func TestFooterView(t *testing.T) {
 	t.Run("Footer with no fields shows scrollbar", func(t *testing.T) {
 		// Guardar estado actual para restaurar después de la prueba
 		tab := h.tabSections[h.activeTab]
-		originalFields := tab.FieldHandlers()
+		originalFields := tab.fieldHandlers
 
 		// Configurar pestaña sin fields
 		tab.setFieldHandlers([]*field{})
@@ -59,7 +59,7 @@ func TestFooterView(t *testing.T) {
 		result := h.footerView()
 
 		// Verificar que contiene la etiqueta y valor del field
-		field := tab.FieldHandlers()[0]
+		field := tab.fieldHandlers[0]
 		if !strings.Contains(result, field.Value()) {
 			t.Errorf("El footer debería mostrar:\n%v\n incluso sin estar en modo edición, pero muestra:\n%s\n", field.Value(), result)
 		}
@@ -69,7 +69,7 @@ func TestFooterView(t *testing.T) {
 // TestRenderFooterInput verifica el comportamiento específico del renderizado del input
 func TestRenderFooterInput(t *testing.T) {
 	// Caso 1: Campo editable en modo edición debe mostrar cursor
-	t.Run("Editable field in edit mode shows cursor", func(t *testing.T) {
+	t.Run("editable field in edit mode shows cursor", func(t *testing.T) {
 		h := DefaultTUIForTest(func(messages ...any) {
 			// Test logger - do nothing
 		})
@@ -84,9 +84,9 @@ func TestRenderFooterInput(t *testing.T) {
 		// Set viewport width for proper layout calculation
 		h.viewport.Width = 80
 
-		field := tab.FieldHandlers()[0]
-		field.SetCursorForTest(2) // Cursor en posición "te|st value"
-		field.SetTempEditValueForTest("test value")
+		field := tab.fieldHandlers[0]
+		field.setCursorForTest(2) // Cursor en posición "te|st value"
+		field.setTempEditValueForTest("test value")
 
 		// Renderizar input
 		result := h.renderFooterInput()
@@ -315,10 +315,10 @@ func TestInputNavigation(t *testing.T) {
 		// Configurar para edición
 		h.editModeActivated = true
 		h.tabSections[h.activeTab].indexActiveEditField = 0
-		field := tab.FieldHandlers()[0]
-		field.SetCursorAtEnd()
+		field := tab.fieldHandlers[0]
+		field.setCursorAtEnd()
 		// Move cursor to position 3 for test
-		field.SetCursorForTest(3)
+		field.setCursorForTest(3)
 
 		// Simular pulsación de tecla izquierda
 		_, _ = h.handleEditingConfigKeyboard(tea.KeyMsg{Type: tea.KeyLeft})

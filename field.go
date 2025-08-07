@@ -71,7 +71,7 @@ func (a *anyHandler) Value() string {
 	return ""
 }
 
-func (a *anyHandler) Editable() bool {
+func (a *anyHandler) editable() bool {
 	if a.editableFunc != nil {
 		return a.editableFunc()
 	}
@@ -278,13 +278,13 @@ type field struct {
 	cursor        int // cursor position in text value
 }
 
-// SetTempEditValueForTest permite modificar tempEditValue en tests
-func (f *field) SetTempEditValueForTest(val string) {
+// setTempEditValueForTest permite modificar tempEditValue en tests
+func (f *field) setTempEditValueForTest(val string) {
 	f.tempEditValue = val
 }
 
-// SetCursorForTest permite modificar el cursor en tests
-func (f *field) SetCursorForTest(cursor int) {
+// setCursorForTest permite modificar el cursor en tests
+func (f *field) setCursorForTest(cursor int) {
 	f.cursor = cursor
 }
 
@@ -307,13 +307,13 @@ func (f *field) Value() string {
 }
 
 // GetHandlerForTest returns the handler for testing purposes
-func (f *field) GetHandlerForTest() *anyHandler {
+func (f *field) getHandlerForTest() *anyHandler {
 	return f.handler
 }
 
-func (f *field) Editable() bool {
+func (f *field) editable() bool {
 	if f.handler != nil {
-		return f.handler.Editable()
+		return f.handler.editable()
 	}
 	return false
 }
@@ -418,7 +418,7 @@ func (f *field) getExpandedFooterLabel() string {
 	return ""
 }
 
-func (f *field) SetCursorAtEnd() {
+func (f *field) setCursorAtEnd() {
 	// Calculate cursor position based on rune count, not byte count
 	if f.handler != nil {
 		f.cursor = len([]rune(f.handler.Value()))
@@ -431,7 +431,7 @@ func (f *field) getCurrentValue() any {
 		return ""
 	}
 
-	if f.handler.Editable() {
+	if f.handler.editable() {
 		// For editable fields, return the edited text (tempEditValue or current value)
 		// This matches current field behavior with tempEditValue
 		// Check if we're in editing mode by looking at parent tab's edit state

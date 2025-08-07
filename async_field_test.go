@@ -35,7 +35,7 @@ func TestFieldHandler_BasicOperation(t *testing.T) {
 		t.Errorf("Expected value 'initial', got '%s'", anyH.Value())
 	}
 
-	if !anyH.Editable() {
+	if !anyH.editable() {
 		t.Error("Expected field to be editable")
 	}
 
@@ -110,11 +110,11 @@ func TestFieldHandler_TimeoutConfiguration(t *testing.T) {
 
 func TestFieldHandler_EditableFields(t *testing.T) {
 	// Use centralized handlers from handler_test.go
-	editableHandler := NewTestEditableHandler("Editable Field", "original")
-	nonEditableHandler := NewTestNonEditableHandler("Non-Editable Field", "action button")
+	editableHandler := NewTestEditableHandler("editable Field", "original")
+	nonEditableHandler := NewTestNonEditableHandler("Non-editable Field", "action button")
 
 	// Test editable field
-	if !editableHandler.Editable() {
+	if !editableHandler.editable() {
 		t.Error("Handler should be editable")
 	}
 
@@ -125,7 +125,7 @@ func TestFieldHandler_EditableFields(t *testing.T) {
 	}
 
 	// Test non-editable field (button) - now using execution handler
-	if nonEditableHandler.Editable() {
+	if nonEditableHandler.editable() {
 		t.Error("Handler should not be editable")
 	}
 

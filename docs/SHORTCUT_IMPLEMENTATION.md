@@ -7,7 +7,7 @@ This document outlines the comprehensive implementation plan for adding global s
 ## Current Architecture Analysis
 
 ### Existing Keyboard Handling Flow
-1. **Entry Point**: `HandleKeyboard()` in `userKeyboard.go` - main dispatcher
+1. **Entry Point**: `handleKeyboard()` in `userKeyboard.go` - main dispatcher
 2. **Mode Detection**: Splits into `handleEditingConfigKeyboard()` vs `handleNormalModeKeyboard()`
 3. **Normal Mode**: Handles navigation (Tab/Shift+Tab, Left/Right, Up/Down, PageUp/PageDown)
 4. **Edit Mode**: Handles text input, cursor movement, Enter/Esc

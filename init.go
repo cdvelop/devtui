@@ -43,15 +43,15 @@ type DevTUI struct {
 type TuiConfig struct {
 	AppName  string    // app name eg: "MyApp"
 	ExitChan chan bool //  global chan to close app eg: make(chan bool)
-	/*// *ColorStyle style for the TUI
+	/*// *ColorPalette style for the TUI
 	  // if nil it will use default style:
-	type ColorStyle struct {
+	type ColorPalette struct {
 	 Foreground string // eg: #F4F4F4
 	 Background string // eg: #000000
-	 Highlight  string // eg: #FF6600
-	 Lowlight   string // eg: #666666
+	 Primary  string // eg: #FF6600
+	 Secondary   string // eg: #666666
 	}*/
-	Color *ColorStyle
+	Color *ColorPalette
 
 	LogToFile func(messages ...any) // function to write log error
 }
@@ -63,7 +63,7 @@ type TuiConfig struct {
 //	config := &TuiConfig{
 //	    AppName: "MyApp",
 //	    ExitChan: make(chan bool),
-//	    Color: nil, // or your *ColorStyle
+//	    Color: nil, // or your *ColorPalette
 //	    LogToFile: func(err any) { fmt.Println(err) },
 //	}
 //	tui := NewTUI(config)

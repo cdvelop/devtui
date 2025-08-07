@@ -28,7 +28,7 @@ func TestRealUserScenario(t *testing.T) {
 		// Get server tab index and set active
 		serverTabIndex := len(tui.tabSections) - 1
 		tui.activeTab = serverTabIndex
-		portField := tui.tabSections[serverTabIndex].FieldHandlers()[0]
+		portField := tui.tabSections[serverTabIndex].fieldHandlers[0]
 
 		t.Logf("=== SIMULATING USER SCENARIO ===")
 		t.Logf("Step 1: Initial state - field.Value(): '%s'", portField.Value())
@@ -36,7 +36,7 @@ func TestRealUserScenario(t *testing.T) {
 		// User sees "8080" and wants to change it to "80"
 		// User presses Enter to edit
 		t.Logf("Step 2: User presses Enter to edit...")
-		tui.HandleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
+		tui.handleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
 
 		t.Logf("Step 3: Now in edit mode - tempEditValue: '%s', cursor: %d",
 			portField.tempEditValue, portField.cursor)
@@ -48,14 +48,14 @@ func TestRealUserScenario(t *testing.T) {
 
 		// User types "8"
 		t.Logf("Step 5: User types '8'...")
-		tui.HandleKeyboard(tea.KeyMsg{
+		tui.handleKeyboard(tea.KeyMsg{
 			Type:  tea.KeyRunes,
 			Runes: []rune{'8'},
 		})
 
 		// User types "0"
 		t.Logf("Step 6: User types '0'...")
-		tui.HandleKeyboard(tea.KeyMsg{
+		tui.handleKeyboard(tea.KeyMsg{
 			Type:  tea.KeyRunes,
 			Runes: []rune{'0'},
 		})
@@ -68,7 +68,7 @@ func TestRealUserScenario(t *testing.T) {
 
 		// User presses Enter to confirm
 		t.Logf("Step 8: User presses Enter to confirm...")
-		tui.HandleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
+		tui.handleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
 
 		t.Logf("Step 9: After pressing Enter - tempEditValue: '%s', field.Value(): '%s'",
 			portField.tempEditValue, portField.Value())
@@ -86,7 +86,7 @@ func TestRealUserScenario(t *testing.T) {
 
 		// If user enters edit mode again, they should see "80"
 		t.Logf("Step 10: Test re-entering edit mode...")
-		tui.HandleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
+		tui.handleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
 
 		t.Logf("Step 11: Re-entered edit mode - tempEditValue: '%s', field.Value(): '%s'",
 			portField.tempEditValue, portField.Value())
@@ -118,7 +118,7 @@ func TestRealUserScenario(t *testing.T) {
 		serverTabIndex := len(tui.tabSections) - 1
 		tui.activeTab = serverTabIndex
 
-		portField := tui.tabSections[serverTabIndex].FieldHandlers()[0]
+		portField := tui.tabSections[serverTabIndex].fieldHandlers[0]
 
 		// Test the UI rendering during different phases
 		t.Logf("=== TESTING UI RENDERING ===")
@@ -128,20 +128,20 @@ func TestRealUserScenario(t *testing.T) {
 		t.Logf("Phase 1 - Before editing:\n%s", content1)
 
 		// Phase 2: During editing
-		tui.HandleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
+		tui.handleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
 
 		// Realistic: User clears field and types "80"
 		for i := 0; i < 5; i++ { // Clear "8080"
-			tui.HandleKeyboard(tea.KeyMsg{Type: tea.KeyBackspace})
+			tui.handleKeyboard(tea.KeyMsg{Type: tea.KeyBackspace})
 		}
-		tui.HandleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'8'}})
-		tui.HandleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'0'}})
+		tui.handleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'8'}})
+		tui.handleKeyboard(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'0'}})
 
 		content2 := tui.ContentView()
 		t.Logf("Phase 2 - During editing (user typed '80'):\n%s", content2)
 
 		// Phase 3: After saving
-		tui.HandleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
+		tui.handleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
 
 		content3 := tui.ContentView()
 		t.Logf("Phase 3 - After saving:\n%s", content3)

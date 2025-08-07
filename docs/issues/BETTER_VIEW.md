@@ -7,12 +7,12 @@
 **1. HandlerDisplay** (ya corregido el bug de duplicación):
 - **Content Area**: Se muestra directamente el `Content()` con `textContentStyle` (color `Foreground`)
 - **Sin timestamp ni handler name** en el content area
-- **Footer**: Muestra `Label()` con color `Highlight`
+- **Footer**: Muestra `Label()` con color `Primary`
 
 **2. HandlerEdit, HandlerExecution, HandlerWriter**:
 - **Content Area**: Formato `[timestamp] [handlerName] [message]`
 - **Colores actuales**:
-  - `timestamp`: `timeStyle` (color `Lowlight`) ✅ **Ya correcto**
+  - `timestamp`: `timeStyle` (color `Secondary`) ✅ **Ya correcto**
   - `handlerName`: Sin estilo específico (color `Foreground`)
   - `message`: Varía según `messagetype` (Error, Warning, Info, Success)
 
@@ -34,9 +34,9 @@ if activeField.isDisplayOnly() {
 // Otros handlers: formato [timestamp] [handlerName] [message]
 var timeStr string
 if t.id != nil {
-    timeStr = t.timeStyle.Render(t.id.UnixNanoToTime(msg.Timestamp)) // Lowlight ✅
+    timeStr = t.timeStyle.Render(t.id.UnixNanoToTime(msg.Timestamp)) // Secondary ✅
 } else {
-    timeStr = t.timeStyle.Render("--:--:--") // Lowlight ✅
+    timeStr = t.timeStyle.Render("--:--:--") // Secondary ✅
 }
 
 var handlerName string
@@ -49,7 +49,7 @@ switch msg.Type {
     case messagetype.Error: msg.Content = t.errStyle.Render(msg.Content)
     case messagetype.Warning: msg.Content = t.warnStyle.Render(msg.Content) 
     case messagetype.Info: msg.Content = t.infoStyle.Render(msg.Content)
-    case messagetype.Success: msg.Content = t.okStyle.Render(msg.Content)
+    case messagetype.Success: msg.Content = t.successStyle.Render(msg.Content)
 }
 
 return fmt.Sprintf("%s %s%s", timeStr, handlerName, msg.Content)
@@ -59,26 +59,26 @@ return fmt.Sprintf("%s %s%s", timeStr, handlerName, msg.Content)
 
 ### Objetivos Específicos
 
-1. **HandlerDisplay**: Aplicar color `Highlight` al contenido
+1. **HandlerDisplay**: Aplicar color `Primary` al contenido
 2. **Otros Handlers**: Mejorar el formato `[timestamp] [handlerName] [message]`:
-   - `timestamp`: `Lowlight` (ya correcto)
-   - `handlerName`: `Highlight` ⭐ **NUEVO**
+   - `timestamp`: `Secondary` (ya correcto)
+   - `handlerName`: `Primary` ⭐ **NUEVO**
    - `message`: Mantener colores automáticos según tipo
 
 ### Cambios Necesarios
 
-#### 1. En `view.go` - HandlerDisplay con color Highlight
+#### 1. En `view.go` - HandlerDisplay con color Primary
 
 ```go
 // ANTES:
 contentLines = append(contentLines, h.textContentStyle.Render(displayContent))
 
 // DESPUÉS:
-highlightStyle := h.textContentStyle.Foreground(lipgloss.Color(h.Highlight))
+highlightStyle := h.textContentStyle.Foreground(lipgloss.Color(h.Primary))
 contentLines = append(contentLines, highlightStyle.Render(displayContent))
 ```
 
-#### 2. En `print.go` - HandlerName con color Highlight
+#### 2. En `print.go` - HandlerName con color Primary
 
 **Opción A: Estilo directo (Recomendada)**
 ```go
@@ -104,7 +104,7 @@ handlerNameStyle lipgloss.Style
 // En newTuiStyle():
 t.handlerNameStyle = lipgloss.NewStyle().
     Bold(true).
-    Foreground(lipgloss.Color(t.Highlight))
+    Foreground(lipgloss.Color(t.Primary))
 
 // En formatMessage():
 var handlerName string
@@ -125,20 +125,20 @@ if msg.handlerName != "" {
 ┌─ Other Handlers ─┐
 │ 10:26:58 [SystemBackup] Create System Backup  │
 │    ↑         ↑              ↑                 │
-│ Lowlight  Foreground    Auto-colored          │
+│ Secondary  Foreground    Auto-colored          │
 └────────────────────────────────────────────────┘
 ```
 
 **DESPUÉS:**
 ```
 ┌─ HandlerDisplay ─┐
-│ Content destacado │  ← Highlight color (#FF6600)
+│ Content destacado │  ← Primary color (#FF6600)
 └───────────────────┘
 
 ┌─ Other Handlers ─┐
 │ 10:26:58 [SystemBackup] Create System Backup  │
 │    ↑         ↑              ↑                 │
-│ Lowlight  Highlight     Auto-colored          │
+│ Secondary  Primary     Auto-colored          │
 │           (#FF6600)                           │
 └────────────────────────────────────────────────┘
 ```
@@ -147,7 +147,7 @@ if msg.handlerName != "" {
 
 ### Ventajas de la Opción A (Recomendada)
 
-1. **Reutiliza `infoStyle` existente**: Ya tiene color `Highlight` configurado
+1. **Reutiliza `infoStyle` existente**: Ya tiene color `Primary` configurado
 2. **Menos código**: No requiere nuevo estilo
 3. **Consistencia**: `infoStyle` ya se usa para mensajes Info
 4. **Fácil cambio**: Modificar solo una línea
@@ -161,7 +161,7 @@ if msg.handlerName != "" {
 ### Escalabilidad
 
 **Estructura modular actual permite:**
-- Cambios de color centralizados en `ColorStyle`
+- Cambios de color centralizados en `ColorPalette`
 - Estilos específicos por componente en `tuiStyle`
 - Renderizado separado por tipo de handler
 
@@ -194,7 +194,7 @@ HandlerEdit/Execute -> progress() -> sendProgressMessage() -> HARDCODED messaget
 **Características**:
 - ❌ Tipo de mensaje HARDCODED como Info
 - ❌ Ignora el contenido del mensaje para detectar tipo
-- ❌ Siempre color Highlight (#FF6600)
+- ❌ Siempre color Primary (#FF6600)
 - ❌ NO usa procesamiento centralizado
 
 ### Código Problemático Identificado
@@ -262,9 +262,9 @@ func (f *field) sendProgressMessage(content string) {
 
 **ANTES (problema)**:
 ```
-12:03:45 [DatabaseConfig] postgres://localhost:5432/mydb     (SIEMPRE Highlight #FF6600)
-12:06:44 [DatabaseConfig] postgres://localhost:5432/}       (SIEMPRE Highlight #FF6600)  
-12:03:45 [SystemBackup] Create System Backup               (SIEMPRE Highlight #FF6600)
+12:03:45 [DatabaseConfig] postgres://localhost:5432/mydb     (SIEMPRE Primary #FF6600)
+12:06:44 [DatabaseConfig] postgres://localhost:5432/}       (SIEMPRE Primary #FF6600)  
+12:03:45 [SystemBackup] Create System Backup               (SIEMPRE Primary #FF6600)
 ```
 
 **DESPUÉS (solucionado)**:
@@ -330,13 +330,13 @@ if msg.handlerName != "" {
 ```
 11:29:10 [DatabaseConfig] postgres://localhost:5432/mydb
          ↑              ↑ ↑
-    Highlight color    Space Contenido según tipo
+    Primary color    Space Contenido según tipo
     (brackets + name unidos)
 ```
 
 **Ventajas**:
 - ✅ Brackets unidos al nombre (sin separación)
-- ✅ Handler name en color `Highlight` como especificado
+- ✅ Handler name en color `Primary` como especificado
 - ✅ Mantiene brackets para estructura visual
 - ✅ Una sola llamada de estilo (más eficiente)
 
@@ -354,7 +354,7 @@ if msg.handlerName != "" {
 ```
 11:29:10 DatabaseConfig postgres://localhost:5432/mydb
          ↑             ↑
-    Highlight color   Contenido según tipo
+    Primary color   Contenido según tipo
 ```
 
 **Ventajas**:
@@ -365,13 +365,13 @@ if msg.handlerName != "" {
 ### Análisis de Colores Según Documento Original
 
 **Configuración definida en el documento**:
-- **Timestamp**: `Lowlight` (#666666) ✅ Ya correcto
-- **Handler Name**: `Highlight` (#FF6600) ⭐ NUEVO 
+- **Timestamp**: `Secondary` (#666666) ✅ Ya correcto
+- **Handler Name**: `Primary` (#FF6600) ⭐ NUEVO 
 - **Message Content**: Según `messagetype` (Error, Warning, Info, Success)
 
 **Problema de conflicto de colores**:
-- Handler Name usa `infoStyle` (Highlight #FF6600)
-- Contenido Info también usa `infoStyle` (Highlight #FF6600)
+- Handler Name usa `infoStyle` (Primary #FF6600)
+- Contenido Info también usa `infoStyle` (Primary #FF6600)
 - **Resultado**: Ambos elementos con el mismo color
 
 ### Recomendación
@@ -379,7 +379,7 @@ if msg.handlerName != "" {
 **Opción A es la recomendada** por:
 1. **Resuelve el spacing**: Brackets unidos al nombre
 2. **Mantiene estructura**: Format `[HandlerName]` preservado  
-3. **Sigue especificación**: Handler name en color `Highlight`
+3. **Sigue especificación**: Handler name en color `Primary`
 4. **Implementación simple**: Una línea de cambio
 
 **Pendiente de aprobación**: Aplicar Opción A para resolver el problema de spacing de brackets.
@@ -388,13 +388,13 @@ if msg.handlerName != "" {
 
 ### Nueva Propuesta: Separadores Visuales
 
-**Problema**: Tanto `[HandlerName]` como contenido `Info` usan color `Highlight`, creando confusión visual.
+**Problema**: Tanto `[HandlerName]` como contenido `Info` usan color `Primary`, creando confusión visual.
 
 **Solución Mejorada**: Mantener el comportamiento actual de colores, pero hacer que los **corchetes `[]`** sean de color `Foreground`, creando separación visual clara.
 
 **Ventajas**:
 - No cambia el comportamiento de colores por tipo de mensaje
-- Mantiene `Success` e `Info` con color `Highlight` (consistencia)
+- Mantiene `Success` e `Info` con color `Primary` (consistencia)
 - Los corchetes `Foreground` actúan como separadores visuales
 - Solución más elegante y menos invasiva
 
@@ -428,7 +428,7 @@ if msg.handlerName != "" {
 ┌─ Other Handlers ─┐
 │ 10:26:58 [SystemBackup] Create System Backup  │
 │    ↑      ↑    ↑   ↑         ↑                │
-│ Lowlight │Highlight│    Highlight             │
+│ Secondary │Primary│    Primary             │
 │          │        │    (Info/Success content) │
 │       Foreground  │                           │
 │       separators  Foreground                  │
@@ -437,8 +437,8 @@ if msg.handlerName != "" {
 
 **Beneficios visuales**:
 - Los corchetes `[]` en color `Foreground` (#F4F4F4) crean contraste
-- El handler name `SystemBackup` en color `Highlight` (#FF6600) se destaca
-- El contenido puede usar `Highlight` sin confusión visual
+- El handler name `SystemBackup` en color `Primary` (#FF6600) se destaca
+- El contenido puede usar `Primary` sin confusión visual
 - Separación clara entre elementos
 
 ### Comparación de Soluciones
@@ -479,8 +479,8 @@ if msg.handlerName != "" {
 ## Estado de Implementación
 
 ### ✅ COMPLETADO:
-1. **HandlerDisplay Color Enhancement**: Content en color Highlight
-2. **Opción A - Brackets Unidos**: Handler names con brackets unidos en color Highlight  
+1. **HandlerDisplay Color Enhancement**: Content en color Primary
+2. **Opción A - Brackets Unidos**: Handler names con brackets unidos en color Primary  
 3. **Centralización de Mensajes**: Progress callbacks usan detección automática de tipo
 4. **Test Coverage**: Validación completa de todos los casos
 

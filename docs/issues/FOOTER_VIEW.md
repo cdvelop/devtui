@@ -75,7 +75,7 @@ if field.isDisplayOnly() {
     displayStyle := lipgloss.NewStyle().
         Width(remainingWidth).
         Padding(0, horizontalPadding).
-        Background(lipgloss.Color(h.Highlight)).  // Fondo naranja
+        Background(lipgloss.Color(h.Primary)).  // Fondo naranja
         Foreground(lipgloss.Color(h.Foreground))  // Texto blanco
     styledLabel := displayStyle.Render(labelText)
     
@@ -189,7 +189,7 @@ Name() completo con fondo naranja y texto blanco
 - **Alineación**: Izquierda para el texto, derecha para scroll%
 
 ### Colores para HandlerDisplay
-- **Fondo**: `Highlight` (#FF6600) - Color naranja característico de la aplicación
+- **Fondo**: `Primary` (#FF6600) - Color naranja característico de la aplicación
 - **Texto**: `Foreground` (#F4F4F4) - Blanco para máximo contraste y legibilidad
 - **Justificación**: Destaca la información del handler con el color principal, creando consistencia visual con otros elementos destacados de la UI
 

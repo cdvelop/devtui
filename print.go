@@ -4,28 +4,6 @@ import (
 	. "github.com/cdvelop/tinystring"
 )
 
-// Print sends a normal Label or error to the tui in current tab
-func (h *DevTUI) Print(messages ...any) {
-	message, msgType := Translate(messages...).StringType()
-	h.sendMessage(message, msgType, h.tabSections[h.activeTab])
-}
-
-// sendMessage envía un mensaje al tui por el canal de mensajes
-func (d *DevTUI) sendMessage(content string, mt MessageType, tabSection *tabSection, operationID ...string) {
-	var opID string
-	if len(operationID) > 0 {
-		opID = operationID[0]
-	}
-	newContent := d.createTabContent(content, mt, tabSection, "", opID)
-
-	// Agregar contenido directamente al slice
-	tabSection.mu.Lock()
-	tabSection.tabContents = append(tabSection.tabContents, newContent)
-	tabSection.mu.Unlock()
-
-	d.tabContentsChan <- newContent
-}
-
 // NEW: sendMessageWithHandler sends a message with handler identification
 func (d *DevTUI) sendMessageWithHandler(content string, mt MessageType, tabSection *tabSection, handlerName string, operationID string) {
 	// Use update or add function that handles operationID reuse
@@ -41,7 +19,7 @@ func (d *DevTUI) sendMessageWithHandler(content string, mt MessageType, tabSecti
 		targetHandler = handler
 	} else {
 		// Search in field handlers
-		for _, field := range tabSection.FieldHandlers() {
+		for _, field := range tabSection.fieldHandlers {
 			if field.handler != nil && field.handler.Name() == handlerName {
 				targetHandler = field.handler
 				break
@@ -55,7 +33,7 @@ func (d *DevTUI) sendMessageWithHandler(content string, mt MessageType, tabSecti
 		// DEBUG: Log when handler is not found (temporary for debugging)
 		if tabSection.tui != nil && tabSection.tui.LogToFile != nil {
 			tabSection.tui.LogToFile(Fmt("DEBUG: Handler not found for '%s'. Available field handlers:", handlerName))
-			for i, field := range tabSection.FieldHandlers() {
+			for i, field := range tabSection.fieldHandlers {
 				if field.handler != nil {
 					tabSection.tui.LogToFile(Fmt("  [%d] %s", i, field.handler.Name()))
 				}
@@ -100,7 +78,7 @@ func (t *DevTUI) applyMessageTypeStyle(content string, msgType MessageType) stri
 	case Msg.Info:
 		return t.infoStyle.Render(content)
 	case Msg.Success:
-		return t.okStyle.Render(content)
+		return t.successStyle.Render(content)
 	default:
 		return content
 	}
@@ -137,7 +115,7 @@ func (t *DevTUI) isReadOnlyHandler(handlerName string) bool {
 // NEW: Helper to detect interactive handlers
 func (t *DevTUI) isInteractiveHandler(handlerName string) bool {
 	for _, tab := range t.tabSections {
-		for _, field := range tab.FieldHandlers() {
+		for _, field := range tab.fieldHandlers {
 			if field.handler != nil && field.handler.Name() == handlerName {
 				return field.handler.handlerType == handlerTypeInteractive
 			}

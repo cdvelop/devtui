@@ -10,7 +10,7 @@ func TestPaginationWritersOnlyTab(t *testing.T) {
 	h := DefaultTUIForTest(func(messages ...any) {})
 	h.viewport.Width = 80
 	h.viewport.Height = 24
-	h.paginationStyle = lipgloss.NewStyle().Background(lipgloss.Color(h.Lowlight)).Foreground(lipgloss.Color(h.Foreground))
+	h.paginationStyle = lipgloss.NewStyle().Background(lipgloss.Color(h.Secondary)).Foreground(lipgloss.Color(h.Foreground))
 
 	// Create a tab with only writers, no field handlers
 	h.tabSections = h.tabSections[:0]

@@ -25,13 +25,7 @@
 			"path": "../../tinyreflect"
 		},
 		{
-			"path": "../../devscripts"
-		},
-		{
 			"path": "../../godepfind"
-		},
-		{
-			"path": "../../../../Resources"
 		}
 	],
 	"settings": {}

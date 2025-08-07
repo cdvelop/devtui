@@ -2,8 +2,6 @@ package devtui
 
 // createShortcutsTab creates and registers the shortcuts tab with its handler
 import (
-	"fmt"
-
 	. "github.com/cdvelop/tinystring"
 )
 
@@ -41,7 +39,7 @@ func (h *shortcutsInteractiveHandler) Label() string {
 func (h *shortcutsInteractiveHandler) GetLastOperationID() string   { return h.lastOpID }
 func (h *shortcutsInteractiveHandler) SetLastOperationID(id string) { h.lastOpID = id }
 
-func (h *shortcutsInteractiveHandler) Value() string { return Convert(h.lang).Low().String() }
+func (h *shortcutsInteractiveHandler) Value() string { return Convert(h.lang).ToLower().String() }
 
 // Change handles both content display and user input via progress()
 func (h *shortcutsInteractiveHandler) Change(newValue string, progress func(msgs ...any)) {
@@ -101,7 +99,7 @@ Scroll `, D.Status, D.Icons, `:
 		if len(shortcuts) > 0 {
 			content += "\n\nRegistered Shortcuts:\n"
 			for key, description := range shortcuts {
-				content += fmt.Sprintf("  • %s - %s\n", key, description)
+				content += Fmt("  • %s - %s\n", key, description)
 			}
 		}
 	}

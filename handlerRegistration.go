@@ -5,7 +5,14 @@ import (
 	"time"
 )
 
-// AddDisplayHandler registers a HandlerDisplay directly
+/*
+AddDisplayHandler registers a HandlerDisplay directly
+
+	type HandlerDisplay interface {
+	    Name() string    // Full text to display in footer (handler responsible for content) eg. "System Status Information Display"
+	    Content() string // Display content (e.g., "help\n1-..\n2-...", "executing deploy wait...")
+	}
+*/
 func (ts *tabSection) AddDisplayHandler(handler HandlerDisplay) *tabSection {
 	anyH := newDisplayHandler(handler)
 	f := &field{
@@ -17,11 +24,18 @@ func (ts *tabSection) AddDisplayHandler(handler HandlerDisplay) *tabSection {
 	return ts
 }
 
-// AddEditHandler registers a HandlerEdit with mandatory timeout.
-//
-// Example:
-//
-//	ts.AddEditHandler(myEditHandler, 2*time.Second)
+/*
+AddEditHandler registers a HandlerEdit with mandatory timeout.
+
+	type HandlerEdit interface {
+	    Name() string                                       // Identificador: "ServerPort", "DatabaseURL"
+	    Label() string                                      // Field label (e.g., "Server Port", "Host Configuration")
+	    Value() string                                      // Current/initial value (e.g., "8080", "localhost")
+	    Change(newValue string, progress func(msgs ...any)) // value to change
+	}
+
+ts.AddEditHandler(myEditHandler, 2*time.Second)
+*/
 func (ts *tabSection) AddEditHandler(handler HandlerEdit, timeout time.Duration) *tabSection {
 	var tracker MessageTracker
 	if t, ok := handler.(MessageTracker); ok {
@@ -44,8 +58,17 @@ func (ts *tabSection) AddEditHandler(handler HandlerEdit, timeout time.Duration)
 	return ts
 }
 
-// AddEditHandlerTracking registers a HandlerEditTracker with mandatory timeout
-// AddExecutionHandler registers a HandlerExecution with mandatory timeout
+/*
+AddEditHandlerTracking registers a HandlerEditTracker with mandatory timeout
+
+	 type HandlerExecution interface {
+	    Name() string                       // Identificador : "DeployProd", "BuildProject"
+	    Label() string                      // Button label (e.g., "Deploy to Production", "Build Project")
+	    Execute(progress func(msgs ...any)) // Nueva firma: sin error, sin variádico
+	}
+
+eg: ts.AddEditHandlerTracking(myEditHandler, 2*time.Second)
+*/
 func (ts *tabSection) AddExecutionHandler(handler HandlerExecution, timeout time.Duration) *tabSection {
 	anyH := newExecutionHandler(handler, timeout)
 	f := &field{
@@ -96,7 +119,17 @@ func (w *simpleWriterTrackerHandler) SetLastOperationID(id string) {
 	w.lastOperationID = id
 }
 
-// AddInteractiveHandler registers a HandlerInteractive with mandatory timeout
+/*
+AddInteractiveHandler registers a HandlerInteractive with mandatory timeout
+
+	type HandlerInteractive interface {
+	    Name() string                                       // Identifier for logging: "ChatBot", "ConfigWizard"
+	    Label() string                                      // Field label (updates dynamically)
+	    Value() string                                      // Current input value
+	    Change(newValue string, progress func(msgs ...any)) // Handle user input + content display via progress
+	    WaitingForUser() bool                               // Should edit mode be auto-activated?
+	}
+*/
 func (ts *tabSection) AddInteractiveHandler(handler HandlerInteractive, timeout time.Duration) *tabSection {
 	var tracker MessageTracker
 	if t, ok := handler.(MessageTracker); ok {

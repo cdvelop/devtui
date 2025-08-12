@@ -10,18 +10,18 @@ type HandlerDisplay interface {
 // HandlerEdit defines the interface for interactive fields that accept user input.
 // These handlers allow users to modify values through text input.
 type HandlerEdit interface {
-	Name() string                                       // Identificador para logging: "ServerPort", "DatabaseURL"
+	Name() string                                       // Identifier for logging: "ServerPort", "DatabaseURL"
 	Label() string                                      // Field label (e.g., "Server Port", "Host Configuration")
 	Value() string                                      // Current/initial value (e.g., "8080", "localhost")
-	Change(newValue string, progress func(msgs ...any)) // Nueva firma: sin error, sin variádico, string
+	Change(newValue string, progress func(msgs ...any)) // New signature: no error, not variadic, string
 }
 
 // HandlerExecution defines the interface for action buttons that execute operations.
 // These handlers trigger business logic when activated by the user.
 type HandlerExecution interface {
-	Name() string                       // Identificador para logging: "DeployProd", "BuildProject"
+	Name() string                       // Identifier for logging: "DeployProd", "BuildProject"
 	Label() string                      // Button label (e.g., "Deploy to Production", "Build Project")
-	Execute(progress func(msgs ...any)) // Nueva firma: sin error, sin variádico
+	Execute(progress func(msgs ...any)) // New signature: no error, not variadic
 }
 
 // HandlerWriter defines the interface for basic writers that create new lines for each write.

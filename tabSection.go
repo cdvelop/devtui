@@ -42,7 +42,6 @@ type tabSection struct {
 
 	// Writing handler registry for external handlers using new interfaces
 	writingHandlers []*anyHandler // CAMBIO: slice en lugar de map para thread-safety
-	activeWriter    string        // current active writer name for io.Writer calls
 }
 
 // getWritingHandler busca un handler por nombre en el slice thread-safe
@@ -58,30 +57,21 @@ func (ts *tabSection) getWritingHandler(name string) *anyHandler {
 	return nil
 }
 
-// Write implementa io.Writer para capturar la salida de otros procesos
-func (ts *tabSection) Write(p []byte) (n int, err error) {
+func (hw *handlerWriter) Write(p []byte) (n int, err error) {
 	msg := strings.TrimSpace(string(p))
 	if msg != "" {
-		// Detectar automáticamente el tipo de mensaje
 		message, msgType := Translate(msg).StringType()
 
-		// NEW: Determine handler name and operation ID from active writer
-		var handlerName string
 		var operationID string
-
-		if ts.activeWriter != "" {
-			if handler := ts.getWritingHandler(ts.activeWriter); handler != nil {
-				handlerName = handler.Name()
-				operationID = handler.GetLastOperationID()
-			}
+		if handler := hw.tabSection.getWritingHandler(hw.handlerName); handler != nil {
+			operationID = handler.GetLastOperationID()
 		}
 
-		ts.tui.sendMessageWithHandler(message, msgType, ts, handlerName, operationID)
-		// Si es un error, escribirlo en el archivo de log
+		hw.tabSection.tui.sendMessageWithHandler(message, msgType, hw.tabSection, hw.handlerName, operationID)
+
 		if msgType == Msg.Error {
-			ts.tui.LogToFile(msg)
+			hw.tabSection.tui.LogToFile(msg)
 		}
-
 	}
 	return len(p), nil
 }
@@ -111,25 +101,6 @@ func (ts *tabSection) registerWriter(handler HandlerWriter) io.Writer {
 type handlerWriter struct {
 	tabSection  *tabSection
 	handlerName string
-}
-
-func (hw *handlerWriter) Write(p []byte) (n int, err error) {
-	msg := strings.TrimSpace(string(p))
-	if msg != "" {
-		message, msgType := Translate(msg).StringType()
-
-		var operationID string
-		if handler := hw.tabSection.getWritingHandler(hw.handlerName); handler != nil {
-			operationID = handler.GetLastOperationID()
-		}
-
-		hw.tabSection.tui.sendMessageWithHandler(message, msgType, hw.tabSection, hw.handlerName, operationID)
-
-		if msgType == Msg.Error {
-			hw.tabSection.tui.LogToFile(msg)
-		}
-	}
-	return len(p), nil
 }
 
 func (t *tabSection) addNewContent(msgType MessageType, content string) {

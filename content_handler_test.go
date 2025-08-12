@@ -75,12 +75,12 @@ func TestHandlerInteractiveInterface(t *testing.T) {
 		t.Logf("Message count before language change: %d", messageCountBeforeChange)
 
 		// Simulate language change
-		field.executeChangeSyncWithTracking("ES")
+		field.executeChangeSyncWithTracking("es")
 
 		// Verify value changed
 		finalValue := field.handler.Value()
-		if finalValue != "ES" {
-			t.Errorf("Handler value should be 'ES', got: '%s'", finalValue)
+		if finalValue != "es" {
+			t.Errorf("Handler value should be 'es', got: '%s'", finalValue)
 		}
 
 		// CRITICAL TEST: Verify MessageTracker updates existing message (same count, updated content)
@@ -90,13 +90,13 @@ func TestHandlerInteractiveInterface(t *testing.T) {
 		// Get the current message content to compare timestamps
 		if messageCountAfterChange > 0 {
 			lastMessage := h.tabSections[0].tabContents[messageCountAfterChange-1]
-			t.Logf("Last message after ES change: %s (timestamp: %s)", lastMessage.Content, lastMessage.Timestamp)
+			t.Logf("Last message after es change: %s (timestamp: %s)", lastMessage.Content, lastMessage.Timestamp)
 		}
 
 		// Call the same change again - should UPDATE existing message, not create new one
-		field.executeChangeSyncWithTracking("ES")
+		field.executeChangeSyncWithTracking("es")
 		messageCountAfterSameChange := len(h.tabSections[0].tabContents)
-		t.Logf("Message count after same change (ES again): %d", messageCountAfterSameChange)
+		t.Logf("Message count after same change (es again): %d", messageCountAfterSameChange)
 
 		// Message count should be the same (updates existing message)
 		if messageCountAfterSameChange != messageCountAfterChange {
@@ -105,9 +105,9 @@ func TestHandlerInteractiveInterface(t *testing.T) {
 		}
 
 		// Verify different value change updates the same message (same count, different content)
-		field.executeChangeSyncWithTracking("FR")
+		field.executeChangeSyncWithTracking("fr")
 		messageCountAfterNewChange := len(h.tabSections[0].tabContents)
-		t.Logf("Message count after new language change (FR): %d", messageCountAfterNewChange)
+		t.Logf("Message count after new language change (fr): %d", messageCountAfterNewChange)
 
 		// Should still be same count (updates existing message)
 		if messageCountAfterNewChange != messageCountAfterChange {
@@ -118,11 +118,11 @@ func TestHandlerInteractiveInterface(t *testing.T) {
 		// Verify the content actually changed
 		if messageCountAfterNewChange > 0 {
 			lastMessage := h.tabSections[0].tabContents[messageCountAfterNewChange-1]
-			t.Logf("Last message after FR change: %s (timestamp: %s)", lastMessage.Content, lastMessage.Timestamp)
+			t.Logf("Last message after fr change: %s (timestamp: %s)", lastMessage.Content, lastMessage.Timestamp)
 
-			// The message content should now reflect FR, not ES
-			if !strings.Contains(lastMessage.Content, "FR") {
-				t.Error("Message content should be updated to reflect new language (FR)")
+			// The message content should now reflect fr, not es
+			if !strings.Contains(lastMessage.Content, "fr") {
+				t.Error("Message content should be updated to reflect new language (fr)")
 			}
 		}
 
@@ -152,9 +152,9 @@ func TestMessageTrackerRealProblem(t *testing.T) {
 		t.Logf("Initial message count: %d", initialCount)
 
 		// FIRST CHANGE: Should create new message with new operationID
-		field.executeChangeSyncWithTracking("ES")
+		field.executeChangeSyncWithTracking("es")
 		firstChangeCount := len(h.tabSections[0].tabContents)
-		t.Logf("After first change (ES): %d messages", firstChangeCount)
+		t.Logf("After first change (es): %d messages", firstChangeCount)
 
 		// Get the operationID from the first message
 		var firstOpID string
@@ -167,9 +167,9 @@ func TestMessageTrackerRealProblem(t *testing.T) {
 		}
 
 		// SECOND CHANGE (SAME VALUE): Should UPDATE existing message, not create new
-		field.executeChangeSyncWithTracking("ES")
+		field.executeChangeSyncWithTracking("es")
 		secondChangeCount := len(h.tabSections[0].tabContents)
-		t.Logf("After duplicate change (ES): %d messages", secondChangeCount)
+		t.Logf("After duplicate change (es): %d messages", secondChangeCount)
 
 		// CRITICAL: Should be same count (updated existing message)
 		if secondChangeCount != firstChangeCount {

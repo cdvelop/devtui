@@ -16,7 +16,10 @@
 			"path": "../../gobuild"
 		},
 		{
-			"path": "../../godepfind"
+			"path": "../../devwatch"
+		},
+		{
+			"path": "../../goserver"
 		}
 	],
 	"settings": {}

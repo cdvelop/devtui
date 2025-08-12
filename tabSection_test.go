@@ -26,9 +26,10 @@ func TestTabSectionWriter(t *testing.T) {
 	// Crear tab section de prueba
 	tab := tui.NewTabSection("TEST", "")
 
-	// Testear el Writer
+	// Usar handlerWriter en vez de tabSection como Writer
+	handlerWriter := &handlerWriter{tabSection: tab, handlerName: ""}
 	testMsg := "Mensaje de prueba"
-	n, err := fmt.Fprintln(tab, testMsg)
+	n, err := fmt.Fprintln(handlerWriter, testMsg)
 	if err != nil {
 		t.Fatalf("Error escribiendo en el Writer: %v", err)
 	}
@@ -67,6 +68,9 @@ func TestTabContentsIncrementWhenSendingMessages(t *testing.T) {
 
 	tab := tui.NewTabSection("TEST", "")
 
+	// Usar handlerWriter en vez de tabSection como Writer
+	handlerWriter := &handlerWriter{tabSection: tab, handlerName: ""}
+
 	// Test messages with different types and prefixes for detection
 	messages := []struct {
 		rawText      string // Text sent via Fprintln
@@ -83,7 +87,7 @@ func TestTabContentsIncrementWhenSendingMessages(t *testing.T) {
 	// Send messages and verify increment
 	for i, message := range messages {
 		// Send message using the raw text
-		_, err := fmt.Fprintln(tab, message.rawText)
+		_, err := fmt.Fprintln(handlerWriter, message.rawText)
 		if err != nil {
 			t.Fatalf("Error writing message %d ('%s'): %v", i+1, message.rawText, err)
 		}
@@ -105,8 +109,6 @@ func TestTabContentsIncrementWhenSendingMessages(t *testing.T) {
 			}
 
 			// Verify that tabContents has the correct amount (should be updated by sendMessage)
-			// Add a small delay in case sendMessage updates tabContents asynchronously, although unlikely based on code
-			// time.Sleep(10 * time.Millisecond) // Usually not needed unless there's concurrency
 			if len(tab.tabContents) != i+1 {
 				t.Errorf("Message %d: incorrect amount in tabContents. Expected %d, got %d",
 					i+1, i+1, len(tab.tabContents))

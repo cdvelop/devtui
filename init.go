@@ -79,10 +79,6 @@ func NewTUI(c *TuiConfig) *DevTUI {
 			c.LogToFile("Critical: Error initializing unixid:", err, "- timestamp generation will use fallback")
 		}
 		// id will remain nil, but createTabContent method will handle this gracefully now
-	} else {
-		if c.LogToFile != nil {
-			c.LogToFile("Success: UnixID initialized correctly")
-		}
 	}
 
 	tui := &DevTUI{

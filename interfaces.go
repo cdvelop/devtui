@@ -24,15 +24,15 @@ type HandlerExecution interface {
 	Execute(progress func(msgs ...any)) // New signature: no error, not variadic
 }
 
-// HandlerWriter defines the interface for basic writers that create new lines for each write.
+// HandlerLogger defines the interface for basic writers that create new lines for each write.
 // These writers are suitable for simple logging or output display.
-type HandlerWriter interface {
+type HandlerLogger interface {
 	Name() string // Writer identifier (e.g., "webBuilder", "ApplicationLog")
 }
 
-// HandlerWriterTracker defines the interface for advanced writers that can update existing lines.
+// HandlerLoggerTracker defines the interface for advanced writers that can update existing lines.
 // These writers support message tracking and can modify previously written content.
-// HandlerWriterTracker defines the interface for advanced writers that can update existing lines.
+// HandlerLoggerTracker defines the interface for advanced writers that can update existing lines.
 // These writers support message tracking and can modify previously written content.
 // This interface has been removed to limit public exposure.
 

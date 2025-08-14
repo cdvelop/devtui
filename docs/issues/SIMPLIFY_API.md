@@ -18,7 +18,7 @@ dashboard.AddHandlerDisplay(&StatusHandler{})                                   
 config.AddEditHandler(&DatabaseHandler{}).WithTimeout(2 * time.Second)             // ❌ Verbose
 config.AddEditHandler(&Handler{}).Register()                                       // ❌ Useless .Register()
 config.AddExecutionHandlerTracking(&BackupHandler{}).WithTimeout(5 * time.Second)  // ❌ Verbose
-writer := logs.RegisterHandlerWriter(&LogWriter{})                                 // ✅ Good - direct
+writer := logs.RegisterHandlerLogger(&LogWriter{})                                 // ✅ Good - direct
 ```
 
 ## PROPOSED SIMPLIFIED API
@@ -39,7 +39,7 @@ tab.AddExecutionHandler(handler HandlerExecution, timeout time.Duration) *tabSec
 tab.AddExecutionHandlerTracking(handler HandlerExecutionTracker, timeout time.Duration) *tabSection
 
 // Writer handlers (no timeout, returns io.Writer)
-tab.RegisterWriterHandler(handler HandlerWriter) io.Writer
+tab.RegisterWriterHandler(handler HandlerLogger) io.Writer
 ```
 
 ### NEW USAGE EXAMPLES:
@@ -91,9 +91,9 @@ func (ts *tabSection) AddEditHandler(handler HandlerEdit, timeout time.Duration)
     }
     ts.addFields(f)
     
-    // Auto-register handler for writing if it implements HandlerWriterTracker
-    if _, ok := handler.(HandlerWriterTracker); ok {
-        if writerHandler, ok := handler.(HandlerWriter); ok {
+    // Auto-register handler for writing if it implements HandlerLoggerTracker
+    if _, ok := handler.(HandlerLoggerTracker); ok {
+        if writerHandler, ok := handler.(HandlerLogger); ok {
             ts.RegisterWriterHandler(writerHandler)
         }
     }
@@ -124,8 +124,8 @@ func (ts *tabSection) AddExecutionHandlerTracking(handler HandlerExecutionTracke
 }
 
 // RegisterWriterHandler registers a writer handler and returns io.Writer (kept from existing API)
-func (ts *tabSection) RegisterWriterHandler(handler HandlerWriter) io.Writer {
-    return ts.RegisterHandlerWriter(handler) // Delegate to existing implementation
+func (ts *tabSection) RegisterWriterHandler(handler HandlerLogger) io.Writer {
+    return ts.RegisterHandlerLogger(handler) // Delegate to existing implementation
 }
 ```
 
@@ -178,7 +178,7 @@ tab.AddDisplayHandler(&StatusHandler{}).
 dashboard.AddHandlerDisplay(&StatusHandler{})
 config.AddEditHandler(&DatabaseHandler{}).WithTimeout(2 * time.Second)
 config.AddExecutionHandlerTracking(&BackupHandler{}).WithTimeout(5 * time.Second)
-systemWriter := logs.RegisterHandlerWriter(&SystemLogWriter{})
+systemWriter := logs.RegisterHandlerLogger(&SystemLogWriter{})
 
 // WITH:
 dashboard.AddDisplayHandler(&StatusHandler{})
@@ -194,7 +194,7 @@ systemWriter := logs.RegisterWriterHandler(&SystemLogWriter{})
 .AddEditHandler(handler).WithTimeout(dur)       → .AddEditHandler(handler, dur)
 .AddExecutionHandler(handler).WithTimeout(dur)  → .AddExecutionHandler(handler, dur)
 .AddHandlerDisplay(handler)                     → .AddDisplayHandler(handler)
-.RegisterHandlerWriter(handler)                 → .RegisterWriterHandler(handler)
+.RegisterHandlerLogger(handler)                 → .RegisterWriterHandler(handler)
 ```
 
 ### FILES TO UPDATE (TEST CASES):
@@ -213,7 +213,7 @@ systemWriter := logs.RegisterWriterHandler(&SystemLogWriter{})
 config.AddEditHandler(&DatabaseHandler{connectionString: "postgres://localhost:5432/mydb"}).WithTimeout(2 * time.Second)
 config.AddExecutionHandlerTracking(&BackupHandler{}).WithTimeout(5 * time.Second)
 dashboard.AddHandlerDisplay(&StatusHandler{})
-writer := logs.RegisterHandlerWriter(&SystemLogWriter{})
+writer := logs.RegisterHandlerLogger(&SystemLogWriter{})
 
 // Inconsistent - some need .Register(), others don't
 tab.AddEditHandler(handler).Register()  // Synchronous version
@@ -275,7 +275,7 @@ tab.AddEditHandler(handler, 0)  // Synchronous version - explicit timeout
 - `AddEditHandlerTracking()` → `AddEditHandlerTracking(handler, timeout)`
 - `AddExecutionHandlerTracking()` → `AddExecutionHandlerTracking(handler, timeout)`
 - `AddHandlerDisplay()` → `AddDisplayHandler()`
-- `RegisterHandlerWriter()` → `RegisterWriterHandler()`
+- `RegisterHandlerLogger()` → `RegisterWriterHandler()`
 - **ALL** `.WithTimeout()` methods
 - **ALL** `.Register()` methods
 

@@ -36,17 +36,17 @@ func (h *testRunHandler) Execute(progress func(msgs ...any)) {
 	}
 }
 
-type testWriterBasic struct{}
+type testLoggerBasic struct{}
 
-func (w *testWriterBasic) Name() string { return "TestWriter" }
+func (w *testLoggerBasic) Name() string { return "TestWriter" }
 
-type testWriterTracker struct {
+type testLoggerTracker struct {
 	lastOpID string
 }
 
-func (w *testWriterTracker) Name() string                 { return "TestTrackerWriter" }
-func (w *testWriterTracker) GetLastOperationID() string   { return w.lastOpID }
-func (w *testWriterTracker) SetLastOperationID(id string) { w.lastOpID = id }
+func (w *testLoggerTracker) Name() string                 { return "TestTrackerLogger" }
+func (w *testLoggerTracker) GetLastOperationID() string   { return w.lastOpID }
+func (w *testLoggerTracker) SetLastOperationID(id string) { w.lastOpID = id }
 
 func TestNewAPIHandlers(t *testing.T) {
 	// Create TUI
@@ -71,8 +71,8 @@ func TestNewAPIHandlers(t *testing.T) {
 	tab.AddExecutionHandler(&testRunHandler{}, 10*time.Second) // Async
 
 	// Test Writer registration
-	basicWriter := tab.NewWriter("testWriterBasic", false)
-	trackerWriter := tab.NewWriter("testWriterTracker", true)
+	basicLogger := tab.NewLogger("testLoggerBasic", false)
+	trackerLogger := tab.NewLogger("testLoggerTracker", true)
 
 	// Verify field count (5 fields registered)
 	if len(tab.fieldHandlers) != 5 {
@@ -104,15 +104,15 @@ func TestNewAPIHandlers(t *testing.T) {
 	}
 
 	// Test writers
-	if basicWriter == nil {
+	if basicLogger == nil {
 		t.Error("Basic writer should not be nil")
 	}
-	if trackerWriter == nil {
+	if trackerLogger == nil {
 		t.Error("Tracker writer should not be nil")
 	}
 
 	// Test writing to basic writer
-	n, err := basicWriter.Write([]byte("test message"))
+	n, err := basicLogger.Write([]byte("test message"))
 	if err != nil {
 		t.Errorf("Basic writer failed: %v", err)
 	}
@@ -121,7 +121,7 @@ func TestNewAPIHandlers(t *testing.T) {
 	}
 
 	// Test writing to tracker writer
-	n, err = trackerWriter.Write([]byte("tracked message"))
+	n, err = trackerLogger.Write([]byte("tracked message"))
 	if err != nil {
 		t.Errorf("Tracker writer failed: %v", err)
 	}

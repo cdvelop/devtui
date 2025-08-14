@@ -10,7 +10,7 @@ require (
 require (
 	github.com/cdvelop/tinyreflect v0.0.37 // indirect
 	github.com/cdvelop/tinytime v0.0.7 // indirect
-	github.com/charmbracelet/colorprofile v0.3.1 // indirect
+	github.com/charmbracelet/colorprofile v0.3.2 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.13 // indirect
 	github.com/charmbracelet/x/term v0.2.1 // indirect
 	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f // indirect

@@ -2,13 +2,13 @@
 
 ## Overview
 
-This proposal aims to completely replace the current verbose DevTUI writer registration API with a single, simplified method. The current `RegisterWriterHandler()` method will be **removed** and replaced with a streamlined `NewWriter()` approach.
+This proposal aims to completely replace the current verbose DevTUI writer registration API with a single, simplified method. The current `RegisterWriterHandler()` method will be **removed** and replaced with a streamlined `NewLogger()` approach.
 
 ## Current API Problem
 
 Currently, to register a writer in DevTUI, developers must:
 
-1. Create a struct that implements `HandlerWriter` interface
+1. Create a struct that implements `HandlerLogger` interface
 2. Implement the `Name() string` method
 3. Register the handler using `RegisterWriterHandler()`
 4. Use the returned `io.Writer`
@@ -25,7 +25,7 @@ This creates unnecessary complexity for all use cases.
 
 ## Proposed Solution
 
-**Replace the entire writer registration system** with a single, simple method `NewWriter(name string, enableTracking bool) io.Writer`.
+**Replace the entire writer registration system** with a single, simple method `NewLogger(name string, enableTracking bool) io.Writer`.
 
 ### What is `enableTracking`?
 
@@ -36,8 +36,8 @@ The `enableTracking` parameter controls how the writer behaves when writing cont
 
 ```go
 // New simplified approach (ONLY API)
-serverWriter := sectionBuild.NewWriter("ServerHandler", false)    // Always new lines
-wasmWriter := sectionBuild.NewWriter("WASMHandler", true)         // Can update existing lines
+serverWriter := sectionBuild.NewLogger("ServerHandler", false)    // Always new lines
+wasmWriter := sectionBuild.NewLogger("WASMHandler", true)         // Can update existing lines
 ```
 
 **Example behavior:**
@@ -64,14 +64,14 @@ writer.Write([]byte("Progress: 100%")) // Updates same line
 #### 1. `handlerRegistration.go`
 
 **Replace existing method:**
-- Remove `RegisterWriterHandler(handler HandlerWriter) io.Writer` (line 71-73)
-- Add `NewWriter(name string, enableTracking bool) io.Writer` method
+- Remove `RegisterWriterHandler(handler HandlerLogger) io.Writer` (line 71-73)
+- Add `NewLogger(name string, enableTracking bool) io.Writer` method
 
 **New implementation:**
 ```go
-// NewWriter creates a writer with the given name and tracking capability
+// NewLogger creates a writer with the given name and tracking capability
 // enableTracking: true = can update existing lines, false = always creates new lines
-func (ts *tabSection) NewWriter(name string, enableTracking bool) io.Writer {
+func (ts *tabSection) NewLogger(name string, enableTracking bool) io.Writer {
     if enableTracking {
         handler := &simpleWriterTrackerHandler{name: name}
         return ts.registerWriter(handler) // Same internal method for both
@@ -111,7 +111,7 @@ func (w *simpleWriterTrackerHandler) SetLastOperationID(id string) {
 #### 2. `tabSection.go`
 
 **Replace existing method:**
-- Remove `RegisterHandlerWriter(handler HandlerWriter) io.Writer` (line 93-107)
+- Remove `RegisterHandlerLogger(handler HandlerLogger) io.Writer` (line 93-107)
 - Replace with single simplified internal implementation
 - Keep `handlerWriter` struct for internal use
 - Use single internal method `registerWriter()` for both cases
@@ -119,14 +119,14 @@ func (w *simpleWriterTrackerHandler) SetLastOperationID(id string) {
 **New internal method:**
 ```go
 // Single internal method that handles both basic and tracking writers automatically
-func (ts *tabSection) registerWriter(handler HandlerWriter) io.Writer {
+func (ts *tabSection) registerWriter(handler HandlerLogger) io.Writer {
     ts.mu.Lock()
     defer ts.mu.Unlock()
 
     var anyH *anyHandler
 
-    // Automatically detect if handler implements HandlerWriterTracker interface
-    if trackerHandler, ok := handler.(HandlerWriterTracker); ok {
+    // Automatically detect if handler implements HandlerLoggerTracker interface
+    if trackerHandler, ok := handler.(HandlerLoggerTracker); ok {
         anyH = newTrackerWriterHandler(trackerHandler)
     } else {
         anyH = newWriterHandler(handler)
@@ -140,8 +140,8 @@ func (ts *tabSection) registerWriter(handler HandlerWriter) io.Writer {
 #### 3. `interfaces.go`
 
 **Remove or simplify interfaces:**
-- Keep `HandlerWriter` interface (used internally)
-- Remove public exposure of `HandlerWriterTracker` (if not needed)
+- Keep `HandlerLogger` interface (used internally)
+- Remove public exposure of `HandlerLoggerTracker` (if not needed)
 - Update documentation to reflect single API
 
 #### 4. Example files (required updates)
@@ -150,24 +150,24 @@ func (ts *tabSection) registerWriter(handler HandlerWriter) io.Writer {
 - `example/demo/main.go` - Replace `RegisterWriterHandler` calls (lines 53, 67)
 - `new_api_test.go` - Replace `RegisterWriterHandler` calls (lines 74, 75)
 - `writing_handler_test.go` - Replace `RegisterWriterHandler` calls (lines 22, 49)
-- `pagination_writers_test.go` - Replace `RegisterHandlerWriter` call (line 21)
+- `pagination_writers_test.go` - Replace `RegisterHandlerLogger` call (line 21)
 - Any documentation mentioning old methods
 
 ### Methods to be REMOVED
 
 **These methods will be eliminated:**
 
-1. **`RegisterWriterHandler(handler HandlerWriter) io.Writer`**
+1. **`RegisterWriterHandler(handler HandlerLogger) io.Writer`**
    - **Location**: `handlerRegistration.go` line 71-73
-   - **Reason**: Replaced by `NewWriter()`
+   - **Reason**: Replaced by `NewLogger()`
    - **Breaking Change**: YES
 
-2. **`RegisterHandlerWriter(handler HandlerWriter) io.Writer`**
+2. **`RegisterHandlerLogger(handler HandlerLogger) io.Writer`**
    - **Location**: `tabSection.go` line 93-107
    - **Reason**: Internal implementation replaced
    - **Breaking Change**: YES (if used directly)
 
-3. **Public `HandlerWriterTracker` interface exposure**
+3. **Public `HandlerLoggerTracker` interface exposure**
    - **Location**: `interfaces.go`
    - **Reason**: Simplified to internal use only
    - **Breaking Change**: YES (if currently used by external code)
@@ -175,7 +175,7 @@ func (ts *tabSection) registerWriter(handler HandlerWriter) io.Writer {
 ### Internal Methods (kept but simplified)
 
 - `handlerWriter` struct - kept for internal io.Writer implementation
-- `HandlerWriter` interface - kept for internal structure
+- `HandlerLogger` interface - kept for internal structure
 - Internal writer management in `tabSection`
 
 ## Usage Examples
@@ -202,10 +202,10 @@ func (h *handler) AddSectionBUILD() {
     sectionBuild := h.tui.NewTabSection("BUILD", "Building and Compiling")
     
     // Single API with tracking control
-    serverWriter := sectionBuild.NewWriter("ServerHandler", false)   // Always new lines
-    wasmWriter := sectionBuild.NewWriter("WASMHandler", true)        // Can update existing lines
-    assetsWriter := sectionBuild.NewWriter("AssetsHandler", false)   // Always new lines
-    watcherWriter := sectionBuild.NewWriter("WatcherHandler", true)  // Can update existing lines
+    serverWriter := sectionBuild.NewLogger("ServerHandler", false)   // Always new lines
+    wasmWriter := sectionBuild.NewLogger("WASMHandler", true)        // Can update existing lines
+    assetsWriter := sectionBuild.NewLogger("AssetsHandler", false)   // Always new lines
+    watcherWriter := sectionBuild.NewLogger("WatcherHandler", true)  // Can update existing lines
 }
 ```
 
@@ -219,39 +219,39 @@ func (h *handler) AddSectionBUILD() {
 ## API Design Guidelines
 
 ### Single Method Usage:
-- `NewWriter(name string, enableTracking bool) io.Writer` - **ONLY** way to create writers
+- `NewLogger(name string, enableTracking bool) io.Writer` - **ONLY** way to create writers
 - `name`: Writer identifier for logging and display
 - `enableTracking`: 
   - `true` = Writer can update existing lines (implements `MessageTracker` internally)
-  - `false` = Writer always creates new lines (basic `HandlerWriter`)
+  - `false` = Writer always creates new lines (basic `HandlerLogger`)
 - Internal handler management is transparent to the user
 - No need to implement interfaces or create structs
 
 ### Usage Examples:
 ```go
 // For logs that should always append new lines
-logWriter := section.NewWriter("ApplicationLog", false)
+logWriter := section.NewLogger("ApplicationLog", false)
 
 // For status updates that should update the same line
-statusWriter := section.NewWriter("BuildStatus", true)
+statusWriter := section.NewLogger("BuildStatus", true)
 
 // For progress indicators that update in place
-progressWriter := section.NewWriter("DeployProgress", true)
+progressWriter := section.NewLogger("DeployProgress", true)
 ```
 
 ## Testing Requirements
 
-1. **Unit Tests**: Test `NewWriter` method functionality
-2. **Integration Tests**: Verify `NewWriter` works with existing DevTUI pipeline
+1. **Unit Tests**: Test `NewLogger` method functionality
+2. **Integration Tests**: Verify `NewLogger` works with existing DevTUI pipeline
 3. **Migration Tests**: Ensure all old API usage is replaced
 4. **Breaking Change Tests**: Verify old API no longer compiles
 
 ## Migration Strategy
 
 ### Phase 1: Implementation
-- Replace `RegisterWriterHandler` with `NewWriter`
+- Replace `RegisterWriterHandler` with `NewLogger`
 - Update internal handler management
-- Keep `HandlerWriter` interface internal
+- Keep `HandlerLogger` interface internal
 
 ### Phase 2: Update All Usage
 - Update `example/demo/main.go`
@@ -294,8 +294,8 @@ func (w *MyWriter) Name() string { return "test" }
 writer := section.RegisterWriterHandler(&MyWriter{})
 
 // NEW API - Two options depending on behavior needed
-basicWriter := section.NewWriter("test", false)     // Always new lines
-trackingWriter := section.NewWriter("test", true)   // Can update existing lines
+basicWriter := section.NewLogger("test", false)     // Always new lines
+trackingWriter := section.NewLogger("test", true)   // Can update existing lines
 ```
 
 ## Conclusion

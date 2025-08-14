@@ -45,28 +45,28 @@ func main() {
 	logs := tui.NewTabSection("Logs", "System Logs")
 
 	// Basic writer (always creates new lines)
-	systemWriter := logs.NewWriter("SystemLogWriter", false)
-	systemWriter.Write([]byte("System initialized"))
-	systemWriter.Write([]byte("API demo started"))
-	systemWriter.Write([]byte("Chat interface enabled"))
+	systemLogger := logs.NewLogger("SystemLogWriter", false)
+	systemLogger.Write([]byte("System initialized"))
+	systemLogger.Write([]byte("API demo started"))
+	systemLogger.Write([]byte("Chat interface enabled"))
 
 	// Generate multiple log entries to test scrolling (30 total)
 	go func() {
 		for i := 1; i <= 30; i++ {
 			time.Sleep(3 * time.Second) // Simulate processing delay
-			systemWriter.Write([]byte(fmt.Sprintf("System log entry #%d - Processing data batch", i)))
+			systemLogger.Write([]byte(fmt.Sprintf("System log entry #%d - Processing data batch", i)))
 		}
 	}()
 
 	// Advanced writer (can update existing messages with tracking)
-	opWriter := logs.NewWriter("OperationLogWriter", true)
-	opWriter.Write([]byte("Operation tracking enabled"))
+	opWLogger := logs.NewLogger("OperationLogWriter", true)
+	opWLogger.Write([]byte("Operation tracking enabled"))
 
 	// Generate more tracking entries to test Page Up/Page Down navigation
 	go func() {
 		for i := 1; i <= 50; i++ {
 			time.Sleep(3 * time.Second) // Simulate processing delay
-			opWriter.Write([]byte(fmt.Sprintf("Operation #%d - Background task completed successfully", i)))
+			fmt.Fprintf(opWLogger, "Operation #%d - Background task completed successfully", i)
 		}
 	}()
 
@@ -81,7 +81,7 @@ func main() {
 	// • HandlerEdit: Name() + Label() + Value() + Change() - Interactive fields
 	// • HandlerExecution: Name() + Label() + Execute() - Action buttons
 	// • HandlerInteractive: Name() + Label() + Value() + Change() + WaitingForUser() - Interactive content
-	// • HandlerWriter: Name() - Basic logging (new lines)
+	// • HandlerLogger: Name() - Basic logging (new lines)
 
 	var wg sync.WaitGroup
 	wg.Add(1)

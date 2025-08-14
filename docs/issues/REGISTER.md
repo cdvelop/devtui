@@ -2,25 +2,25 @@
 
 ## PROBLEM STATEMENT
 
-The devtui library has **API inconsistency** between handler registration patterns. `HandlerDisplay` uses an unnecessary builder pattern with `.Register()` while `HandlerWriter` uses direct registration, creating confusion and violating the principle of least surprise.
+The devtui library has **API inconsistency** between handler registration patterns. `HandlerDisplay` uses an unnecessary builder pattern with `.Register()` while `HandlerLogger` uses direct registration, creating confusion and violating the principle of least surprise.
 
 ## CURRENT API INCONSISTENCY
 
 ### INCONSISTENT PATTERNS:
-1. **HandlerWriter (SIMPLE)**: `tab.RegisterHandlerWriter(handler)` - Direct registration ✅
+1. **HandlerLogger (SIMPLE)**: `tab.RegisterHandlerLogger(handler)` - Direct registration ✅
 2. **HandlerDisplay (VERBOSE)**: `tab.NewDisplayHandler(handler).Register()` - Builder pattern ❌
 3. **HandlerEdit/Execution (JUSTIFIED)**: `tab.AddEditHandler(handler).WithTimeout(duration)` - Builder pattern ✅
 
 ### PROBLEM ANALYSIS:
 - **HandlerDisplay** doesn't support timeout configuration, making the builder pattern unnecessary
-- **HandlerWriter** already uses the simpler, more intuitive direct registration pattern  
+- **HandlerLogger** already uses the simpler, more intuitive direct registration pattern  
 - **HandlerEdit/Execution** legitimately need builder pattern for `.WithTimeout()` configuration
 
 ## TECHNICAL INCONSISTENCY DETAILS
 
 ### CODE LOCATION MAPPING:
 - **Builder Pattern**: `handlerRegistration.go` lines 42-49, `builders.go` lines 75-102
-- **Direct Pattern**: `tabSection.go` - `RegisterHandlerWriter()` method
+- **Direct Pattern**: `tabSection.go` - `RegisterHandlerLogger()` method
 - **Interface Definition**: `interfaces.go` lines 4-8
 
 ### CURRENT IMPLEMENTATION:
@@ -43,7 +43,7 @@ The `displayHandlerBuilder` provides **NO additional functionality** beyond what
 ## REFACTORING DIRECTIVE
 
 ### OBJECTIVE:
-Eliminate unnecessary builder pattern for `HandlerDisplay` to achieve **API consistency** with `HandlerWriter` pattern.
+Eliminate unnecessary builder pattern for `HandlerDisplay` to achieve **API consistency** with `HandlerLogger` pattern.
 
 ### SOLUTION:
 **REMOVE**: Builder pattern for `HandlerDisplay`  
@@ -124,13 +124,13 @@ tab.AddHandlerDisplay(&testDisplayHandler{})
 ```go
 // BEFORE (inconsistent):
 tab.NewDisplayHandler(handler).Register()           → tab.AddHandlerDisplay(handler)
-tab.RegisterHandlerWriter(handler)                  → NO CHANGE (already consistent)
+tab.RegisterHandlerLogger(handler)                  → NO CHANGE (already consistent)
 tab.AddEditHandler(handler).WithTimeout(duration)   → NO CHANGE (justified by timeout)
 tab.AddExecutionHandler(handler).WithTimeout(duration) → NO CHANGE (justified by timeout)
 
 // AFTER (consistent):
 tab.AddHandlerDisplay(handler)     // Direct registration (like Writers)
-tab.RegisterHandlerWriter(handler)      // Direct registration (existing)
+tab.RegisterHandlerLogger(handler)      // Direct registration (existing)
 tab.AddEditHandler(handler).WithTimeout(duration)    // Builder pattern (timeout config)
 tab.AddExecutionHandler(handler).WithTimeout(duration) // Builder pattern (timeout config)
 ```
@@ -159,7 +159,7 @@ tab.AddExecutionHandler(handler).WithTimeout(duration) // Builder pattern (timeo
 
 ### PHASE 2 - ADD NEW METHOD:
 - [ ] Add `AddHandlerDisplay()` method to `handlerRegistration.go`
-- [ ] Implement direct registration logic (similar to `RegisterHandlerWriter`)
+- [ ] Implement direct registration logic (similar to `RegisterHandlerLogger`)
 
 ### PHASE 3 - MIGRATION:
 - [ ] Update `/README.md` registration examples
@@ -196,7 +196,7 @@ tab.AddExecutionHandler(handler).WithTimeout(duration) // Builder pattern (timeo
 ### LOW RISK FACTORS:
 - DisplayHandlers are the simplest handler type (no configuration options)
 - Change affects only the registration API, not runtime behavior
-- Similar pattern already proven successful with `RegisterHandlerWriter`
+- Similar pattern already proven successful with `RegisterHandlerLogger`
 - No functional capability loss, only API simplification
 
 ### BACKWARD COMPATIBILITY:

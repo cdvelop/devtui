@@ -55,7 +55,7 @@ func (t *tabSection) updateOrAddContentWithHandler(...) (updated bool, newConten
 The following handler types implement MessageTracker and will benefit from this feature:
 - **HandlerEditTracker**: Edit handlers with message tracking
 - **HandlerExecutionTracker**: Execution handlers with message tracking  
-- **HandlerWriterTracker**: Writer handlers with message tracking
+- **HandlerLoggerTracker**: Writer handlers with message tracking
 
 **Current Issue**: When these handlers update their messages, the updates happen in-place at the original position, making them invisible when regular handlers add new content afterward.
 

@@ -13,13 +13,13 @@
 			"path": "../../assetmin"
 		},
 		{
-			"path": "../../gobuild"
-		},
-		{
 			"path": "../../devwatch"
 		},
 		{
 			"path": "../../goserver"
+		},
+		{
+			"path": "../../devbrowser"
 		}
 	],
 	"settings": {}

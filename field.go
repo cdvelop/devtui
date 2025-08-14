@@ -205,7 +205,7 @@ func newExecutionHandler(h HandlerExecution, timeout time.Duration) *anyHandler 
 	return anyH
 }
 
-func newWriterHandler(h HandlerWriter) *anyHandler {
+func newWriterHandler(h HandlerLogger) *anyHandler {
 	return &anyHandler{
 		handlerType: handlerTypeWriter,
 		nameFunc:    h.Name,

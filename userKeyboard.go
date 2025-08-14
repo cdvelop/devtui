@@ -130,7 +130,7 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 	} else { // Si el campo no es editable, solo ejecutar la acción
 		switch msg.Type {
 		case tea.KeyEnter:
-			// content eg: "Browser Opened"
+			// content eg: "DevBrowser Opened"
 			if currentField.handler != nil {
 				// Trigger async operation for non-editable fields (action buttons)
 				currentField.handleEnter()

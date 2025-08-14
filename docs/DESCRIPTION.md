@@ -19,7 +19,7 @@ You inject handlers that contain your business logic, and DevTUI simply displays
 ### The Original Problem
 During development of Go-to-WASM compilation tools with:
 - File change detection
-- Browser hot reload
+- DevBrowser hot reload
 - CSS/JS file minification
 - Complex configuration for full-stack Go applications
 
@@ -115,11 +115,11 @@ Handlers are **business logic components** that:
 **Purpose**: Action buttons with optional progress callbacks
 **Cases**: Compile, deploy, clear cache, restart services, backups
 
-### 4. HandlerWriter (1 method)
+### 4. HandlerLogger (1 method)
 **Purpose**: Basic logging (always new lines)
 **Cases**: Application logs, system events, command output
 
-### 5. HandlerWriterTracker (3 methods)
+### 5. HandlerLoggerTracker (3 methods)
 **Purpose**: Advanced logging (can update existing lines)
 **Cases**: Compilation progress, deployment status, continuous monitoring
 
@@ -127,7 +127,7 @@ Handlers are **business logic components** that:
 All handlers can implement `MessageTracker` for advanced capabilities:
 - **HandlerEditTracker**: Edit + MessageTracker
 - **HandlerExecutionTracker**: Execution + MessageTracker  
-- **HandlerWriterTracker**: Writer + MessageTracker (built-in)
+- **HandlerLoggerTracker**: Writer + MessageTracker (built-in)
 
 ## What DevTUI Does NOT Do
 
@@ -201,7 +201,7 @@ func (h *DatabaseHandler) Change(newValue any, progress func(string)) {
 
 DevTUI is the **main interface** of GoDEV App, a Go development tool that includes:
 - Go-to-WASM compilation
-- Browser hot reload
+- DevBrowser hot reload
 - Asset minification
 - Dependency management
 - File monitoring

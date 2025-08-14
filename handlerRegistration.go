@@ -53,7 +53,7 @@ func (ts *tabSection) AddEditHandler(handler HandlerEdit, timeout time.Duration)
 	// NEW: Check for shortcut support and register shortcuts
 	ts.registerShortcutsIfSupported(handler, len(ts.fieldHandlers)-1)
 
-	// REMOVED: Auto-register handler for writing if it implements HandlerWriterTracker (obsolete)
+	// REMOVED: Auto-register handler for writing if it implements HandlerLoggerTracker (obsolete)
 
 	return ts
 }
@@ -81,9 +81,9 @@ func (ts *tabSection) AddExecutionHandler(handler HandlerExecution, timeout time
 }
 
 // AddExecutionHandlerTracking registers a HandlerExecutionTracker with mandatory timeout
-// NewWriter creates a writer with the given name and tracking capability
+// NewLogger creates a writer with the given name and tracking capability
 // enableTracking: true = can update existing lines, false = always creates new lines
-func (ts *tabSection) NewWriter(name string, enableTracking bool) io.Writer {
+func (ts *tabSection) NewLogger(name string, enableTracking bool) io.Writer {
 	if enableTracking {
 		handler := &simpleWriterTrackerHandler{name: name}
 		return ts.registerWriter(handler)

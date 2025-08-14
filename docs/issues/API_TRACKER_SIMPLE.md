@@ -151,7 +151,7 @@ tab.AddInteractiveHandler(trackerHandler, timeout) // Auto-detects MessageTracke
 - Only the registration API is simplified
 
 ### 4. **Consistent with Current Design**
-- `HandlerWriter` already works this way (auto-detection in `registerWriter()`)
+- `HandlerLogger` already works this way (auto-detection in `registerWriter()`)
 - Factory methods already have automatic detection logic
 - Just exposes the existing internal behavior
 

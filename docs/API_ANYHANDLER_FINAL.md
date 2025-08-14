@@ -30,12 +30,12 @@ type HandlerExecution interface {
 }
 
 // Writer básico - Nuevas líneas siempre
-type HandlerWriter interface {
+type HandlerLogger interface {
     Name() string // Identificador único: "AppLogger", "BuildOutput"
 }
 
 // Writer avanzado - Puede actualizar líneas existentes
-type HandlerWriterTracker interface {
+type HandlerLoggerTracker interface {
     Name() string
     MessageTracker
 }
@@ -161,7 +161,7 @@ func newEditHandlerWithTracking(h HandlerEditTracker, timeout time.Duration) *an
     return newEditHandler(h, timeout, h)
 }
 
-func newWriterHandler(h HandlerWriter) *anyHandler {
+func newWriterHandler(h HandlerLogger) *anyHandler {
     return &anyHandler{
         handlerType: handlerTypeWriter,
         nameFunc:    h.Name,
@@ -170,7 +170,7 @@ func newWriterHandler(h HandlerWriter) *anyHandler {
     }
 }
 
-func newTrackerWriterHandler(h HandlerWriterTracker) *anyHandler {
+func newTrackerWriterHandler(h HandlerLoggerTracker) *anyHandler {
     return &anyHandler{
         handlerType: handlerTypeTrackerWriter,
         nameFunc:    h.Name,
@@ -252,7 +252,7 @@ type tabSection struct {
     mu              sync.RWMutex  // Protección para operaciones concurrentes
 }
 
-func (ts *tabSection) RegisterHandlerWriter(handler HandlerWriter) io.Writer {
+func (ts *tabSection) RegisterHandlerLogger(handler HandlerLogger) io.Writer {
     ts.mu.Lock()
     defer ts.mu.Unlock()
     
@@ -402,7 +402,7 @@ func (ts *tabSection) NewWriterHandler(handler any) *writerHandlerBuilder {
     }
 }
 
-func (ts *tabSection) NewWriterHandlerTracking(handler HandlerWriterTracker) *writerHandlerBuilder {
+func (ts *tabSection) NewWriterHandlerTracking(handler HandlerLoggerTracker) *writerHandlerBuilder {
     return &writerHandlerBuilder{
         tabSection: ts,
         handler:    handler,
@@ -410,13 +410,13 @@ func (ts *tabSection) NewWriterHandlerTracking(handler HandlerWriterTracker) *wr
 }
 
 // Métodos de registro directo (con auto-detección de tracking)
-func (ts *tabSection) RegisterHandlerWriter(handler HandlerWriter) io.Writer {
-    // Auto-detecta HandlerWriterTracker y configura tracking automáticamente
+func (ts *tabSection) RegisterHandlerLogger(handler HandlerLogger) io.Writer {
+    // Auto-detecta HandlerLoggerTracker y configura tracking automáticamente
 }
 
-// DEPRECATED: Usar RegisterHandlerWriter - detecta tracking automáticamente
-func (ts *tabSection) RegisterHandlerWriterTracker(handler HandlerWriterTracker) io.Writer {
-    return ts.RegisterHandlerWriter(handler)
+// DEPRECATED: Usar RegisterHandlerLogger - detecta tracking automáticamente
+func (ts *tabSection) RegisterHandlerLoggerTracker(handler HandlerLoggerTracker) io.Writer {
+    return ts.RegisterHandlerLogger(handler)
 }
 ```
 

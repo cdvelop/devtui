@@ -160,15 +160,15 @@ type HandlerInteractive interface {
 
 **[→ See complete implementation example](example/HandlerInteractive.go)**
 
-### 5. HandlerWriter - Simple Logging (1 method)
+### 5. HandlerLogger - Simple Logging (1 method)
 ```go
-type HandlerWriter interface {
+type HandlerLogger interface {
     Name() string // Writer identifier
 }
 ```
-**[→ See complete HandlerWriter implementation example](example/HandlerWriter.go)**
+**[→ See complete HandlerLogger implementation example](example/HandlerLogger.go)**
 
-**[→ See complete HandlerWriterTracker implementation example](example/HandlerWriterTracker.go)**
+**[→ See complete HandlerLoggerTracker implementation example](example/HandlerLoggerTracker.go)**
 
 ## Registration Methods
 
@@ -188,10 +188,10 @@ tab.AddExecutionHandler(handler, 10*time.Second) // Automatic MessageTracker det
 tab.AddInteractiveHandler(handler, 5*time.Second) // Automatic MessageTracker detection
 
 // Writers (returns io.Writer)
-writer := tab.NewWriter("LogWriter", false)        // Basic writer (new lines)
-writerWithTracker := tab.NewWriter("TrackedWriter", true) // Advanced writer (tracking)
-writer.Write([]byte("Log message 1"))
-writer.Write([]byte("Another log entry"))
+logger := tab.NewLogger("LogWriter", false)        // Basic writer (new lines)
+loggerWithTracker := tab.NewLogger("TrackedWriter", true) // Advanced writer (tracking)
+logger.Write([]byte("Log message 1"))
+logger.Write([]byte("Another log entry"))
 ```
 
 ### Optional MessageTracker Implementation

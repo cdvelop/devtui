@@ -77,12 +77,12 @@ func (hw *handlerWriter) Write(p []byte) (n int, err error) {
 }
 
 // registerWriter is the single internal method that handles both basic and tracking writers automatically
-func (ts *tabSection) registerWriter(handler HandlerWriter) io.Writer {
+func (ts *tabSection) registerWriter(handler HandlerLogger) io.Writer {
 	ts.mu.Lock()
 	defer ts.mu.Unlock()
 
 	var anyH *anyHandler
-	// Automatically detect if handler implements HandlerWriterTracker (Name + MessageTracker)
+	// Automatically detect if handler implements HandlerLoggerTracker (Name + MessageTracker)
 	if tracker, ok := handler.(interface {
 		Name() string
 		GetLastOperationID() string
@@ -97,7 +97,7 @@ func (ts *tabSection) registerWriter(handler HandlerWriter) io.Writer {
 	return &handlerWriter{tabSection: ts, handlerName: anyH.Name()}
 }
 
-// HandlerWriter wraps tabSection with handler identification
+// HandlerLogger wraps tabSection with handler identification
 type handlerWriter struct {
 	tabSection  *tabSection
 	handlerName string

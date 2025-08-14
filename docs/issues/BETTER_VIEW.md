@@ -9,7 +9,7 @@
 - **Sin timestamp ni handler name** en el content area
 - **Footer**: Muestra `Label()` con color `Primary`
 
-**2. HandlerEdit, HandlerExecution, HandlerWriter**:
+**2. HandlerEdit, HandlerExecution, HandlerLogger**:
 - **Content Area**: Formato `[timestamp] [handlerName] [message]`
 - **Colores actuales**:
   - `timestamp`: `timeStyle` (color `Secondary`) ✅ **Ya correcto**

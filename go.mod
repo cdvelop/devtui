@@ -3,13 +3,13 @@ module github.com/cdvelop/devtui
 go 1.24.4
 
 require (
-	github.com/cdvelop/tinystring v0.1.60
+	github.com/cdvelop/tinystring v0.1.61
 	github.com/charmbracelet/lipgloss v1.1.0
 )
 
 require (
 	github.com/cdvelop/tinyreflect v0.0.37 // indirect
-	github.com/cdvelop/tinytime v0.0.7 // indirect
+	github.com/cdvelop/tinytime v0.0.8 // indirect
 	github.com/charmbracelet/colorprofile v0.3.2 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.13 // indirect
 	github.com/charmbracelet/x/term v0.2.1 // indirect
@@ -24,7 +24,7 @@ require (
 
 require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
-	github.com/cdvelop/unixid v0.0.108
+	github.com/cdvelop/unixid v0.0.109
 	github.com/charmbracelet/bubbles v0.21.0
 	github.com/charmbracelet/bubbletea v1.3.6
 	github.com/charmbracelet/x/ansi v0.10.1 // indirect

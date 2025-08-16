@@ -20,6 +20,18 @@
 		},
 		{
 			"path": "../../devbrowser"
+		},
+		{
+			"path": "../../gorun"
+		},
+		{
+			"path": "../../godepfind"
+		},
+		{
+			"path": "../../tinydb"
+		},
+		{
+			"path": "../../tinystring"
 		}
 	],
 	"settings": {}

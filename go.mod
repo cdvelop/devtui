@@ -3,7 +3,7 @@ module github.com/cdvelop/devtui
 go 1.24.4
 
 require (
-	github.com/cdvelop/tinystring v0.1.59
+	github.com/cdvelop/tinystring v0.1.60
 	github.com/charmbracelet/lipgloss v1.1.0
 )
 

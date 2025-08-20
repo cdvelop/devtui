@@ -1,34 +1,10 @@
 {
 	"folders": [
 		{
-			"path": ".."
+			"path": "../../envfonts"
 		},
 		{
-			"path": "../../godev"
-		},
-		{
-			"path": "../../tinywasm"
-		},
-		{
-			"path": "../../assetmin"
-		},
-		{
-			"path": "../../devwatch"
-		},
-		{
-			"path": "../../goserver"
-		},
-		{
-			"path": "../../devbrowser"
-		},
-		{
-			"path": "../../gorun"
-		},
-		{
-			"path": "../../godepfind"
-		},
-		{
-			"path": "../../tinydb"
+			"path": "../../tinypdf"
 		},
 		{
 			"path": "../../tinystring"

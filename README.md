@@ -242,4 +242,4 @@ DevTUI automatically detects when a handler implements `MessageTracker` and enab
 DevTUI is built on top of the excellent libraries from [github.com/charmbracelet](https://github.com/charmbracelet): bubbletea, bubbles and lipgloss, which provide the solid foundation for creating terminal interfaces in Go.
 
 
-## [Contributing](docs/CONTRIBUTING.md)
+## [Contributing](https://github.com/cdvelop/cdvelop/blob/main/CONTRIBUTING.md)

@@ -30,9 +30,9 @@ func (d *DevTUI) sendMessageWithHandler(content string, mt MessageType, tabSecti
 	if targetHandler != nil {
 		targetHandler.SetLastOperationID(newContent.Id)
 	} else {
-		// DEBUG: Log when handler is not found (temporary for debugging)
+		// Handler not found; log available handlers for diagnosis
 		if tabSection.tui != nil && tabSection.tui.LogToFile != nil {
-			tabSection.tui.LogToFile(Fmt("DEBUG: Handler not found for '%s'. Available field handlers:", handlerName))
+			tabSection.tui.LogToFile(Fmt("Handler not found for '%s'. Available field handlers:", handlerName))
 			for i, field := range tabSection.fieldHandlers {
 				if field.handler != nil {
 					tabSection.tui.LogToFile(Fmt("  [%d] %s", i, field.handler.Name()))

@@ -46,27 +46,27 @@ func main() {
 
 	// Basic writer (always creates new lines)
 	systemLogger := logs.NewLogger("SystemLogWriter", false)
-	systemLogger.Write([]byte("System initialized"))
-	systemLogger.Write([]byte("API demo started"))
-	systemLogger.Write([]byte("Chat interface enabled"))
+	systemLogger("System initialized")
+	systemLogger("API demo started")
+	systemLogger("Chat interface enabled")
 
 	// Generate multiple log entries to test scrolling (30 total)
 	go func() {
 		for i := 1; i <= 30; i++ {
 			time.Sleep(3 * time.Second) // Simulate processing delay
-			systemLogger.Write([]byte(fmt.Sprintf("System log entry #%d - Processing data batch", i)))
+			systemLogger("System log entry #%d - Processing data batch", i)
 		}
 	}()
 
 	// Advanced writer (can update existing messages with tracking)
 	opWLogger := logs.NewLogger("OperationLogWriter", true)
-	opWLogger.Write([]byte("Operation tracking enabled"))
+	opWLogger("Operation tracking enabled")
 
 	// Generate more tracking entries to test Page Up/Page Down navigation
 	go func() {
 		for i := 1; i <= 50; i++ {
 			time.Sleep(3 * time.Second) // Simulate processing delay
-			fmt.Fprintf(opWLogger, "Operation #%d - Background task completed successfully", i)
+			opWLogger("Operation #%d - Background task completed successfully", i)
 		}
 	}()
 

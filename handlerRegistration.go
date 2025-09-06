@@ -1,7 +1,6 @@
 package devtui
 
 import (
-	"io"
 	"time"
 )
 
@@ -83,13 +82,13 @@ func (ts *tabSection) AddExecutionHandler(handler HandlerExecution, timeout time
 // AddExecutionHandlerTracking registers a HandlerExecutionTracker with mandatory timeout
 // NewLogger creates a writer with the given name and tracking capability
 // enableTracking: true = can update existing lines, false = always creates new lines
-func (ts *tabSection) NewLogger(name string, enableTracking bool) io.Writer {
+func (ts *tabSection) NewLogger(name string, enableTracking bool) func(message ...any) {
 	if enableTracking {
 		handler := &simpleWriterTrackerHandler{name: name}
-		return ts.registerWriter(handler)
+		return ts.registerLoggerFunc(handler)
 	} else {
 		handler := &simpleWriterHandler{name: name}
-		return ts.registerWriter(handler)
+		return ts.registerLoggerFunc(handler)
 	}
 }
 

@@ -41,20 +41,12 @@ func TestHandlerLoggerFunctionality(t *testing.T) {
 	// Create a new tab for testing
 	tab := h.NewTabSection("WritingTest", "Test HandlerLogger functionality")
 
-	// Register the handler and get its writer (basic writer without tracking)
-	writer := tab.NewLogger("TestWriter", false)
+	// Register the handler and get its logger function (basic logger without tracking)
+	logger := tab.NewLogger("TestWriter", false)
 
-	// Write a test message
+	// Call the logger function with a test message
 	testMessage := "Test message from handler"
-	n, err := writer.Write([]byte(testMessage))
-
-	if err != nil {
-		t.Fatalf("Write should not return error: %v", err)
-	}
-
-	if n != len(testMessage) {
-		t.Errorf("Write should return correct byte count: expected %d, got %d", len(testMessage), n)
-	}
+	logger(testMessage)
 
 	// Verify handler was registered (basic writer doesn't have tracking)
 	if registeredHandler := tab.getWritingHandler("TestWriter"); registeredHandler == nil {
@@ -72,17 +64,9 @@ func TestHandlerLoggerWithTracking(t *testing.T) {
 	// Register a writer with tracking enabled
 	writer := tab.NewLogger("TrackerWriter", true)
 
-	// Write a test message
+	// Call the logger function with a test message
 	testMessage := "Test tracking message"
-	n, err := writer.Write([]byte(testMessage))
-
-	if err != nil {
-		t.Fatalf("Write should not return error: %v", err)
-	}
-
-	if n != len(testMessage) {
-		t.Errorf("Write should return correct byte count: expected %d, got %d", len(testMessage), n)
-	}
+	writer(testMessage)
 
 	// Verify handler was registered with tracking capability
 	registeredHandler := tab.getWritingHandler("TrackerWriter")
@@ -119,7 +103,7 @@ func TestHandlerNameInMessages(t *testing.T) {
 
 	// Write a test message
 	testMessage := "Test message with handler name"
-	writer.Write([]byte(testMessage))
+	writer(testMessage)
 
 	// Give some time for message processing
 	time.Sleep(10 * time.Millisecond)
@@ -185,11 +169,11 @@ func TestOperationIDControl(t *testing.T) {
 	writer := tab.NewLogger("TestWriter", true)
 
 	// First write - should create new message
-	writer.Write([]byte("First message"))
+	writer("First message")
 	time.Sleep(10 * time.Millisecond)
 
 	// Second write - should potentially update existing message (with tracking enabled)
-	writer.Write([]byte("Updated message"))
+	writer("Updated message")
 	time.Sleep(10 * time.Millisecond)
 
 	// Verify the writer was registered with tracking capability
@@ -228,8 +212,8 @@ func TestMultipleHandlersInSameTab(t *testing.T) {
 	writer2 := tab.NewLogger("TestWriter2", false)
 
 	// Write messages from both handlers
-	writer1.Write([]byte("Message from Writer1"))
-	writer2.Write([]byte("Message from Writer2"))
+	writer1("Message from Writer1")
+	writer2("Message from Writer2")
 
 	time.Sleep(10 * time.Millisecond)
 
@@ -282,7 +266,7 @@ func TestMessageTypeDetection(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		writer.Write([]byte(tc.message))
+		writer(tc.message)
 		time.Sleep(5 * time.Millisecond)
 
 		// Check the last message

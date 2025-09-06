@@ -1,7 +1,7 @@
 package devtui
 
 import (
-	"io"
+	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -76,8 +76,8 @@ func (hw *handlerWriter) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-// registerWriter is the single internal method that handles both basic and tracking writers automatically
-func (ts *tabSection) registerWriter(handler HandlerLogger) io.Writer {
+// registerLoggerFunc creates a logger function that handles variadic arguments
+func (ts *tabSection) registerLoggerFunc(handler HandlerLogger) func(message ...any) {
 	ts.mu.Lock()
 	defer ts.mu.Unlock()
 
@@ -94,7 +94,38 @@ func (ts *tabSection) registerWriter(handler HandlerLogger) io.Writer {
 	}
 
 	ts.writingHandlers = append(ts.writingHandlers, anyH)
-	return &handlerWriter{tabSection: ts, handlerName: anyH.Name()}
+	return func(message ...any) {
+		if len(message) == 0 {
+			return
+		}
+
+		// Format the message similar to fmt.Sprint
+		var msg string
+		if len(message) == 1 {
+			if str, ok := message[0].(string); ok {
+				msg = str
+			} else {
+				msg = fmt.Sprintf("%v", message[0])
+			}
+		} else {
+			msg = fmt.Sprintf("%v", message[0])
+			for _, m := range message[1:] {
+				msg += " " + fmt.Sprintf("%v", m)
+			}
+		}
+
+		var operationID string
+		if handler := ts.getWritingHandler(anyH.Name()); handler != nil {
+			operationID = handler.GetLastOperationID()
+		}
+
+		messageStr, msgType := Translate(msg).StringType()
+		ts.tui.sendMessageWithHandler(messageStr, msgType, ts, anyH.Name(), operationID)
+
+		if msgType == Msg.Error {
+			ts.tui.Logger(msg)
+		}
+	}
 }
 
 // HandlerLogger wraps tabSection with handler identification

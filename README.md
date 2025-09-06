@@ -187,11 +187,11 @@ tab.AddExecutionHandler(handler, 10*time.Second) // Automatic MessageTracker det
 // Interactive handlers (timeout mandatory)
 tab.AddInteractiveHandler(handler, 5*time.Second) // Automatic MessageTracker detection
 
-// Writers (returns io.Writer)
+// Writers (returns func(message ...any))
 logger := tab.NewLogger("LogWriter", false)        // Basic writer (new lines)
 loggerWithTracker := tab.NewLogger("TrackedWriter", true) // Advanced writer (tracking)
-logger.Write([]byte("Log message 1"))
-logger.Write([]byte("Another log entry"))
+logger("Log message 1")
+logger("Another log entry")
 ```
 
 ### Optional MessageTracker Implementation

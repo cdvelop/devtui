@@ -111,23 +111,11 @@ func TestNewAPIHandlers(t *testing.T) {
 		t.Error("Tracker writer should not be nil")
 	}
 
-	// Test writing to basic writer
-	n, err := basicLogger.Write([]byte("test message"))
-	if err != nil {
-		t.Errorf("Basic writer failed: %v", err)
-	}
-	if n != 12 { // "test message" length
-		t.Errorf("Expected 12 bytes written, got %d", n)
-	}
+	// Test calling basic logger function
+	basicLogger("test message")
 
-	// Test writing to tracker writer
-	n, err = trackerLogger.Write([]byte("tracked message"))
-	if err != nil {
-		t.Errorf("Tracker writer failed: %v", err)
-	}
-	if n != 15 { // "tracked message" length
-		t.Errorf("Expected 15 bytes written, got %d", n)
-	}
+	// Test calling tracker logger function
+	trackerLogger("tracked message")
 
 	// Verify writing handlers were registered
 	if len(tab.writingHandlers) != 2 {

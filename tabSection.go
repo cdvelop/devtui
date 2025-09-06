@@ -25,8 +25,9 @@ type tabContent struct {
 	isComplete  bool    // true if async operation completed
 
 	// NEW: Handler identification
-	handlerName  string // Handler name for message source identification
-	handlerColor string // NEW: Handler-specific color for message formatting
+	handlerName    string // Formatted/padded Handler name for display
+	RawHandlerName string // Unformatted raw handler name used for matching/updating
+	handlerColor   string // NEW: Handler-specific color for message formatting
 }
 
 // tabSection represents a tab section in the TUI with configurable fields and content
@@ -157,7 +158,7 @@ func (t *tabSection) updateOrAddContentWithHandler(msgType MessageType, content 
 			// Match by both operationID and handlerName to ensure each handler updates its own message
 			if t.tabContents[i].operationID != nil &&
 				*t.tabContents[i].operationID == operationID &&
-				t.tabContents[i].handlerName == handlerName {
+				t.tabContents[i].RawHandlerName == handlerName {
 				// Update existing content
 				t.tabContents[i].Content = content
 				t.tabContents[i].Type = msgType

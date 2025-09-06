@@ -99,7 +99,7 @@ func TestHandlerNameInMessages(t *testing.T) {
 	// Create a test writing handler
 
 	// Register the handler and get its writer
-	writer := tab.NewLogger("TestWriter", false, "")
+	writer := tab.NewLogger("Writer", false, "")
 
 	// Write a test message
 	testMessage := "Test message with handler name"
@@ -118,8 +118,8 @@ func TestHandlerNameInMessages(t *testing.T) {
 	}
 
 	lastContent := tab.tabContents[len(tab.tabContents)-1]
-	if lastContent.handlerName != "TestWriter" {
-		t.Errorf("Message should have handler name 'TestWriter', got '%s'", lastContent.handlerName)
+	if lastContent.handlerName != "   Writer   " {
+		t.Errorf("Message should have handler name ' Writer ', got '%s'", lastContent.handlerName)
 	}
 
 	if !strings.Contains(lastContent.Content, testMessage) {
@@ -166,7 +166,7 @@ func TestOperationIDControl(t *testing.T) {
 	tab := h.NewTabSection("WritingTest", "Test operation ID control")
 
 	// Register a writer with tracking enabled for operation ID control
-	writer := tab.NewLogger("TestWriter", true, "")
+	writer := tab.NewLogger("Writer", true, "")
 
 	// First write - should create new message
 	writer("First message")
@@ -177,7 +177,7 @@ func TestOperationIDControl(t *testing.T) {
 	time.Sleep(10 * time.Millisecond)
 
 	// Verify the writer was registered with tracking capability
-	registeredHandler := tab.getWritingHandler("TestWriter")
+	registeredHandler := tab.getWritingHandler("Writer")
 	if registeredHandler == nil {
 		t.Fatal("Handler should be registered in writingHandlers slice")
 	}
@@ -192,8 +192,8 @@ func TestOperationIDControl(t *testing.T) {
 
 	// Check that the handler name is preserved in messages
 	for _, content := range tab.tabContents {
-		if content.handlerName != "TestWriter" {
-			t.Errorf("All messages should have handler name 'TestWriter', got '%s'", content.handlerName)
+		if content.handlerName != "   Writer   " {
+			t.Errorf("All messages should have handler name ' Writer ', got '%s'", content.handlerName)
 		}
 	}
 }
@@ -208,8 +208,8 @@ func TestMultipleHandlersInSameTab(t *testing.T) {
 	// Create multiple test writing handlers
 
 	// Register both handlers
-	writer1 := tab.NewLogger("TestWriter1", false, "")
-	writer2 := tab.NewLogger("TestWriter2", false, "")
+	writer1 := tab.NewLogger("W1", false, "")
+	writer2 := tab.NewLogger("W2", false, "")
 
 	// Write messages from both handlers
 	writer1("Message from Writer1")
@@ -229,18 +229,18 @@ func TestMultipleHandlersInSameTab(t *testing.T) {
 	var writer1Messages, writer2Messages int
 	for _, content := range tab.tabContents {
 		switch content.handlerName {
-		case "TestWriter1":
+		case "     W1     ":
 			writer1Messages++
-		case "TestWriter2":
+		case "     W2     ":
 			writer2Messages++
 		}
 	}
 
 	if writer1Messages == 0 {
-		t.Error("Should have messages from TestWriter1")
+		t.Error("Should have messages from W1")
 	}
 	if writer2Messages == 0 {
-		t.Error("Should have messages from TestWriter2")
+		t.Error("Should have messages from W2")
 	}
 }
 

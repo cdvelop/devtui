@@ -64,6 +64,7 @@ func (t *DevTUI) formatMessage(msg tabContent) string {
 	}
 
 	// Default format for other handlers (Edit, Execution, Writers)
+	// Use already padded handlerName for consistent width
 	handlerName := t.formatHandlerName(msg.handlerName, msg.handlerColor)
 	return Fmt("%s %s%s", timeStr, handlerName, styledContent)
 }
@@ -97,6 +98,8 @@ func (t *DevTUI) formatHandlerName(handlerName string, handlerColor string) stri
 		return ""
 	}
 
+	// handlerName already comes padded from createTabContent, no need to pad again
+
 	// Use Primary color if no specific color provided
 	color := handlerColor
 	if color == "" {
@@ -109,7 +112,8 @@ func (t *DevTUI) formatHandlerName(handlerName string, handlerColor string) stri
 		Background(lipgloss.Color(color)).
 		Foreground(lipgloss.Color(t.Foreground)) // Use foreground for text contrast
 
-	styledName := style.Render(Fmt("[%s]", handlerName))
+	styledName := style.Render(handlerName)
+	// styledName := style.Render(Fmt("[%s]", handlerName))
 	return styledName + " "
 }
 
@@ -167,15 +171,16 @@ func (h *DevTUI) createTabContent(content string, mt MessageType, tabSection *ta
 	}
 
 	return tabContent{
-		Id:           id,
-		Timestamp:    timestamp, // NUEVO campo
-		Content:      content,
-		Type:         mt,
-		tabSection:   tabSection,
-		operationID:  opID,
-		isProgress:   false,
-		isComplete:   false,
-		handlerName:  handlerName,
-		handlerColor: handlerColor, // NEW: Set the color field
+		Id:             id,
+		Timestamp:      timestamp, // NUEVO campo
+		Content:        content,
+		Type:           mt,
+		tabSection:     tabSection,
+		operationID:    opID,
+		isProgress:     false,
+		isComplete:     false,
+		handlerName:    padHandlerName(handlerName, handlerNameWidth),
+		RawHandlerName: handlerName,
+		handlerColor:   handlerColor, // NEW: Set the color field
 	}
 }

@@ -39,10 +39,10 @@ func TestOpcionA_RequirementsValidation(t *testing.T) {
 
 			t.Logf("Message: %s", formattedMessage)
 
-			// 1. Verificar que el formato tiene brackets unidos: [HandlerName]
-			expectedPattern := fmt.Sprintf("[%s]", tc.handler)
+			// 1. Verificar que el formato contiene el nombre del handler (sin corchetes)
+			expectedPattern := fmt.Sprintf("%s", tc.handler)
 			if !strings.Contains(formattedMessage, expectedPattern) {
-				t.Errorf("FAIL: Expected unified pattern '[%s]' not found", tc.handler)
+				t.Errorf("FAIL: Expected handler name '%s' not found", tc.handler)
 			}
 
 			// 2. Verificar que el contenido está presente

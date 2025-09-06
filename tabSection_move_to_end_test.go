@@ -61,7 +61,7 @@ func TestMessageTrackerMoveToEnd(t *testing.T) {
 	// Ensure only one tracker message exists
 	trackerCount := 0
 	for _, c := range tab.tabContents {
-		if c.handlerName == tracker.Name() {
+		if c.RawHandlerName == tracker.Name() {
 			trackerCount++
 		}
 	}

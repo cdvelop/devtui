@@ -25,7 +25,8 @@ type tabContent struct {
 	isComplete  bool    // true if async operation completed
 
 	// NEW: Handler identification
-	handlerName string // Handler name for message source identification
+	handlerName  string // Handler name for message source identification
+	handlerColor string // NEW: Handler-specific color for message formatting
 }
 
 // tabSection represents a tab section in the TUI with configurable fields and content
@@ -63,11 +64,13 @@ func (hw *handlerWriter) Write(p []byte) (n int, err error) {
 		message, msgType := Translate(msg).StringType()
 
 		var operationID string
+		var handlerColor string
 		if handler := hw.tabSection.getWritingHandler(hw.handlerName); handler != nil {
 			operationID = handler.GetLastOperationID()
+			handlerColor = handler.handlerColor // NEW: Get handler color
 		}
 
-		hw.tabSection.tui.sendMessageWithHandler(message, msgType, hw.tabSection, hw.handlerName, operationID)
+		hw.tabSection.tui.sendMessageWithHandler(message, msgType, hw.tabSection, hw.handlerName, operationID, handlerColor)
 
 		if msgType == Msg.Error {
 			hw.tabSection.tui.Logger(msg)
@@ -77,7 +80,7 @@ func (hw *handlerWriter) Write(p []byte) (n int, err error) {
 }
 
 // registerLoggerFunc creates a logger function that handles variadic arguments
-func (ts *tabSection) registerLoggerFunc(handler HandlerLogger) func(message ...any) {
+func (ts *tabSection) registerLoggerFunc(handler HandlerLogger, color string) func(message ...any) {
 	ts.mu.Lock()
 	defer ts.mu.Unlock()
 
@@ -88,9 +91,9 @@ func (ts *tabSection) registerLoggerFunc(handler HandlerLogger) func(message ...
 		GetLastOperationID() string
 		SetLastOperationID(string)
 	}); ok {
-		anyH = newTrackerWriterHandler(tracker)
+		anyH = newTrackerWriterHandler(tracker, color)
 	} else {
-		anyH = newWriterHandler(handler)
+		anyH = newWriterHandler(handler, color)
 	}
 
 	ts.writingHandlers = append(ts.writingHandlers, anyH)
@@ -115,12 +118,14 @@ func (ts *tabSection) registerLoggerFunc(handler HandlerLogger) func(message ...
 		}
 
 		var operationID string
+		var handlerColor string
 		if handler := ts.getWritingHandler(anyH.Name()); handler != nil {
 			operationID = handler.GetLastOperationID()
+			handlerColor = handler.handlerColor // NEW: Get handler color
 		}
 
 		messageStr, msgType := Translate(msg).StringType()
-		ts.tui.sendMessageWithHandler(messageStr, msgType, ts, anyH.Name(), operationID)
+		ts.tui.sendMessageWithHandler(messageStr, msgType, ts, anyH.Name(), operationID, handlerColor)
 
 		if msgType == Msg.Error {
 			ts.tui.Logger(msg)
@@ -137,12 +142,12 @@ type handlerWriter struct {
 func (t *tabSection) addNewContent(msgType MessageType, content string) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	t.tabContents = append(t.tabContents, t.tui.createTabContent(content, msgType, t, "", ""))
+	t.tabContents = append(t.tabContents, t.tui.createTabContent(content, msgType, t, "", "", ""))
 }
 
 // NEW: updateOrAddContentWithHandler updates existing content by operationID or adds new if not found
 // Returns true if content was updated, false if new content was added
-func (t *tabSection) updateOrAddContentWithHandler(msgType MessageType, content string, handlerName string, operationID string) (updated bool, newContent tabContent) {
+func (t *tabSection) updateOrAddContentWithHandler(msgType MessageType, content string, handlerName string, operationID string, handlerColor string) (updated bool, newContent tabContent) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
@@ -177,7 +182,7 @@ func (t *tabSection) updateOrAddContentWithHandler(msgType MessageType, content 
 	}
 
 	// If not found or no operationID, add new content
-	newContent = t.tui.createTabContent(content, msgType, t, handlerName, operationID)
+	newContent = t.tui.createTabContent(content, msgType, t, handlerName, operationID, handlerColor)
 	t.tabContents = append(t.tabContents, newContent)
 	return false, newContent
 }

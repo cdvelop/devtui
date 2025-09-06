@@ -18,7 +18,7 @@ func TestFieldEditingBugReplication(t *testing.T) {
 
 		// Create test tab and register handler
 		tab := h.NewTabSection("Test Tab", "Test description")
-		tab.AddEditHandler(testHandler, 0)
+		tab.AddEditHandler(testHandler, 0, "")
 
 		// Initialize viewport with a reasonable size for testing
 		h.viewport.Width = 80
@@ -87,7 +87,7 @@ func TestFieldEditingCorrectBehavior(t *testing.T) {
 
 		// Create test tab and register handler
 		tab := h.NewTabSection("Test Tab", "Test description")
-		tab.AddEditHandler(testHandler, 0)
+		tab.AddEditHandler(testHandler, 0, "")
 
 		// Initialize viewport with a reasonable size for testing
 		h.viewport.Width = 80

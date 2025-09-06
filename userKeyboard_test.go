@@ -34,7 +34,7 @@ func TestHandleKeyboard(t *testing.T) {
 
 	// Create test tab and register handler
 	tab := h.NewTabSection("Test Tab", "Test description")
-	tab.AddEditHandler(testHandler, 0)
+	tab.AddEditHandler(testHandler, 0, "")
 
 	// Test case: Normal mode, changing tabs with tab key
 	t.Run("Normal mode - Tab key", func(t *testing.T) {
@@ -87,7 +87,7 @@ func TestHandleKeyboard(t *testing.T) {
 
 		// Create test tab and register handler
 		tab := h.NewTabSection("Test Tab", "Test description")
-		tab.AddEditHandler(testHandler, 0)
+		tab.AddEditHandler(testHandler, 0, "")
 
 		// Configurar viewport para tener espacio suficiente para el texto
 		h.viewport.Width = 80
@@ -169,7 +169,7 @@ func TestHandleKeyboard(t *testing.T) {
 
 		// Create test tab and register handler
 		tab := h.NewTabSection("Test Tab", "Test description")
-		tab.AddEditHandler(testHandler, 0)
+		tab.AddEditHandler(testHandler, 0, "")
 
 		// Setup: Enter editing mode
 		field := prepareFieldForEditing(t, h)
@@ -231,7 +231,7 @@ func TestHandleKeyboard(t *testing.T) {
 
 		// Create test tab and register handler
 		tab := h.NewTabSection("Test Tab", "Test description")
-		tab.AddEditHandler(testHandler, 0)
+		tab.AddEditHandler(testHandler, 0, "")
 
 		// Use centralized function to get correct tab index
 		testTabIndex := GetFirstTestTabIndex()
@@ -275,7 +275,7 @@ func TestHandleKeyboard(t *testing.T) {
 
 		// Create test tab and register handler
 		tab := h.NewTabSection("Test Tab", "Test description")
-		tab.AddEditHandler(testHandler, 0)
+		tab.AddEditHandler(testHandler, 0, "")
 
 		h.editModeActivated = false
 
@@ -308,7 +308,7 @@ func TestAdditionalKeyboardFeatures(t *testing.T) {
 
 	// Create test tab and register handler
 	tab := h.NewTabSection("Test Tab", "Test description")
-	tab.AddEditHandler(testHandler, 0)
+	tab.AddEditHandler(testHandler, 0, "")
 
 	// Test: Cancelación de edición con ESC debe restaurar el valor original
 	t.Run("Editing mode - Cancel with ESC discards changes", func(t *testing.T) {
@@ -320,7 +320,7 @@ func TestAdditionalKeyboardFeatures(t *testing.T) {
 
 		// Create test tab and register handler
 		tab := h.NewTabSection("Test Tab", "Test description")
-		tab.AddEditHandler(testHandler, 0)
+		tab.AddEditHandler(testHandler, 0, "")
 
 		// Use the correct tab (index 1, not 0 which is SHORTCUTS)
 		testTabIndex := 1
@@ -402,7 +402,7 @@ func TestAdditionalKeyboardFeatures(t *testing.T) {
 
 		// Create test tab and register handler
 		tab := h.NewTabSection("Test Tab", "Test description")
-		tab.AddEditHandler(testHandler, 0)
+		tab.AddEditHandler(testHandler, 0, "")
 
 		// Use centralized function to get correct tab index
 		testTabIndex := 1

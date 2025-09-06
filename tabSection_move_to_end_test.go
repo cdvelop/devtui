@@ -29,12 +29,12 @@ func TestMessageTrackerMoveToEnd(t *testing.T) {
 	tab := tui.NewTabSection("TRACKER", "")
 
 	tracker := &testTracker{}
-	tab.AddEditHandler(tracker, 5*time.Second)
+	tab.AddEditHandler(tracker, 5*time.Second, "")
 
 	// Add a normal message
 	tab.addNewContent(Msg.Info, "Normal message")
 	// Add a tracker message (first time, operationID empty)
-	updated, _ := tab.updateOrAddContentWithHandler(Msg.Info, "Tracker message 1", tracker.Name(), "op-1")
+	updated, _ := tab.updateOrAddContentWithHandler(Msg.Info, "Tracker message 1", tracker.Name(), "op-1", "")
 	tracker.SetLastOperationID("op-1") // simulate tracker storing op id after first message
 	if updated {
 		t.Fatal("First tracker message should not be an update")
@@ -50,7 +50,7 @@ func TestMessageTrackerMoveToEnd(t *testing.T) {
 	}
 
 	// Update tracker message (should move to end)
-	updated, _ = tab.updateOrAddContentWithHandler(Msg.Info, "Tracker message UPDATED", tracker.Name(), tracker.GetLastOperationID())
+	updated, _ = tab.updateOrAddContentWithHandler(Msg.Info, "Tracker message UPDATED", tracker.Name(), tracker.GetLastOperationID(), "")
 	if !updated {
 		t.Fatal("Tracker message update should return updated=true")
 	}

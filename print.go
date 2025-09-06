@@ -2,12 +2,13 @@ package devtui
 
 import (
 	. "github.com/cdvelop/tinystring"
+	"github.com/charmbracelet/lipgloss"
 )
 
 // NEW: sendMessageWithHandler sends a message with handler identification
-func (d *DevTUI) sendMessageWithHandler(content string, mt MessageType, tabSection *tabSection, handlerName string, operationID string) {
+func (d *DevTUI) sendMessageWithHandler(content string, mt MessageType, tabSection *tabSection, handlerName string, operationID string, handlerColor string) {
 	// Use update or add function that handles operationID reuse
-	_, newContent := tabSection.updateOrAddContentWithHandler(mt, content, handlerName, operationID)
+	_, newContent := tabSection.updateOrAddContentWithHandler(mt, content, handlerName, operationID, handlerColor)
 
 	// Always send to channel to trigger UI update, regardless of whether content was updated or added new
 	d.tabContentsChan <- newContent
@@ -63,7 +64,7 @@ func (t *DevTUI) formatMessage(msg tabContent) string {
 	}
 
 	// Default format for other handlers (Edit, Execution, Writers)
-	handlerName := t.formatHandlerName(msg.handlerName)
+	handlerName := t.formatHandlerName(msg.handlerName, msg.handlerColor)
 	return Fmt("%s %s%s", timeStr, handlerName, styledContent)
 }
 
@@ -91,12 +92,24 @@ func (t *DevTUI) generateTimestamp(timestamp string) string {
 	return t.timeStyle.Render("--:--:--")
 }
 
-func (t *DevTUI) formatHandlerName(handlerName string) string {
+func (t *DevTUI) formatHandlerName(handlerName string, handlerColor string) string {
 	if handlerName == "" {
 		return ""
 	}
-	// Aplicar estilo completo a [handlerName] como una unidad
-	styledName := t.infoStyle.Render(Fmt("[%s]", handlerName))
+
+	// Use Primary color if no specific color provided
+	color := handlerColor
+	if color == "" {
+		color = t.Primary // Use palette.Primary as default
+	}
+
+	// Create style with handler-specific color as background
+	style := lipgloss.NewStyle().
+		Bold(true).
+		Background(lipgloss.Color(color)).
+		Foreground(lipgloss.Color(t.Foreground)) // Use foreground for text contrast
+
+	styledName := style.Render(Fmt("[%s]", handlerName))
 	return styledName + " "
 }
 
@@ -125,7 +138,7 @@ func (t *DevTUI) isInteractiveHandler(handlerName string) bool {
 }
 
 // createTabContent creates tabContent with unified logic (replaces newContent and newContentWithHandler)
-func (h *DevTUI) createTabContent(content string, mt MessageType, tabSection *tabSection, handlerName string, operationID string) tabContent {
+func (h *DevTUI) createTabContent(content string, mt MessageType, tabSection *tabSection, handlerName string, operationID string, handlerColor string) tabContent {
 	// Timestamp SIEMPRE nuevo usando GetNewID - Handle gracefully if unixid failed to initialize
 	var timestamp string
 	if h.id != nil {
@@ -154,14 +167,15 @@ func (h *DevTUI) createTabContent(content string, mt MessageType, tabSection *ta
 	}
 
 	return tabContent{
-		Id:          id,
-		Timestamp:   timestamp, // NUEVO campo
-		Content:     content,
-		Type:        mt,
-		tabSection:  tabSection,
-		operationID: opID,
-		isProgress:  false,
-		isComplete:  false,
-		handlerName: handlerName,
+		Id:           id,
+		Timestamp:    timestamp, // NUEVO campo
+		Content:      content,
+		Type:         mt,
+		tabSection:   tabSection,
+		operationID:  opID,
+		isProgress:   false,
+		isComplete:   false,
+		handlerName:  handlerName,
+		handlerColor: handlerColor, // NEW: Set the color field
 	}
 }

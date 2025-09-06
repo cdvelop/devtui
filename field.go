@@ -32,6 +32,8 @@ type anyHandler struct {
 
 	origHandler interface{} // Store original handler for type assertions
 
+	handlerColor string // NEW: Handler-specific color for message formatting
+
 	// Function pointers - solo los necesarios poblados
 	nameFunc     func() string                   // Todos
 	labelFunc    func() string                   // Display/Edit/Execution
@@ -122,7 +124,7 @@ func (a *anyHandler) WaitingForUser() bool {
 // Factory Methods
 // ============================================================================
 
-func newEditHandler(h HandlerEdit, timeout time.Duration, tracker MessageTracker) *anyHandler {
+func newEditHandler(h HandlerEdit, timeout time.Duration, tracker MessageTracker, color string) *anyHandler {
 	anyH := &anyHandler{
 		handlerType:  handlerTypeEdit,
 		timeout:      timeout,
@@ -133,6 +135,7 @@ func newEditHandler(h HandlerEdit, timeout time.Duration, tracker MessageTracker
 		changeFunc:   h.Change,
 		timeoutFunc:  func() time.Duration { return timeout },
 		origHandler:  h,
+		handlerColor: color, // NEW: Store handler color
 	}
 
 	// NEW: Check if handler also implements Value() method (like TestNonEditableHandler)
@@ -156,7 +159,7 @@ func newEditHandler(h HandlerEdit, timeout time.Duration, tracker MessageTracker
 	return anyH
 }
 
-func newDisplayHandler(h HandlerDisplay) *anyHandler {
+func newDisplayHandler(h HandlerDisplay, color string) *anyHandler {
 	return &anyHandler{
 		handlerType:  handlerTypeDisplay,
 		timeout:      0,         // Display no requiere timeout
@@ -166,10 +169,11 @@ func newDisplayHandler(h HandlerDisplay) *anyHandler {
 		editableFunc: func() bool { return false },
 		getOpIDFunc:  func() string { return "" },
 		setOpIDFunc:  func(string) {},
+		handlerColor: color, // NEW: Store handler color
 	}
 }
 
-func newExecutionHandler(h HandlerExecution, timeout time.Duration) *anyHandler {
+func newExecutionHandler(h HandlerExecution, timeout time.Duration, color string) *anyHandler {
 	anyH := &anyHandler{
 		handlerType:  handlerTypeExecution,
 		timeout:      timeout,
@@ -180,8 +184,9 @@ func newExecutionHandler(h HandlerExecution, timeout time.Duration) *anyHandler 
 		changeFunc: func(_ string, progress func(msgs ...any)) {
 			h.Execute(progress)
 		},
-		timeoutFunc: func() time.Duration { return timeout },
-		origHandler: h,
+		timeoutFunc:  func() time.Duration { return timeout },
+		origHandler:  h,
+		handlerColor: color, // NEW: Store handler color
 	}
 
 	// Check if handler implements MessageTracker interface for operation tracking
@@ -205,12 +210,13 @@ func newExecutionHandler(h HandlerExecution, timeout time.Duration) *anyHandler 
 	return anyH
 }
 
-func newWriterHandler(h HandlerLogger) *anyHandler {
+func newWriterHandler(h HandlerLogger, color string) *anyHandler {
 	return &anyHandler{
-		handlerType: handlerTypeWriter,
-		nameFunc:    h.Name,
-		getOpIDFunc: func() string { return "" }, // Siempre nuevas líneas
-		setOpIDFunc: func(string) {},
+		handlerType:  handlerTypeWriter,
+		nameFunc:     h.Name,
+		getOpIDFunc:  func() string { return "" }, // Siempre nuevas líneas
+		setOpIDFunc:  func(string) {},
+		handlerColor: color, // NEW: Store handler color
 	}
 }
 
@@ -218,16 +224,17 @@ func newTrackerWriterHandler(h interface {
 	Name() string
 	GetLastOperationID() string
 	SetLastOperationID(string)
-}) *anyHandler {
+}, color string) *anyHandler {
 	return &anyHandler{
-		handlerType: handlerTypeTrackerWriter,
-		nameFunc:    h.Name,
-		getOpIDFunc: h.GetLastOperationID,
-		setOpIDFunc: h.SetLastOperationID,
+		handlerType:  handlerTypeTrackerWriter,
+		nameFunc:     h.Name,
+		getOpIDFunc:  h.GetLastOperationID,
+		setOpIDFunc:  h.SetLastOperationID,
+		handlerColor: color, // NEW: Store handler color
 	}
 }
 
-func newInteractiveHandler(h HandlerInteractive, timeout time.Duration, tracker MessageTracker) *anyHandler {
+func newInteractiveHandler(h HandlerInteractive, timeout time.Duration, tracker MessageTracker, color string) *anyHandler {
 	anyH := &anyHandler{
 		handlerType: handlerTypeInteractive,
 		timeout:     timeout,
@@ -240,6 +247,7 @@ func newInteractiveHandler(h HandlerInteractive, timeout time.Duration, tracker 
 		timeoutFunc:  func() time.Duration { return timeout },
 		editModeFunc: h.WaitingForUser, // NEW: Auto edit mode detection
 		origHandler:  h,
+		handlerColor: color, // NEW: Store handler color
 	}
 
 	// Configure optional tracking
@@ -388,11 +396,12 @@ func (f *field) triggerContentDisplay() {
 
 		// Create progress callback that follows MessageTracker logic
 		handlerName := f.handler.Name()
+		handlerColor := f.handler.handlerColor // NEW: Get handler color
 		progressCallback := func(msgs ...any) {
 			if f.parentTab != nil && len(msgs) > 0 {
 				// For regular handlers, create timestamped messages with tracking
 				message, msgType := Translate(msgs...).StringType()
-				f.parentTab.tui.sendMessageWithHandler(message, msgType, f.parentTab, handlerName, operationID)
+				f.parentTab.tui.sendMessageWithHandler(message, msgType, f.parentTab, handlerName, operationID, handlerColor)
 			}
 		}
 
@@ -461,8 +470,10 @@ func (f *field) sendMessage(msgs ...any) {
 
 	// Get handler name
 	handlerName := ""
+	handlerColor := ""
 	if f.handler != nil {
 		handlerName = f.handler.Name()
+		handlerColor = f.handler.handlerColor // NEW: Get handler color
 	}
 
 	// NEW: If handler has Content() method, refresh display instead of creating messages
@@ -473,7 +484,7 @@ func (f *field) sendMessage(msgs ...any) {
 
 	// Convert and send message with automatic type detection
 	message, msgType := Translate(msgs...).StringType()
-	f.parentTab.tui.sendMessageWithHandler(message, msgType, f.parentTab, handlerName, operationID)
+	f.parentTab.tui.sendMessageWithHandler(message, msgType, f.parentTab, handlerName, operationID, handlerColor)
 }
 
 // executeAsyncChange executes the handler's Change method asynchronously
@@ -636,6 +647,7 @@ func (f *field) executeChangeSyncWithTracking(valueToSave any) {
 
 	// Create progress callback that sends messages with operation tracking
 	handlerName := f.handler.Name()
+	handlerColor := f.handler.handlerColor // NEW: Get handler color
 	progressCallback := func(msgs ...any) {
 		if f.parentTab != nil && len(msgs) > 0 {
 			// NEW: If handler has Content() method, refresh display instead of creating messages
@@ -646,7 +658,7 @@ func (f *field) executeChangeSyncWithTracking(valueToSave any) {
 
 			// For regular handlers, create timestamped messages with tracking
 			message, msgType := Translate(msgs...).StringType()
-			f.parentTab.tui.sendMessageWithHandler(message, msgType, f.parentTab, handlerName, operationID)
+			f.parentTab.tui.sendMessageWithHandler(message, msgType, f.parentTab, handlerName, operationID, handlerColor)
 		}
 	}
 
@@ -665,7 +677,7 @@ func (f *field) executeChangeSyncWithTracking(valueToSave any) {
 			// For regular handlers, send success message
 			result := f.handler.Value()
 			_, msgType := Translate(result).StringType()
-			f.parentTab.tui.sendMessageWithHandler(result, msgType, f.parentTab, handlerName, operationID)
+			f.parentTab.tui.sendMessageWithHandler(result, msgType, f.parentTab, handlerName, operationID, handlerColor)
 		}
 	}
 }

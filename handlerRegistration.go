@@ -12,8 +12,8 @@ AddDisplayHandler registers a HandlerDisplay directly
 	    Content() string // Display content (e.g., "help\n1-..\n2-...", "executing deploy wait...")
 	}
 */
-func (ts *tabSection) AddDisplayHandler(handler HandlerDisplay) *tabSection {
-	anyH := newDisplayHandler(handler)
+func (ts *tabSection) AddDisplayHandler(handler HandlerDisplay, color string) *tabSection {
+	anyH := newDisplayHandler(handler, color)
 	f := &field{
 		handler:    anyH,
 		parentTab:  ts,
@@ -33,15 +33,15 @@ AddEditHandler registers a HandlerEdit with mandatory timeout.
 	    Change(newValue string, progress func(msgs ...any)) // value to change
 	}
 
-ts.AddEditHandler(myEditHandler, 2*time.Second)
+ts.AddEditHandler(myEditHandler, 2*time.Second, "")
 */
-func (ts *tabSection) AddEditHandler(handler HandlerEdit, timeout time.Duration) *tabSection {
+func (ts *tabSection) AddEditHandler(handler HandlerEdit, timeout time.Duration, color string) *tabSection {
 	var tracker MessageTracker
 	if t, ok := handler.(MessageTracker); ok {
 		tracker = t
 	}
 
-	anyH := newEditHandler(handler, timeout, tracker)
+	anyH := newEditHandler(handler, timeout, tracker, color)
 	f := &field{
 		handler:    anyH,
 		parentTab:  ts,
@@ -68,8 +68,8 @@ AddEditHandlerTracking registers a HandlerEditTracker with mandatory timeout
 
 eg: ts.AddEditHandlerTracking(myEditHandler, 2*time.Second)
 */
-func (ts *tabSection) AddExecutionHandler(handler HandlerExecution, timeout time.Duration) *tabSection {
-	anyH := newExecutionHandler(handler, timeout)
+func (ts *tabSection) AddExecutionHandler(handler HandlerExecution, timeout time.Duration, color string) *tabSection {
+	anyH := newExecutionHandler(handler, timeout, color)
 	f := &field{
 		handler:    anyH,
 		parentTab:  ts,
@@ -79,16 +79,22 @@ func (ts *tabSection) AddExecutionHandler(handler HandlerExecution, timeout time
 	return ts
 }
 
-// AddExecutionHandlerTracking registers a HandlerExecutionTracker with mandatory timeout
-// NewLogger creates a writer with the given name and tracking capability
+// NewLogger creates a logger function with the given name and tracking capability
 // enableTracking: true = can update existing lines, false = always creates new lines
-func (ts *tabSection) NewLogger(name string, enableTracking bool) func(message ...any) {
+//
+// Example:
+//
+//	log := tab.NewLogger("BuildProcess", true, "#1e40af")
+//	log("Starting build...")
+//	log("Compiling", 42, "files")
+//	log("Build completed successfully")
+func (ts *tabSection) NewLogger(name string, enableTracking bool, color string) func(message ...any) {
 	if enableTracking {
 		handler := &simpleWriterTrackerHandler{name: name}
-		return ts.registerLoggerFunc(handler)
+		return ts.registerLoggerFunc(handler, color)
 	} else {
 		handler := &simpleWriterHandler{name: name}
-		return ts.registerLoggerFunc(handler)
+		return ts.registerLoggerFunc(handler, color)
 	}
 }
 
@@ -129,13 +135,13 @@ AddInteractiveHandler registers a HandlerInteractive with mandatory timeout
 	    WaitingForUser() bool                               // Should edit mode be auto-activated?
 	}
 */
-func (ts *tabSection) AddInteractiveHandler(handler HandlerInteractive, timeout time.Duration) *tabSection {
+func (ts *tabSection) AddInteractiveHandler(handler HandlerInteractive, timeout time.Duration, color string) *tabSection {
 	var tracker MessageTracker
 	if t, ok := handler.(MessageTracker); ok {
 		tracker = t
 	}
 
-	anyH := newInteractiveHandler(handler, timeout, tracker)
+	anyH := newInteractiveHandler(handler, timeout, tracker, color)
 	f := &field{
 		handler:    anyH,
 		parentTab:  ts,

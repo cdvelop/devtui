@@ -25,12 +25,12 @@ func main() {
 
 	// Dashboard tab with DisplayHandlers (read-only information)
 	dashboard := tui.NewTabSection("Dashboard", "System Overview")
-	dashboard.AddDisplayHandler(&example.StatusHandler{})
+	dashboard.AddDisplayHandler(&example.StatusHandler{}, "")
 
 	// Configuration tab with EditHandlers (interactive fields)
 	config := tui.NewTabSection("Config", "System Configuration")
-	config.AddEditHandler(&example.DatabaseHandler{ConnectionString: "postgres://localhost:5432/mydb"}, 2*time.Second)
-	config.AddExecutionHandler(&example.BackupHandler{}, 5*time.Second)
+	config.AddEditHandler(&example.DatabaseHandler{ConnectionString: "postgres://localhost:5432/mydb"}, 2*time.Second, "")
+	config.AddExecutionHandler(&example.BackupHandler{}, 5*time.Second, "")
 
 	// NEW: Chat tab with InteractiveHandler - Demonstrates interactive content management
 	chat := tui.NewTabSection("Chat", "AI Chat Assistant")
@@ -39,13 +39,13 @@ func main() {
 		WaitingForUserFlag: false, // Start showing content, not waiting for input
 		IsProcessing:       false, // Not processing initially
 	}
-	chat.AddInteractiveHandler(chatHandler, 3*time.Second)
+	chat.AddInteractiveHandler(chatHandler, 3*time.Second, "")
 
 	// Logging tab with Writers
 	logs := tui.NewTabSection("Logs", "System Logs")
 
 	// Basic writer (always creates new lines)
-	systemLogger := logs.NewLogger("SystemLogWriter", false)
+	systemLogger := logs.NewLogger("SystemLogWriter", false, "")
 	systemLogger("System initialized")
 	systemLogger("API demo started")
 	systemLogger("Chat interface enabled")
@@ -59,7 +59,7 @@ func main() {
 	}()
 
 	// Advanced writer (can update existing messages with tracking)
-	opWLogger := logs.NewLogger("OperationLogWriter", true)
+	opWLogger := logs.NewLogger("OperationLogWriter", true, "")
 	opWLogger("Operation tracking enabled")
 
 	// Generate more tracking entries to test Page Up/Page Down navigation

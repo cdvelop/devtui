@@ -118,8 +118,9 @@ func TestHandlerNameInMessages(t *testing.T) {
 	}
 
 	lastContent := tab.tabContents[len(tab.tabContents)-1]
-	if lastContent.handlerName != "   Writer   " {
-		t.Errorf("Message should have handler name ' Writer ', got '%s'", lastContent.handlerName)
+	expectedName := padHandlerName("Writer", HandlerNameWidth)
+	if lastContent.handlerName != expectedName {
+		t.Errorf("Message should have handler name '%s', got '%s'", expectedName, lastContent.handlerName)
 	}
 
 	if !strings.Contains(lastContent.Content, testMessage) {
@@ -192,8 +193,9 @@ func TestOperationIDControl(t *testing.T) {
 
 	// Check that the handler name is preserved in messages
 	for _, content := range tab.tabContents {
-		if content.handlerName != "   Writer   " {
-			t.Errorf("All messages should have handler name ' Writer ', got '%s'", content.handlerName)
+		expectedName := padHandlerName("Writer", HandlerNameWidth)
+		if content.handlerName != expectedName {
+			t.Errorf("All messages should have handler name '%s', got '%s'", expectedName, content.handlerName)
 		}
 	}
 }
@@ -229,9 +231,9 @@ func TestMultipleHandlersInSameTab(t *testing.T) {
 	var writer1Messages, writer2Messages int
 	for _, content := range tab.tabContents {
 		switch content.handlerName {
-		case "     W1     ":
+		case padHandlerName("W1", HandlerNameWidth):
 			writer1Messages++
-		case "     W2     ":
+		case padHandlerName("W2", HandlerNameWidth):
 			writer2Messages++
 		}
 	}

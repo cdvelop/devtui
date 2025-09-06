@@ -40,9 +40,16 @@ func TestOpcionA_RequirementsValidation(t *testing.T) {
 			t.Logf("Message: %s", formattedMessage)
 
 			// 1. Verificar que el formato contiene el nombre del handler (sin corchetes)
-			expectedPattern := fmt.Sprintf("%s", tc.handler)
+			// NOTE: current API truncates/pads handler names to a fixed width (HandlerNameWidth).
+			// Check for the prefix/truncated form instead of the full handler name.
+			var expectedPattern string
+			if len(tc.handler) > HandlerNameWidth {
+				expectedPattern = tc.handler[:HandlerNameWidth]
+			} else {
+				expectedPattern = tc.handler
+			}
 			if !strings.Contains(formattedMessage, expectedPattern) {
-				t.Errorf("FAIL: Expected handler name '%s' not found", tc.handler)
+				t.Errorf("FAIL: Expected handler name prefix '%s' not found (full: '%s')", expectedPattern, tc.handler)
 			}
 
 			// 2. Verificar que el contenido está presente

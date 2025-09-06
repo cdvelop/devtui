@@ -3,7 +3,7 @@ module github.com/cdvelop/devtui
 go 1.24.4
 
 require (
-	github.com/cdvelop/tinystring v0.4.0
+	github.com/cdvelop/tinystring v0.1.65
 	github.com/charmbracelet/lipgloss v1.1.0
 )
 
@@ -35,5 +35,3 @@ require (
 	github.com/rivo/uniseg v0.4.7 // indirect
 	golang.org/x/sys v0.35.0 // indirect
 )
-
-replace github.com/cdvelop/tinystring => ../tinystring

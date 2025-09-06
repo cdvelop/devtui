@@ -179,7 +179,7 @@ func (h *DevTUI) createTabContent(content string, mt MessageType, tabSection *ta
 		operationID:    opID,
 		isProgress:     false,
 		isComplete:     false,
-		handlerName:    padHandlerName(handlerName, handlerNameWidth),
+		handlerName:    padHandlerName(handlerName, HandlerNameWidth),
 		RawHandlerName: handlerName,
 		handlerColor:   handlerColor, // NEW: Set the color field
 	}

@@ -15,7 +15,7 @@ func main() {
 		AppName:  "Demo",
 		ExitChan: make(chan bool),
 		Color:    devtui.DefaultPalette(),
-		LogToFile: func(messages ...any) {
+		Logger: func(messages ...any) {
 			fmt.Println(messages...) // Replace with actual logging implementation
 		},
 	})

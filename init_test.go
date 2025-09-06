@@ -9,7 +9,7 @@ func TestNewTUI(t *testing.T) {
 	config := &TuiConfig{
 		ExitChan: make(chan bool),
 		Color:    &ColorPalette{}, // Usando un ColorPalette vacío
-		LogToFile: func(messages ...any) {
+		Logger: func(messages ...any) {
 			// Mock function for logging
 		},
 	}

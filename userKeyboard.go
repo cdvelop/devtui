@@ -255,8 +255,8 @@ func (h *DevTUI) checkAndTriggerInteractiveContent() {
 func (h *DevTUI) executeShortcut(entry *ShortcutEntry) (bool, tea.Cmd) {
 	// Validate indexes are still valid
 	if entry.TabIndex >= len(h.tabSections) {
-		if h.LogToFile != nil {
-			h.LogToFile("Shortcut error: invalid tab index", entry.TabIndex)
+		if h.Logger != nil {
+			h.Logger("Shortcut error: invalid tab index", entry.TabIndex)
 		}
 		return false, nil // Stop processing for invalid shortcuts
 	}
@@ -264,8 +264,8 @@ func (h *DevTUI) executeShortcut(entry *ShortcutEntry) (bool, tea.Cmd) {
 	targetTab := h.tabSections[entry.TabIndex]
 	fieldHandlers := targetTab.fieldHandlers
 	if entry.FieldIndex >= len(fieldHandlers) {
-		if h.LogToFile != nil {
-			h.LogToFile("Shortcut error: invalid field index", entry.FieldIndex)
+		if h.Logger != nil {
+			h.Logger("Shortcut error: invalid field index", entry.FieldIndex)
 		}
 		return false, nil // Stop processing for invalid shortcuts
 	}

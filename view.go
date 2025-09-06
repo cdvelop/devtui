@@ -81,8 +81,8 @@ func (h *DevTUI) headerView() string {
 	currentTab := h.activeTab
 	totalTabs := len(h.tabSections)
 	if currentTab > 99 || totalTabs > 99 {
-		if h.LogToFile != nil {
-			h.LogToFile("Tab limit exceeded:", currentTab, "/", totalTabs)
+		if h.Logger != nil {
+			h.Logger("Tab limit exceeded:", currentTab, "/", totalTabs)
 		}
 	}
 	displayCurrent := min(currentTab, 99) + 1 // 1-based for display

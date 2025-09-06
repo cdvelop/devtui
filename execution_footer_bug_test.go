@@ -27,7 +27,7 @@ func TestExecutionHandlerFooterBug(t *testing.T) {
 	tui := NewTUI(&TuiConfig{
 		AppName:  "TestApp",
 		ExitChan: make(chan bool),
-		LogToFile: func(msgs ...any) {
+		Logger: func(msgs ...any) {
 			mu.Lock()
 			for _, m := range msgs {
 				messages = append(messages, m.(string))

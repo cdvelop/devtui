@@ -15,7 +15,7 @@ func TestUIDisplayBug(t *testing.T) {
 		config := &TuiConfig{
 			AppName:  "DevTUI - Display Bug Test",
 			ExitChan: make(chan bool),
-			LogToFile: func(messages ...any) {
+			Logger: func(messages ...any) {
 				t.Logf("DevTUI Log: %v", messages)
 			},
 		}

@@ -32,8 +32,8 @@ func (h *DevTUI) footerView() string {
 	currentField := tabSection.indexActiveEditField
 	totalFields := len(fieldHandlers)
 	if currentField > 99 || totalFields > 99 {
-		if h.LogToFile != nil {
-			h.LogToFile("Field limit exceeded:", currentField, "/", totalFields)
+		if h.Logger != nil {
+			h.Logger("Field limit exceeded:", currentField, "/", totalFields)
 		}
 	}
 	// Writers-only tab: show  1/ 1 for clarity
@@ -102,8 +102,8 @@ func (h *DevTUI) renderFooterInput() string {
 		currentField := tabSection.indexActiveEditField
 		totalFields := len(fieldHandlers)
 		if currentField > 99 || totalFields > 99 {
-			if h.LogToFile != nil {
-				h.LogToFile("Field limit exceeded:", currentField, "/", totalFields)
+			if h.Logger != nil {
+				h.Logger("Field limit exceeded:", currentField, "/", totalFields)
 			}
 		}
 		displayCurrent := min(currentField, 99) + 1 // 1-based for display
@@ -131,8 +131,8 @@ func (h *DevTUI) renderFooterInput() string {
 		currentField := tabSection.indexActiveEditField
 		totalFields := len(fieldHandlers)
 		if currentField > 99 || totalFields > 99 {
-			if h.LogToFile != nil {
-				h.LogToFile("Field limit exceeded:", currentField, "/", totalFields)
+			if h.Logger != nil {
+				h.Logger("Field limit exceeded:", currentField, "/", totalFields)
 			}
 		}
 		displayCurrent := min(currentField, 99) + 1 // 1-based for display
@@ -195,8 +195,8 @@ func (h *DevTUI) renderFooterInput() string {
 	currentField := tabSection.indexActiveEditField
 	totalFields := len(fieldHandlers)
 	if currentField > 99 || totalFields > 99 {
-		if h.LogToFile != nil {
-			h.LogToFile("Field limit exceeded:", currentField, "/", totalFields)
+		if h.Logger != nil {
+			h.Logger("Field limit exceeded:", currentField, "/", totalFields)
 		}
 	}
 	displayCurrent := min(currentField, 99) + 1 // 1-based for display

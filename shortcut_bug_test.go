@@ -16,7 +16,7 @@ func TestShortcutBug(t *testing.T) {
 	config := &TuiConfig{
 		AppName:  "Demo",
 		ExitChan: make(chan bool),
-		LogToFile: func(messages ...any) {
+		Logger: func(messages ...any) {
 			t.Logf("DevTUI Log: %v", messages)
 		},
 	}

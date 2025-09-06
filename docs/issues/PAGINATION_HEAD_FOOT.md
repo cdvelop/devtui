@@ -85,8 +85,8 @@ totalTabs := len(h.tabSections)
 
 // Check limits and log error if exceeded
 if currentTab > 99 || totalTabs > 99 {
-    if h.LogToFile != nil {
-        h.LogToFile("Tab limit exceeded:", currentTab, "/", totalTabs)
+    if h.Logger != nil {
+        h.Logger("Tab limit exceeded:", currentTab, "/", totalTabs)
     }
 }
 
@@ -116,8 +116,8 @@ totalFields := len(fieldHandlers)
 
 // Check limits and log error if exceeded
 if currentField > 99 || totalFields > 99 {
-    if h.LogToFile != nil {
-        h.LogToFile("Field limit exceeded:", currentField, "/", totalFields)
+    if h.Logger != nil {
+        h.Logger("Field limit exceeded:", currentField, "/", totalFields)
     }
 }
 
@@ -140,8 +140,8 @@ totalFields := len(fieldHandlers)
 
 // Check limits and log error if exceeded (same as above)
 if currentField > 99 || totalFields > 99 {
-    if h.LogToFile != nil {
-        h.LogToFile("Field limit exceeded:", currentField, "/", totalFields)
+    if h.Logger != nil {
+        h.Logger("Field limit exceeded:", currentField, "/", totalFields)
     }
 }
 
@@ -213,7 +213,7 @@ t.paginationStyle = lipgloss.NewStyle().
 #### Edge Cases
 - Single tab: Show `[ 1/ 1]` (for clarity, even if only writers are present)
 - No fields (writers-only tabs): Should show `[ 1/ 1]` for clarity. If `[ 0/ 0]` is shown, this is confusing and is a bug. See test `TestPaginationWritersOnlyTab`.
-- Limit exceeded: Clamp to 99, log error via `LogToFile`
+- Limit exceeded: Clamp to 99, log error via `Logger`
 - Large numbers: Handle with `%2d` format for exact `[99/99]` spacing
 
 ### Testing Considerations
@@ -227,7 +227,7 @@ t.paginationStyle = lipgloss.NewStyle().
 
 To fix the bug, update the footer pagination logic so that when there are no field handlers (writers-only tab), both current and total are set to 1 for display purposes. This ensures `[ 1/ 1]` is shown, matching the documentation and user expectations.
 - **Test limit handling**: 99+ tabs and 99+ field handlers per tab
-- **Test error logging**: Verify `LogToFile` is called when limits exceeded
+- **Test error logging**: Verify `Logger` is called when limits exceeded
 
 ### Visual Style Consistency
 - **Both paginations**: New `paginationStyle` (Primary background + Foreground text)

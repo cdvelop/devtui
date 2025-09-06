@@ -53,7 +53,7 @@ type TuiConfig struct {
 	}*/
 	Color *ColorPalette
 
-	LogToFile func(messages ...any) // function to write log error
+	Logger func(messages ...any) // function to write log error
 }
 
 // NewTUI creates a new DevTUI instance and initializes it.
@@ -64,7 +64,7 @@ type TuiConfig struct {
 //	    AppName: "MyApp",
 //	    ExitChan: make(chan bool),
 //	    Color: nil, // or your *ColorPalette
-//	    LogToFile: func(err any) { fmt.Println(err) },
+//	    Logger: func(err any) { fmt.Println(err) },
 //	}
 //	tui := NewTUI(config)
 func NewTUI(c *TuiConfig) *DevTUI {
@@ -75,8 +75,8 @@ func NewTUI(c *TuiConfig) *DevTUI {
 	// Initialize the unique ID generator first
 	id, err := unixid.NewUnixID()
 	if err != nil {
-		if c.LogToFile != nil {
-			c.LogToFile("Critical: Error initializing unixid:", err, "- timestamp generation will use fallback")
+		if c.Logger != nil {
+			c.Logger("Critical: Error initializing unixid:", err, "- timestamp generation will use fallback")
 		}
 		// id will remain nil, but createTabContent method will handle this gracefully now
 	}

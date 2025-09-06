@@ -18,7 +18,7 @@ func TestRealWorldScenario(t *testing.T) {
 			Primary:    "#FF6600",
 			Secondary:  "#666666",
 		},
-		LogToFile: func(messages ...any) {
+		Logger: func(messages ...any) {
 			t.Logf("Log: %v", messages)
 		},
 	})

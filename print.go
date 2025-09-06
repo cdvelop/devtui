@@ -31,11 +31,11 @@ func (d *DevTUI) sendMessageWithHandler(content string, mt MessageType, tabSecti
 		targetHandler.SetLastOperationID(newContent.Id)
 	} else {
 		// Handler not found; log available handlers for diagnosis
-		if tabSection.tui != nil && tabSection.tui.LogToFile != nil {
-			tabSection.tui.LogToFile(Fmt("Handler not found for '%s'. Available field handlers:", handlerName))
+		if tabSection.tui != nil && tabSection.tui.Logger != nil {
+			tabSection.tui.Logger(Fmt("Handler not found for '%s'. Available field handlers:", handlerName))
 			for i, field := range tabSection.fieldHandlers {
 				if field.handler != nil {
-					tabSection.tui.LogToFile(Fmt("  [%d] %s", i, field.handler.Name()))
+					tabSection.tui.Logger(Fmt("  [%d] %s", i, field.handler.Name()))
 				}
 			}
 		}
@@ -133,8 +133,8 @@ func (h *DevTUI) createTabContent(content string, mt MessageType, tabSection *ta
 	} else {
 		errMsg := "error: unixid not initialized, using fallback timestamp for content: " + content
 		// Log the issue before using fallback
-		if h.LogToFile != nil {
-			h.LogToFile(errMsg)
+		if h.Logger != nil {
+			h.Logger(errMsg)
 		}
 		panic(errMsg) // Panic to ensure we catch this critical issue
 		// Graceful fallback when unixid initialization failed

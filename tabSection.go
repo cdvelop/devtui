@@ -70,7 +70,7 @@ func (hw *handlerWriter) Write(p []byte) (n int, err error) {
 		hw.tabSection.tui.sendMessageWithHandler(message, msgType, hw.tabSection, hw.handlerName, operationID)
 
 		if msgType == Msg.Error {
-			hw.tabSection.tui.LogToFile(msg)
+			hw.tabSection.tui.Logger(msg)
 		}
 	}
 	return len(p), nil
@@ -130,8 +130,8 @@ func (t *tabSection) updateOrAddContentWithHandler(msgType MessageType, content 
 					t.tabContents[i].Timestamp = t.tui.id.GetNewID()
 				} else {
 					// Log the issue before using fallback
-					if t.tui.LogToFile != nil {
-						t.tui.LogToFile("Warning: unixid not initialized, using fallback timestamp for content update:", content)
+					if t.tui.Logger != nil {
+						t.tui.Logger("Warning: unixid not initialized, using fallback timestamp for content update:", content)
 					}
 					// Graceful fallback when unixid initialization failed
 					t.tabContents[i].Timestamp = time.Now().Format("15:04:05")

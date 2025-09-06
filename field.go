@@ -513,8 +513,8 @@ func (f *field) executeAsyncChange(valueToSave any) {
 		}
 	} else {
 		// Log when id is nil for debugging
-		if f.parentTab != nil && f.parentTab.tui != nil && f.parentTab.tui.LogToFile != nil {
-			f.parentTab.tui.LogToFile("Warning: Cannot generate operation ID, unixid not initialized")
+		if f.parentTab != nil && f.parentTab.tui != nil && f.parentTab.tui.Logger != nil {
+			f.parentTab.tui.Logger("Warning: Cannot generate operation ID, unixid not initialized")
 		}
 	}
 	f.asyncState.startTime = time.Now()

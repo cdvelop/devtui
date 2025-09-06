@@ -190,16 +190,16 @@ func (h *DevTUI) handleNormalModeKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 func (h *DevTUI) executeShortcut(entry *ShortcutEntry) (bool, tea.Cmd) {
     // Validate indexes are still valid
     if entry.TabIndex >= len(h.tabSections) {
-        if h.LogToFile != nil {
-            h.LogToFile("Shortcut error: invalid tab index", entry.TabIndex)
+        if h.Logger != nil {
+            h.Logger("Shortcut error: invalid tab index", entry.TabIndex)
         }
         return true, nil
     }
 
     targetTab := h.tabSections[entry.TabIndex]
     if entry.FieldIndex >= len(targetTab.fieldHandlers) {
-        if h.LogToFile != nil {
-            h.LogToFile("Shortcut error: invalid field index", entry.FieldIndex)
+        if h.Logger != nil {
+            h.Logger("Shortcut error: invalid field index", entry.FieldIndex)
         }
         return true, nil
     }

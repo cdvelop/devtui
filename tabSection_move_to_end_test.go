@@ -20,9 +20,9 @@ func (t *testTracker) SetLastOperationID(id string)                       { t.la
 
 func TestMessageTrackerMoveToEnd(t *testing.T) {
 	config := &TuiConfig{
-		ExitChan:  make(chan bool),
-		Color:     &ColorPalette{},
-		LogToFile: func(messages ...any) {},
+		ExitChan: make(chan bool),
+		Color:    &ColorPalette{},
+		Logger:   func(messages ...any) {},
 	}
 	tui := NewTUI(config)
 	tui.SetTestMode(true)

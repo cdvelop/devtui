@@ -52,7 +52,7 @@ func TestRaceConditionReproduction(t *testing.T) {
 	handlers := make([]*RaceConditionHandler, 5)
 	for i := 0; i < 5; i++ {
 		handlers[i] = &RaceConditionHandler{}
-		tab.AddExecutionHandler(handlers[i], 100*time.Millisecond, "")
+		tab.AddHandler(handlers[i], 100*time.Millisecond, "")
 	}
 
 	// Simulate concurrent executions
@@ -96,7 +96,7 @@ func TestConcurrentOperationIDAccess(t *testing.T) {
 	handler := &RaceConditionHandler{}
 
 	// Create anyHandler through factory method (same as used in AddExecutionHandler)
-	anyH := newExecutionHandler(handler, 100*time.Millisecond, "")
+	anyH := NewExecutionHandler(handler, 100*time.Millisecond, "")
 
 	var wg sync.WaitGroup
 	numWriters := 50
@@ -132,7 +132,7 @@ func TestConcurrentOperationIDAccess(t *testing.T) {
 func TestAnyHandlerConcurrentAccess(t *testing.T) {
 	// Direct test of anyHandler race condition
 	handler := &RaceConditionHandler{}
-	anyH := newExecutionHandler(handler, 100*time.Millisecond, "")
+	anyH := NewExecutionHandler(handler, 100*time.Millisecond, "")
 
 	var wg sync.WaitGroup
 	numGoroutines := 100

@@ -14,8 +14,8 @@ func createShortcutsTab(tui *DevTUI) {
 		needsLanguageInput: false,     // Initially show help content
 		tui:                tui,       // NEW: Reference to TUI for shortcut registry access
 	}
-	// Use AddInteractiveHandler instead of AddEditHandler
-	shortcutsTab.AddInteractiveHandler(handler, 0, "")
+	// Use AddHandler for all handler types
+	shortcutsTab.AddHandler(handler, 0, "")
 }
 
 // shortcutsInteractiveHandler - Interactive handler for language selection and help display

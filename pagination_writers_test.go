@@ -18,7 +18,7 @@ func TestPaginationWritersOnlyTab(t *testing.T) {
 	// Minimal SystemLogWriter for test
 
 	h.activeTab = 0
-	_ = logs.NewLogger("SystemLogWriter", false, "")
+	_ = logs.AddLogger("SystemLogWriter", false, "")
 
 	h.activeTab = 0
 	// Call the real footerView rendering logic

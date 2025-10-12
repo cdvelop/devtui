@@ -104,7 +104,6 @@ func (h *TestNonEditableHandler) Value() string {
 	return h.actionText
 }
 
-func (h *TestNonEditableHandler) editable() bool         { return false }
 func (h *TestNonEditableHandler) Timeout() time.Duration { return 0 }
 
 func (h *TestNonEditableHandler) Change(newValue string, progress func(msgs ...any)) {
@@ -120,9 +119,12 @@ func (h *TestNonEditableHandler) Execute(progress func(msgs ...any)) {
 	}
 }
 
-// MessageTracker methods
-func (h *TestNonEditableHandler) Name() string { return h.label + "Handler" }
+// Name returns the name of the handler.
+func (h *TestNonEditableHandler) Name() string {
+	return h.label
+}
 
+// MessageTracker methods
 func (h *TestNonEditableHandler) SetLastOperationID(lastOpID string) {
 	h.mu.Lock()
 	defer h.mu.Unlock()

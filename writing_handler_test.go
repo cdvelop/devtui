@@ -18,7 +18,7 @@ func TestWriterHandlerRegistration(t *testing.T) {
 	// Create a test writing handler using centralized handler
 
 	// Register the handler and get its writer
-	writer := tab.NewLogger("TestWriter", false, "")
+	writer := tab.AddLogger("TestWriter", false, "")
 
 	if writer == nil {
 		t.Fatal("RegisterHandlerLogger should return a non-nil writer")
@@ -42,7 +42,7 @@ func TestHandlerLoggerFunctionality(t *testing.T) {
 	tab := h.NewTabSection("WritingTest", "Test HandlerLogger functionality")
 
 	// Register the handler and get its logger function (basic logger without tracking)
-	logger := tab.NewLogger("TestWriter", false, "")
+	logger := tab.AddLogger("TestWriter", false, "")
 
 	// Call the logger function with a test message
 	testMessage := "Test message from handler"
@@ -62,7 +62,7 @@ func TestHandlerLoggerWithTracking(t *testing.T) {
 	tab := h.NewTabSection("WritingTest", "Test HandlerLogger with tracking")
 
 	// Register a writer with tracking enabled
-	writer := tab.NewLogger("TrackerWriter", true, "")
+	writer := tab.AddLogger("TrackerWriter", true, "")
 
 	// Call the logger function with a test message
 	testMessage := "Test tracking message"
@@ -99,7 +99,7 @@ func TestHandlerNameInMessages(t *testing.T) {
 	// Create a test writing handler
 
 	// Register the handler and get its writer
-	writer := tab.NewLogger("Writer", false, "")
+	writer := tab.AddLogger("Writer", false, "")
 
 	// Write a test message
 	testMessage := "Test message with handler name"
@@ -139,7 +139,7 @@ func TestExplicitWriterRegistration(t *testing.T) {
 	fieldHandler := NewTestEditableHandler("TestField", "test")
 
 	// Add field using new API (does NOT auto-register for writing anymore)
-	tab.AddEditHandler(fieldHandler, 0, "")
+	tab.AddHandler(fieldHandler, 0, "")
 
 	// Verify the field handler was NOT auto-registered for writing
 	handlerName := fieldHandler.Name()
@@ -148,7 +148,7 @@ func TestExplicitWriterRegistration(t *testing.T) {
 	}
 
 	// Now explicitly register a writer with the same name
-	writer := tab.NewLogger(handlerName, false, "")
+	writer := tab.AddLogger(handlerName, false, "")
 	if writer == nil {
 		t.Fatal("NewLogger should return a non-nil writer")
 	}
@@ -167,7 +167,7 @@ func TestOperationIDControl(t *testing.T) {
 	tab := h.NewTabSection("WritingTest", "Test operation ID control")
 
 	// Register a writer with tracking enabled for operation ID control
-	writer := tab.NewLogger("Writer", true, "")
+	writer := tab.AddLogger("Writer", true, "")
 
 	// First write - should create new message
 	writer("First message")
@@ -210,8 +210,8 @@ func TestMultipleHandlersInSameTab(t *testing.T) {
 	// Create multiple test writing handlers
 
 	// Register both handlers
-	writer1 := tab.NewLogger("W1", false, "")
-	writer2 := tab.NewLogger("W2", false, "")
+	writer1 := tab.AddLogger("W1", false, "")
+	writer2 := tab.AddLogger("W2", false, "")
 
 	// Write messages from both handlers
 	writer1("Message from Writer1")
@@ -254,7 +254,7 @@ func TestMessageTypeDetection(t *testing.T) {
 	tab := h.NewTabSection("WritingTest", "Test message type detection")
 
 	// Create a test writing handler
-	writer := tab.NewLogger("TestWriter", false, "")
+	writer := tab.AddLogger("TestWriter", false, "")
 
 	// Test different message types
 	testCases := []struct {

@@ -1,47 +1,79 @@
 package devtui
 
-import (
-	"time"
-)
+import "time"
 
-/*
-AddDisplayHandler registers a HandlerDisplay directly
+// AddHandler is the ONLY method to register handlers of any type.
+// It accepts any handler interface and internally detects the type.
+// Does NOT return anything - enforces complete decoupling.
+//
+// Supported handler interfaces (from interfaces.go):
+//   - HandlerDisplay: Static/dynamic content display
+//   - HandlerEdit: Interactive text input fields
+//   - HandlerExecution: Action buttons
+//   - HandlerInteractive: Combined display + interaction
+//   - HandlerLogger: Basic line-by-line logging (via MessageTracker detection)
+//
+// Optional interfaces (detected automatically):
+//   - MessageTracker: Enables message update tracking
+//   - ShortcutProvider: Registers global keyboard shortcuts
+//
+// Parameters:
+//   - handler: ANY handler implementing one of the supported interfaces
+//   - timeout: Operation timeout (used for Edit/Execution/Interactive handlers, ignored for Display)
+//   - color: Hex color for handler messages (e.g., "#1e40af", empty string for default)
+//
+// Example:
+//   tab.AddHandler(myEditHandler, 2*time.Second, "#3b82f6")
+//   tab.AddHandler(myDisplayHandler, 0, "") // timeout ignored for display
+//   tab.AddHandler(myExecutionHandler, 5*time.Second, "#10b981")
+func (ts *tabSection) AddHandler(handler any, timeout time.Duration, color string) {
+	// Type detection and routing
+	switch h := handler.(type) {
 
-	type HandlerDisplay interface {
-	    Name() string    // Full text to display in footer (handler responsible for content) eg. "System Status Information Display"
-	    Content() string // Display content (e.g., "help\n1-..\n2-...", "executing deploy wait...")
+	case HandlerDisplay:
+		ts.registerDisplayHandler(h, color)
+
+	case HandlerInteractive:
+		ts.registerInteractiveHandler(h, timeout, color)
+
+	case HandlerExecution:
+		ts.registerExecutionHandler(h, timeout, color)
+
+	case HandlerEdit:
+		ts.registerEditHandler(h, timeout, color)
+
+	case HandlerLogger:
+		// Logger detection: check for MessageTracker to determine tracking capability
+		_, hasTracking := handler.(MessageTracker)
+		ts.registerLoggerHandler(h, color, hasTracking)
+
+	default:
+		// Invalid handler type - log error or panic
+		if ts.tui != nil && ts.tui.Logger != nil {
+			ts.tui.Logger("ERROR: Unknown handler type provided to AddHandler:", handler)
+		}
 	}
-*/
-func (ts *tabSection) AddDisplayHandler(handler HandlerDisplay, color string) *tabSection {
-	anyH := newDisplayHandler(handler, color)
+}
+
+// Internal registration methods (private)
+
+func (ts *tabSection) registerDisplayHandler(handler HandlerDisplay, color string) {
+	anyH := NewDisplayHandler(handler, color)
 	f := &field{
 		handler:    anyH,
 		parentTab:  ts,
 		asyncState: &internalAsyncState{},
 	}
 	ts.addFields(f)
-	return ts
 }
 
-/*
-AddEditHandler registers a HandlerEdit with mandatory timeout.
-
-	type HandlerEdit interface {
-	    Name() string                                       // Identificador: "ServerPort", "DatabaseURL"
-	    Label() string                                      // Field label (e.g., "Server Port", "Host Configuration")
-	    Value() string                                      // Current/initial value (e.g., "8080", "localhost")
-	    Change(newValue string, progress func(msgs ...any)) // value to change
-	}
-
-ts.AddEditHandler(myEditHandler, 2*time.Second, "")
-*/
-func (ts *tabSection) AddEditHandler(handler HandlerEdit, timeout time.Duration, color string) *tabSection {
+func (ts *tabSection) registerEditHandler(handler HandlerEdit, timeout time.Duration, color string) {
 	var tracker MessageTracker
 	if t, ok := handler.(MessageTracker); ok {
 		tracker = t
 	}
 
-	anyH := newEditHandler(handler, timeout, tracker, color)
+	anyH := NewEditHandler(handler, timeout, tracker, color)
 	f := &field{
 		handler:    anyH,
 		parentTab:  ts,
@@ -49,46 +81,72 @@ func (ts *tabSection) AddEditHandler(handler HandlerEdit, timeout time.Duration,
 	}
 	ts.addFields(f)
 
-	// NEW: Check for shortcut support and register shortcuts
+	// Check for shortcut support
 	ts.registerShortcutsIfSupported(handler, len(ts.fieldHandlers)-1)
-
-	// REMOVED: Auto-register handler for writing if it implements HandlerLoggerTracker (obsolete)
-
-	return ts
 }
 
-/*
-AddEditHandlerTracking registers a HandlerEditTracker with mandatory timeout
-
-	 type HandlerExecution interface {
-	    Name() string                       // Identificador : "DeployProd", "BuildProject"
-	    Label() string                      // Button label (e.g., "Deploy to Production", "Build Project")
-	    Execute(progress func(msgs ...any)) // Nueva firma: sin error, sin variádico
-	}
-
-eg: ts.AddEditHandlerTracking(myEditHandler, 2*time.Second)
-*/
-func (ts *tabSection) AddExecutionHandler(handler HandlerExecution, timeout time.Duration, color string) *tabSection {
-	anyH := newExecutionHandler(handler, timeout, color)
+func (ts *tabSection) registerExecutionHandler(handler HandlerExecution, timeout time.Duration, color string) {
+	anyH := NewExecutionHandler(handler, timeout, color)
 	f := &field{
 		handler:    anyH,
 		parentTab:  ts,
 		asyncState: &internalAsyncState{},
 	}
 	ts.addFields(f)
-	return ts
 }
 
-// NewLogger creates a logger function with the given name and tracking capability
+func (ts *tabSection) registerInteractiveHandler(handler HandlerInteractive, timeout time.Duration, color string) {
+	var tracker MessageTracker
+	if t, ok := handler.(MessageTracker); ok {
+		tracker = t
+	}
+
+	anyH := NewInteractiveHandler(handler, timeout, tracker, color)
+	f := &field{
+		handler:    anyH,
+		parentTab:  ts,
+		asyncState: &internalAsyncState{},
+	}
+	ts.addFields(f)
+}
+
+func (ts *tabSection) registerLoggerHandler(handler HandlerLogger, color string, hasTracking bool) {
+	var anyH *anyHandler
+
+	if hasTracking {
+		// Handler implements MessageTracker
+		if tracker, ok := handler.(interface {
+			Name() string
+			GetLastOperationID() string
+			SetLastOperationID(string)
+		}); ok {
+			anyH = NewWriterTrackerHandler(tracker, color)
+		} else {
+			// This should not happen if hasTracking is true, but as a fallback:
+			anyH = NewWriterHandler(handler, color)
+		}
+	} else {
+		// Basic logger without tracking
+		anyH = NewWriterHandler(handler, color)
+	}
+
+	// Register in writing handlers list
+	ts.mu.Lock()
+	ts.writingHandlers = append(ts.writingHandlers, anyH)
+	ts.mu.Unlock()
+}
+
+
+// AddLogger creates a logger function with the given name and tracking capability
 // enableTracking: true = can update existing lines, false = always creates new lines
 //
 // Example:
 //
-//	log := tab.NewLogger("BuildProcess", true, "#1e40af")
+//	log := tab.AddLogger("BuildProcess", true, "#1e40af")
 //	log("Starting build...")
 //	log("Compiling", 42, "files")
 //	log("Build completed successfully")
-func (ts *tabSection) NewLogger(name string, enableTracking bool, color string) func(message ...any) {
+func (ts *tabSection) AddLogger(name string, enableTracking bool, color string) func(message ...any) {
 	if enableTracking {
 		handler := &simpleWriterTrackerHandler{name: name}
 		return ts.registerLoggerFunc(handler, color)
@@ -124,34 +182,7 @@ func (w *simpleWriterTrackerHandler) SetLastOperationID(id string) {
 	w.lastOperationID = id
 }
 
-/*
-AddInteractiveHandler registers a HandlerInteractive with mandatory timeout
 
-	type HandlerInteractive interface {
-	    Name() string                                       // Identifier for logging: "ChatBot", "ConfigWizard"
-	    Label() string                                      // Field label (updates dynamically)
-	    Value() string                                      // Current input value
-	    Change(newValue string, progress func(msgs ...any)) // Handle user input + content display via progress
-	    WaitingForUser() bool                               // Should edit mode be auto-activated?
-	}
-*/
-func (ts *tabSection) AddInteractiveHandler(handler HandlerInteractive, timeout time.Duration, color string) *tabSection {
-	var tracker MessageTracker
-	if t, ok := handler.(MessageTracker); ok {
-		tracker = t
-	}
-
-	anyH := newInteractiveHandler(handler, timeout, tracker, color)
-	f := &field{
-		handler:    anyH,
-		parentTab:  ts,
-		asyncState: &internalAsyncState{},
-	}
-	ts.addFields(f)
-	return ts
-}
-
-// AddInteractiveHandlerTracking registers a HandlerInteractiveTracker with mandatory timeout
 // registerShortcutsIfSupported checks if handler implements shortcut interface and registers shortcuts
 func (ts *tabSection) registerShortcutsIfSupported(handler HandlerEdit, fieldIndex int) {
 	// Check if handler implements shortcut interface

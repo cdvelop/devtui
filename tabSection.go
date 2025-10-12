@@ -92,9 +92,9 @@ func (ts *tabSection) registerLoggerFunc(handler HandlerLogger, color string) fu
 		GetLastOperationID() string
 		SetLastOperationID(string)
 	}); ok {
-		anyH = newTrackerWriterHandler(tracker, color)
+		anyH = NewWriterTrackerHandler(tracker, color)
 	} else {
-		anyH = newWriterHandler(handler, color)
+		anyH = NewWriterHandler(handler, color)
 	}
 
 	ts.writingHandlers = append(ts.writingHandlers, anyH)

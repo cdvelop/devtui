@@ -915,6 +915,13 @@ This is the **Dependency Inversion Principle** in action:
 
 ---
 
+## Tracking de Pruebas Fallidas
+
+Para un seguimiento detallado del estado de las pruebas durante esta refactorización, consulta el siguiente documento:
+[Lista de Pruebas con Errores de Compilación](./FAIL_TEST.md)
+
+---
+
 ## Next Steps
 
 Una vez apruebes este plan:

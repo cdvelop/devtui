@@ -28,7 +28,7 @@ type DevTUI struct {
 
 	focused bool // is the app focused
 
-	tabSections       []*tabSection // represent sections in the tui
+	TabSections       []*tabSection // represent sections in the tui
 	activeTab         int           // current tab index
 	editModeActivated bool          // global flag to edit config
 
@@ -84,7 +84,7 @@ func NewTUI(c *TuiConfig) *DevTUI {
 	tui := &DevTUI{
 		TuiConfig:        c,
 		focused:          true, // assume the app is focused
-		tabSections:      []*tabSection{},
+		TabSections:      []*tabSection{},
 		activeTab:        0, // Will be adjusted in Start() method
 		tabContentsChan:  make(chan tabContent, 100),
 		currentTime:      time.Now().Format("15:04:05"),
@@ -140,7 +140,7 @@ func (h *DevTUI) Start(args ...any) {
 	}
 
 	// Start with tab 1 (skip SHORTCUTS which is at index 0) if there are multiple tabs
-	if len(h.tabSections) > 1 {
+	if len(h.TabSections) > 1 {
 		h.activeTab = 1
 	}
 

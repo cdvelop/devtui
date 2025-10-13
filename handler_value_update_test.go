@@ -75,14 +75,15 @@ func TestHandlerValueUpdateAfterEdit(t *testing.T) {
 		// Create a new tab with our port handler
 		portHandler := &PortTestHandler{currentPort: "8080"}
 		tab := h.NewTabSection("Server", "Server configuration")
-		tab.AddHandler(portHandler, 0, "")
+		h.AddHandler(portHandler, 0, "", tab)
 
 		// Get the test tab index (should be the last one added)
-		testTabIndex := len(h.tabSections) - 1
+		testTabIndex := len(h.TabSections) - 1
 		h.activeTab = testTabIndex
 
 		// Get the field
-		field := h.tabSections[testTabIndex].fieldHandlers[0]
+		tabSection := tab.(*tabSection)
+		field := tabSection.fieldHandlers[0]
 
 		// Verify initial state
 		initialValue := field.Value()
@@ -156,14 +157,15 @@ func TestHandlerValueUpdateAfterEdit(t *testing.T) {
 		// Create a new tab with our port handler
 		portHandler := &PortTestHandler{currentPort: "8080"}
 		tab := h.NewTabSection("Server", "Server configuration")
-		tab.AddHandler(portHandler, 0, "")
+		h.AddHandler(portHandler, 0, "", tab)
 
 		// Get the test tab index
-		testTabIndex := len(h.tabSections) - 1
+		testTabIndex := len(h.TabSections) - 1
 		h.activeTab = testTabIndex
 
 		// Get the field
-		field := h.tabSections[testTabIndex].fieldHandlers[0]
+		tabSection := tab.(*tabSection)
+		field := tabSection.fieldHandlers[0]
 
 		// Realistic: User presses Enter to enter edit mode
 		h.handleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})

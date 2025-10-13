@@ -118,7 +118,7 @@ func (h *DevTUI) editingConfigOpen(open bool, currentField *field, msg string) {
 	}
 
 	if msg != "" {
-		tabSection := h.tabSections[h.activeTab]
+		tabSection := h.TabSections[h.activeTab]
 		tabSection.addNewContent(Msg.Warning, msg)
 	}
 

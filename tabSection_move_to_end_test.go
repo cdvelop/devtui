@@ -29,38 +29,40 @@ func TestMessageTrackerMoveToEnd(t *testing.T) {
 	tab := tui.NewTabSection("TRACKER", "")
 
 	tracker := &testTracker{}
-	tab.AddHandler(tracker, 5*time.Second, "")
+	tui.AddHandler(tracker, 5*time.Second, "", tab)
+
+	tabSection := tab.(*tabSection)
 
 	// Add a normal message
-	tab.addNewContent(Msg.Info, "Normal message")
+	tabSection.addNewContent(Msg.Info, "Normal message")
 	// Add a tracker message (first time, operationID empty)
-	updated, _ := tab.updateOrAddContentWithHandler(Msg.Info, "Tracker message 1", tracker.Name(), "op-1", "")
+	updated, _ := tabSection.updateOrAddContentWithHandler(Msg.Info, "Tracker message 1", tracker.Name(), "op-1", "")
 	tracker.SetLastOperationID("op-1") // simulate tracker storing op id after first message
 	if updated {
 		t.Fatal("First tracker message should not be an update")
 	}
-	if tab.tabContents[len(tab.tabContents)-1].Content != "Tracker message 1" {
+	if tabSection.tabContents[len(tabSection.tabContents)-1].Content != "Tracker message 1" {
 		t.Fatal("Tracker message 1 should be at the end")
 	}
 
 	// Add another normal message
-	tab.addNewContent(Msg.Info, "Another normal message")
-	if tab.tabContents[len(tab.tabContents)-1].Content != "Another normal message" {
+	tabSection.addNewContent(Msg.Info, "Another normal message")
+	if tabSection.tabContents[len(tabSection.tabContents)-1].Content != "Another normal message" {
 		t.Fatal("Another normal message should be at the end")
 	}
 
 	// Update tracker message (should move to end)
-	updated, _ = tab.updateOrAddContentWithHandler(Msg.Info, "Tracker message UPDATED", tracker.Name(), tracker.GetLastOperationID(), "")
+	updated, _ = tabSection.updateOrAddContentWithHandler(Msg.Info, "Tracker message UPDATED", tracker.Name(), tracker.GetLastOperationID(), "")
 	if !updated {
 		t.Fatal("Tracker message update should return updated=true")
 	}
-	if tab.tabContents[len(tab.tabContents)-1].Content != "Tracker message UPDATED" {
-		t.Fatalf("Tracker message should be moved to end after update, got '%s' at end", tab.tabContents[len(tab.tabContents)-1].Content)
+	if tabSection.tabContents[len(tabSection.tabContents)-1].Content != "Tracker message UPDATED" {
+		t.Fatalf("Tracker message should be moved to end after update, got '%s' at end", tabSection.tabContents[len(tabSection.tabContents)-1].Content)
 	}
 
 	// Ensure only one tracker message exists
 	trackerCount := 0
-	for _, c := range tab.tabContents {
+	for _, c := range tabSection.tabContents {
 		if c.RawHandlerName == tracker.Name() {
 			trackerCount++
 		}

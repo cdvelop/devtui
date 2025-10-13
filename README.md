@@ -81,9 +81,9 @@ func main() {
         },
     })
 
-        // Operations tab with universal AddHandler registration
+    // Operations tab with universal AddHandler registration
     ops := tui.NewTabSection("Operations", "System Operations")
-    ops.AddHandler(&BackupHandler{}, 5*time.Second, "#10b981") // Universal registration with MessageTracker detection
+    tui.AddHandler(&BackupHandler{}, 5*time.Second, "#10b981", ops) // Universal registration with MessageTracker detection
 
     var wg sync.WaitGroup
     wg.Add(1)
@@ -176,7 +176,8 @@ DevTUI uses a **universal registration method** with **automatic type detection*
 
 ```go
 // Universal AddHandler method - works with ALL handler types
-tab.AddHandler(handler, timeout, color)
+tab := tui.NewTabSection("MyTab", "My Description")
+tui.AddHandler(handler, timeout, color, tab)
 
 // Supported handler interfaces (detected automatically):
 //   - HandlerDisplay: Static/dynamic content display (timeout ignored)
@@ -190,14 +191,14 @@ tab.AddHandler(handler, timeout, color)
 //   - ShortcutProvider: Registers global keyboard shortcuts
 
 // Examples:
-tab.AddHandler(myDisplayHandler, 0, "")                    // Display handler (timeout ignored)
-tab.AddHandler(myEditHandler, 2*time.Second, "#3b82f6")    // Edit handler with timeout
-tab.AddHandler(myExecutionHandler, 5*time.Second, "#10b981") // Execution handler with timeout
-tab.AddHandler(myInteractiveHandler, 3*time.Second, "#f59e0b") // Interactive handler
+tui.AddHandler(myDisplayHandler, 0, "", tab)                    // Display handler (timeout ignored)
+tui.AddHandler(myEditHandler, 2*time.Second, "#3b82f6", tab)    // Edit handler with timeout
+tui.AddHandler(myExecutionHandler, 5*time.Second, "#10b981", tab) // Execution handler with timeout
+tui.AddHandler(myInteractiveHandler, 3*time.Second, "#f59e0b", tab) // Interactive handler
 
 // Logger creation (returns func(message ...any))
-logger := tab.AddLogger("LogWriter", false, "#6b7280")        // Basic logger (new lines only)
-loggerWithTracker := tab.AddLogger("TrackedWriter", true, "#3b82f6") // Advanced logger (message tracking)
+logger := tui.AddLogger("LogWriter", false, "#6b7280", tab)        // Basic logger (new lines only)
+loggerWithTracker := tui.AddLogger("TrackedWriter", true, "#3b82f6", tab) // Advanced logger (message tracking)
 logger("Log message 1")
 logger("Another log entry")
 ```
@@ -238,13 +239,10 @@ DevTUI follows a **consumer-driven interface design** where consuming applicatio
 ```go
 // Consumer defines its own interface (NO DevTUI import)
 type TuiInterface interface {
-    NewTabSection(title, description string) TabSectionInterface
+    NewTabSection(title, description string) any
+    AddHandler(handler any, timeout time.Duration, color string, tabSection any)
+    AddLogger(name string, enableTracking bool, color string, tabSection any) func(message ...any)
     Start(wg *sync.WaitGroup)
-}
-
-type TabSectionInterface interface {
-    AddHandler(handler any, timeout time.Duration, color string)
-    AddLogger(name string, enableTracking bool, color string) func(message ...any)
 }
 ```
 
@@ -252,7 +250,7 @@ type TabSectionInterface interface {
 ```go
 // main.go - ONLY file that knows about DevTUI
 ui := devtui.NewTUI(config)
-consumer.Start(rootDir, logger, ui, exitChan) // Pass UI as interface
+consumer.Start(ui) // Pass UI as interface
 ```
 
 ## Navigation

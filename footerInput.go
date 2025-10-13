@@ -14,20 +14,20 @@ import (
 
 func (h *DevTUI) footerView() string {
 	// Verificar que haya tabs disponibles
-	if len(h.tabSections) == 0 {
+	if len(h.TabSections) == 0 {
 		return h.footerInfoStyle.Render("No tabs available")
 	}
-	if h.activeTab >= len(h.tabSections) {
+	if h.activeTab >= len(h.TabSections) {
 		h.activeTab = 0
 	}
 
 	// Si hay campos disponibles, mostrar el input (independiente de si estamos en modo edición)
-	if len(h.tabSections[h.activeTab].fieldHandlers) > 0 {
+	if len(h.TabSections[h.activeTab].fieldHandlers) > 0 {
 		return h.renderFooterInput()
 	}
 
 	// Si no hay campos, mostrar paginación de writers-only y scrollbar estándar
-	tabSection := h.tabSections[h.activeTab]
+	tabSection := h.TabSections[h.activeTab]
 	fieldHandlers := tabSection.fieldHandlers
 	currentField := tabSection.indexActiveEditField
 	totalFields := len(fieldHandlers)
@@ -84,7 +84,7 @@ func (h *DevTUI) renderScrollInfo() string {
 // Si el campo es editable y estamos en modo edición, muestra un cursor en la posición actual
 func (h *DevTUI) renderFooterInput() string {
 	// Obtener el campo activo
-	tabSection := h.tabSections[h.activeTab]
+	tabSection := h.TabSections[h.activeTab]
 
 	// Verificar que el índice activo esté en rango
 	fieldHandlers := tabSection.fieldHandlers

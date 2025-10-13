@@ -28,14 +28,14 @@ func TestShortcutBug(t *testing.T) {
 
 	// Recreate exact structure from main.go
 	dashboard := tui.NewTabSection("Dashboard", "System Overview")
-	dashboard.AddHandler(&example.StatusHandler{}, 0, "")
+	tui.AddHandler(&example.StatusHandler{}, 0, "", dashboard)
 
 	config_tab := tui.NewTabSection("Config", "System Configuration")
 	databaseHandler := &example.DatabaseHandler{ConnectionString: "postgres://localhost:5432/mydb"}
-	config_tab.AddHandler(databaseHandler, 2*time.Second, "")
+	tui.AddHandler(databaseHandler, 2*time.Second, "", config_tab)
 
 	backupHandler := &example.BackupHandler{}
-	config_tab.AddHandler(backupHandler, 5*time.Second, "")
+	tui.AddHandler(backupHandler, 5*time.Second, "", config_tab)
 
 	// Initialize viewport
 	tui.viewport.Width = 80

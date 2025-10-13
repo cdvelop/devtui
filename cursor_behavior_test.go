@@ -13,15 +13,16 @@ func TestCursorBehaviorInEditMode(t *testing.T) {
 		h := DefaultTUIForTest(func(messages ...any) {})
 		portHandler := &PortTestHandler{currentPort: "8080"}
 		tab := h.NewTabSection("Server", "Config")
-		tab.AddHandler(portHandler, 0, "")
+		h.AddHandler(portHandler, 0, "", tab)
 
 		// Set viewport size properly for calculation
 		h.viewport.Width = 80
 		h.viewport.Height = 24
 
-		serverTabIndex := len(h.tabSections) - 1
+		serverTabIndex := len(h.TabSections) - 1
 		h.activeTab = serverTabIndex
-		field := h.tabSections[serverTabIndex].fieldHandlers[0]
+		tabSection := tab.(*tabSection)
+		field := tabSection.fieldHandlers[0]
 
 		// Enter edit mode
 		h.handleKeyboard(tea.KeyMsg{Type: tea.KeyEnter})

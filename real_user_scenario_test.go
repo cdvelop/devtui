@@ -19,16 +19,17 @@ func TestRealUserScenario(t *testing.T) {
 
 		// Configure tab exactly like main.go
 		serverTab := tui.NewTabSection("Server", "Server configuration")
-		serverTab.AddHandler(portHandler, 0, "")
+		tui.AddHandler(portHandler, 0, "", serverTab)
 
 		// Initialize viewport
 		tui.viewport.Width = 80
 		tui.viewport.Height = 24
 
 		// Get server tab index and set active
-		serverTabIndex := len(tui.tabSections) - 1
+		serverTabIndex := len(tui.TabSections) - 1
 		tui.activeTab = serverTabIndex
-		portField := tui.tabSections[serverTabIndex].fieldHandlers[0]
+		serverTabSection := serverTab.(*tabSection)
+		portField := serverTabSection.fieldHandlers[0]
 
 		t.Logf("=== SIMULATING USER SCENARIO ===")
 		t.Logf("Step 1: Initial state - field.Value(): '%s'", portField.Value())
@@ -110,15 +111,16 @@ func TestRealUserScenario(t *testing.T) {
 
 		portHandler := &PortTestHandler{currentPort: "8080"}
 		serverTab := tui.NewTabSection("Server", "Server configuration")
-		serverTab.AddHandler(portHandler, 0, "")
+		tui.AddHandler(portHandler, 0, "", serverTab)
 
 		tui.viewport.Width = 80
 		tui.viewport.Height = 24
 
-		serverTabIndex := len(tui.tabSections) - 1
+		serverTabIndex := len(tui.TabSections) - 1
 		tui.activeTab = serverTabIndex
 
-		portField := tui.tabSections[serverTabIndex].fieldHandlers[0]
+		serverTabSection := serverTab.(*tabSection)
+		portField := serverTabSection.fieldHandlers[0]
 
 		// Test the UI rendering during different phases
 		t.Logf("=== TESTING UI RENDERING ===")

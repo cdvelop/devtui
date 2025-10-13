@@ -15,15 +15,16 @@ func TestFieldHandler_BasicOperation(t *testing.T) {
 	tui := DefaultTUIForTest()
 
 	// Create a test tab and add the handler using new API
-	tabSection := tui.NewTabSection("Test Tab", "Test description")
-	tabSection.AddHandler(handler, 0, "")
+	tab := tui.NewTabSection("Test Tab", "Test description")
+	tui.AddHandler(handler, 0, "", tab)
 
 	// Verify field was created with handler
-	if len(tabSection.fieldHandlers) != 1 {
-		t.Fatalf("Expected 1 field, got %d", len(tabSection.fieldHandlers))
+	ts := tab.(*tabSection)
+	if len(ts.fieldHandlers) != 1 {
+		t.Fatalf("Expected 1 field, got %d", len(ts.fieldHandlers))
 	}
 
-	field := tabSection.fieldHandlers[0]
+	field := ts.fieldHandlers[0]
 	anyH := field.handler
 
 	// Test handler methods through anyHandler
@@ -50,10 +51,11 @@ func TestFieldHandler_AsyncExecution(t *testing.T) {
 	tui := DefaultTUIForTest()
 
 	// Create a test tab and add the handler using new API
-	tabSection := tui.NewTabSection("Test Tab", "Test description")
-	tabSection.AddHandler(slowHandler, 0, "")
+	tab := tui.NewTabSection("Test Tab", "Test description")
+	tui.AddHandler(slowHandler, 0, "", tab)
 
-	field := tabSection.fieldHandlers[0]
+	ts := tab.(*tabSection)
+	field := ts.fieldHandlers[0]
 
 	// Test that async state is initialized
 	if field.asyncState == nil {
@@ -78,14 +80,15 @@ func TestFieldHandler_TimeoutConfiguration(t *testing.T) {
 	// Test Edit Handler
 	editHandler := NewTestEditableHandler("Test", "value")
 	tui := DefaultTUIForTest()
-	tabSection := tui.NewTabSection("Test Tab", "Test description")
-	tabSection.AddHandler(editHandler, 0, "")
+	tab := tui.NewTabSection("Test Tab", "Test description")
+	tui.AddHandler(editHandler, 0, "", tab)
 
-	if len(tabSection.fieldHandlers) != 1 {
-		t.Fatalf("Expected 1 field, got %d", len(tabSection.fieldHandlers))
+	ts := tab.(*tabSection)
+	if len(ts.fieldHandlers) != 1 {
+		t.Fatalf("Expected 1 field, got %d", len(ts.fieldHandlers))
 	}
 
-	field := tabSection.fieldHandlers[0]
+	field := ts.fieldHandlers[0]
 	timeout := field.handler.Timeout()
 	if timeout != 0 {
 		t.Errorf("Expected timeout 0s for edit handler, got %v", timeout)
@@ -93,15 +96,16 @@ func TestFieldHandler_TimeoutConfiguration(t *testing.T) {
 
 	// Test Execution Handler
 	execHandler := NewTestNonEditableHandler("Action", "Press Enter")
-	tabSection2 := tui.NewTabSection("Test Tab 2", "Test description")
+	tab2 := tui.NewTabSection("Test Tab 2", "Test description")
 	// Provide a timeout of 0 as in other tests
-	tabSection2.AddHandler(execHandler, 0, "")
+	tui.AddHandler(execHandler, 0, "", tab2)
 
-	if len(tabSection2.fieldHandlers) != 1 {
-		t.Fatalf("Expected 1 field in second tab, got %d", len(tabSection2.fieldHandlers))
+	ts2 := tab2.(*tabSection)
+	if len(ts2.fieldHandlers) != 1 {
+		t.Fatalf("Expected 1 field in second tab, got %d", len(ts2.fieldHandlers))
 	}
 
-	field2 := tabSection2.fieldHandlers[0]
+	field2 := ts2.fieldHandlers[0]
 	timeout2 := field2.handler.Timeout()
 	if timeout2 != 0 {
 		t.Errorf("Expected timeout 0s for execution handler, got %v", timeout2)
@@ -140,10 +144,11 @@ func TestAsyncState_Management(t *testing.T) {
 	tui := DefaultTUIForTest()
 
 	// Create a test tab and add the handler using new API
-	tabSection := tui.NewTabSection("Test Tab", "Test description")
-	tabSection.AddHandler(handler, 0, "")
+	tab := tui.NewTabSection("Test Tab", "Test description")
+	tui.AddHandler(handler, 0, "", tab)
 
-	field := tabSection.fieldHandlers[0]
+	ts := tab.(*tabSection)
+	field := ts.fieldHandlers[0]
 
 	// Test initial async state
 	if field.asyncState == nil {
@@ -187,11 +192,14 @@ func BenchmarkFieldHandler_MultipleFields(b *testing.B) {
 	}
 
 	tui := DefaultTUIForTest(handlers...)
-	tabSection := tui.tabSections[GetFirstTestTabIndex()]
+	if len(tui.TabSections) == 0 {
+		b.Fatal("No tab sections found")
+	}
+	ts := tui.TabSections[GetFirstTestTabIndex()]
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		for j, field := range tabSection.fieldHandlers {
+		for j, field := range ts.fieldHandlers {
 			field.handler.Change(fmt.Sprintf("benchmark-value-%d-%d", i, j), func(msgs ...any) {})
 		}
 	}

@@ -41,7 +41,7 @@ func TestMultipleTabSections(t *testing.T) {
 	tui.NewTabSection("Tab1", "Description 1")
 	tui.NewTabSection("Tab2", "Description 2")
 
-	totalSections := len(tui.tabSections)
+	totalSections := len(tui.TabSections)
 
 	// Expected: 1 (SHORTCUTS) + 2 (Tab1, Tab2) = 3
 	expected := 3

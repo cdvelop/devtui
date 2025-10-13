@@ -29,9 +29,9 @@ func TestRealWorldScenario(t *testing.T) {
 	emailHandler := NewTestEditableHandler("Email", "")
 
 	tab := tui.NewTabSection("Datos personales", "Información básica")
-	tab.AddHandler(nombreHandler, 0, "")
-	tab.AddHandler(edadHandler, 0, "")
-	tab.AddHandler(emailHandler, 0, "")
+	tui.AddHandler(nombreHandler, 0, "", tab)
+	tui.AddHandler(edadHandler, 0, "", tab)
+	tui.AddHandler(emailHandler, 0, "", tab)
 
 	// Asegurarnos de que no hay panic durante la inicialización
 	defer func() {
@@ -52,7 +52,7 @@ func TestRealWorldScenario(t *testing.T) {
 		// simplemente simulamos las operaciones que causaban el problema
 
 		// Simular que se presiona Enter en un campo
-		section := tui.tabSections[0] // Primera sección
+		section := tui.TabSections[0] // Primera sección
 
 		// Esto era lo que causaba el panic original
 		section.addNewContent(0, "Test content from real scenario")

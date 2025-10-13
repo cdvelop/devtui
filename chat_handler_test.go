@@ -180,14 +180,15 @@ func TestChatHandlerRealScenario(t *testing.T) {
 		chatHandler := &example.SimpleChatHandler{}
 
 		chatTab := tui.NewTabSection("Chat", "AI Chat Assistant")
-		chatTab.AddHandler(chatHandler, 5*time.Second, "")
+		tui.AddHandler(chatHandler, 5*time.Second, "", chatTab)
 
 		tui.viewport.Width = 80
 		tui.viewport.Height = 24
 
-		chatTabIndex := len(tui.tabSections) - 1
+		chatTabIndex := len(tui.TabSections) - 1
 		tui.activeTab = chatTabIndex
-		chatField := tui.tabSections[chatTabIndex].fieldHandlers[0]
+		chatTabSection := chatTab.(*tabSection)
+		chatField := chatTabSection.fieldHandlers[0]
 
 		t.Logf("=== TESTING UI RENDERING AND EDIT MODE ===")
 

@@ -29,14 +29,14 @@ func TestPaginationDisplay(t *testing.T) {
 	for _, tc := range tabCases {
 		// Setup tabs using only public API
 		// Remove all tabs
-		h.tabSections = h.tabSections[:0]
+		h.TabSections = h.TabSections[:0]
 		for i := 0; i < tc.totalTabs; i++ {
 			h.NewTabSection(fmt.Sprintf("Tab%d", i), "desc")
 		}
 		h.activeTab = tc.activeTab
 		// Render header pagination
 		currentTab := h.activeTab
-		totalTabs := len(h.tabSections)
+		totalTabs := len(h.TabSections)
 		displayCurrent := min(currentTab, 99) + 1
 		displayTotal := min(totalTabs, 99)
 		pagination := fmt.Sprintf("[%2d/%2d]", displayCurrent, displayTotal)
@@ -60,17 +60,18 @@ func TestPaginationDisplay(t *testing.T) {
 
 	for _, tc := range fieldCases {
 		// Remove all tabs
-		h.tabSections = h.tabSections[:0]
+		h.TabSections = h.TabSections[:0]
 		tab := h.NewTabSection("TestTab", "desc")
 		for i := 0; i < tc.totalFields; i++ {
-			tab.AddHandler(NewTestEditableHandler(fmt.Sprintf("Field%d", i), "val"), 0, "")
+			h.AddHandler(NewTestEditableHandler(fmt.Sprintf("Field%d", i), "val"), 0, "", tab)
 		}
 		h.activeTab = 0
-		if tc.activeField < len(tab.fieldHandlers) {
-			tab.setActiveEditField(tc.activeField)
+		tabSection := tab.(*tabSection)
+		if tc.activeField < len(tabSection.fieldHandlers) {
+			tabSection.setActiveEditField(tc.activeField)
 		}
 		currentField := tc.activeField
-		totalFields := len(tab.fieldHandlers)
+		totalFields := len(tabSection.fieldHandlers)
 		displayCurrent := min(currentField, 99) + 1
 		displayTotal := min(totalFields, 99)
 		pagination := fmt.Sprintf("[%2d/%2d]", displayCurrent, displayTotal)

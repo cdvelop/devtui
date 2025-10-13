@@ -60,27 +60,28 @@ func TestNewAPIHandlers(t *testing.T) {
 	tab := tui.NewTabSection("Test", "Testing new API")
 
 	// Test HandlerDisplay registration
-	tab.AddHandler(&testDisplayHandler{}, 0, "")
+	tui.AddHandler(&testDisplayHandler{}, 0, "", tab)
 
 	// Test HandlerEdit registration with and without timeout
-	tab.AddHandler(&testEditHandler{value: "initial"}, 0, "")           // Sync
-	tab.AddHandler(&testEditHandler{value: "async"}, 5*time.Second, "") // Async
+	tui.AddHandler(&testEditHandler{value: "initial"}, 0, "", tab)           // Sync
+	tui.AddHandler(&testEditHandler{value: "async"}, 5*time.Second, "", tab) // Async
 
 	// Test HandlerExecution registration with and without timeout
-	tab.AddHandler(&testRunHandler{}, 0, "")              // Sync
-	tab.AddHandler(&testRunHandler{}, 10*time.Second, "") // Async
+	tui.AddHandler(&testRunHandler{}, 0, "", tab)              // Sync
+	tui.AddHandler(&testRunHandler{}, 10*time.Second, "", tab) // Async
 
 	// Test Writer registration
-	basicLogger := tab.AddLogger("testLoggerBasic", false, "")
-	trackerLogger := tab.AddLogger("testLoggerTracker", true, "")
+	basicLogger := tui.AddLogger("testLoggerBasic", false, "", tab)
+	trackerLogger := tui.AddLogger("testLoggerTracker", true, "", tab)
 
 	// Verify field count (5 fields registered)
-	if len(tab.fieldHandlers) != 5 {
-		t.Errorf("Expected 5 fields, got %d", len(tab.fieldHandlers))
+	tabSection := tab.(*tabSection)
+	if len(tabSection.fieldHandlers) != 5 {
+		t.Errorf("Expected 5 fields, got %d", len(tabSection.fieldHandlers))
 	}
 
 	// Test field types
-	fields := tab.fieldHandlers
+	fields := tabSection.fieldHandlers
 
 	// First field should be HandlerDisplay (read-only)
 	if !fields[0].isDisplayOnly() {
@@ -118,8 +119,8 @@ func TestNewAPIHandlers(t *testing.T) {
 	trackerLogger("tracked message")
 
 	// Verify writing handlers were registered
-	if len(tab.writingHandlers) != 2 {
-		t.Errorf("Expected 2 writing handlers, got %d", len(tab.writingHandlers))
+	if len(tabSection.writingHandlers) != 2 {
+		t.Errorf("Expected 2 writing handlers, got %d", len(tabSection.writingHandlers))
 	}
 
 	close(exitChan)

@@ -22,7 +22,7 @@ func TestShortcutKeyboard_SingleCharacterHandling(t *testing.T) {
 	// Create tab section with handler
 	tabSection := tui.NewTabSection("Test", "Test tab")
 	handler := &example.DatabaseHandler{ConnectionString: "postgres://localhost:5432/testdb"}
-	tabSection.AddHandler(handler, 5*time.Second, "")
+	tui.AddHandler(handler, 5*time.Second, "", tabSection)
 
 	// Set up proper state (not in edit mode, proper tab selection)
 	tui.editModeActivated = false
@@ -63,7 +63,7 @@ func TestShortcutKeyboard_NonExistentShortcut(t *testing.T) {
 	// Create tab section with handler
 	tabSection := tui.NewTabSection("Test", "Test tab")
 	handler := &example.DatabaseHandler{ConnectionString: "postgres://localhost:5432/testdb"}
-	tabSection.AddHandler(handler, 5*time.Second, "")
+	tui.AddHandler(handler, 5*time.Second, "", tabSection)
 
 	// Set up proper state
 	tui.editModeActivated = false
@@ -104,7 +104,7 @@ func TestShortcutKeyboard_EditModeIgnoresShortcuts(t *testing.T) {
 	// Create tab section with handler
 	tabSection := tui.NewTabSection("Test", "Test tab")
 	handler := &example.DatabaseHandler{ConnectionString: "postgres://localhost:5432/testdb"}
-	tabSection.AddHandler(handler, 5*time.Second, "")
+	tui.AddHandler(handler, 5*time.Second, "", tabSection)
 
 	// Set up edit mode state
 	tui.editModeActivated = true
@@ -148,7 +148,7 @@ func TestShortcutKeyboard_MultipleCharacterIgnored(t *testing.T) {
 	// Create tab section with handler
 	tabSection := tui.NewTabSection("Test", "Test tab")
 	handler := &example.DatabaseHandler{ConnectionString: "postgres://localhost:5432/testdb"}
-	tabSection.AddHandler(handler, 5*time.Second, "")
+	tui.AddHandler(handler, 5*time.Second, "", tabSection)
 
 	// Set up proper state
 	tui.editModeActivated = false

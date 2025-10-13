@@ -1,6 +1,39 @@
 package devtui
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
+
+// validateTabSection validates that the provided any is a valid *tabSection
+// Returns the typed tabSection or panics with clear error message
+func (t *DevTUI) validateTabSection(tab any, methodName string) *tabSection {
+	if tab == nil {
+		panic(fmt.Sprintf(
+			"DevTUI.%s: tabSection parameter is nil\n"+
+				"Usage: tab := tui.NewTabSection(...); tui.%s(..., tab)",
+			methodName, methodName))
+	}
+
+	ts, ok := tab.(*tabSection)
+	if !ok {
+		panic(fmt.Sprintf(
+			"DevTUI.%s: invalid tabSection type %T\n"+
+				"Expected: value returned by tui.NewTabSection()\n"+
+				"Got: %T\n"+
+				"Usage: tab := tui.NewTabSection(...); tui.%s(..., tab)",
+			methodName, tab, tab, methodName))
+	}
+
+	if ts.tui != t {
+		panic(fmt.Sprintf(
+			"DevTUI.%s: tabSection belongs to different DevTUI instance\n"+
+				"Each tabSection can only be used with the DevTUI instance that created it",
+			methodName))
+	}
+
+	return ts
+}
 
 // AddHandler is the ONLY method to register handlers of any type.
 // It accepts any handler interface and internally detects the type.
@@ -21,12 +54,19 @@ import "time"
 //   - handler: ANY handler implementing one of the supported interfaces
 //   - timeout: Operation timeout (used for Edit/Execution/Interactive handlers, ignored for Display)
 //   - color: Hex color for handler messages (e.g., "#1e40af", empty string for default)
+//   - tabSection: The tab section returned by NewTabSection (as any for decoupling)
 //
 // Example:
-//   tab.AddHandler(myEditHandler, 2*time.Second, "#3b82f6")
-//   tab.AddHandler(myDisplayHandler, 0, "") // timeout ignored for display
-//   tab.AddHandler(myExecutionHandler, 5*time.Second, "#10b981")
-func (ts *tabSection) AddHandler(handler any, timeout time.Duration, color string) {
+//   tab := tui.NewTabSection("BUILD", "Compiler")
+//   tui.AddHandler(myEditHandler, 2*time.Second, "#3b82f6", tab)
+//   tui.AddHandler(myDisplayHandler, 0, "", tab)
+func (t *DevTUI) AddHandler(handler any, timeout time.Duration, color string, tabSection any) {
+	ts := t.validateTabSection(tabSection, "AddHandler")
+	ts.addHandler(handler, timeout, color)
+}
+
+// addHandler - internal method (lowercase, private)
+func (ts *tabSection) addHandler(handler any, timeout time.Duration, color string) {
 	// Type detection and routing
 	switch h := handler.(type) {
 
@@ -52,6 +92,39 @@ func (ts *tabSection) AddHandler(handler any, timeout time.Duration, color strin
 		if ts.tui != nil && ts.tui.Logger != nil {
 			ts.tui.Logger("ERROR: Unknown handler type provided to AddHandler:", handler)
 		}
+	}
+}
+
+// AddLogger creates a logger function with the given name and tracking capability.
+// enableTracking: true = can update existing lines, false = always creates new lines
+//
+// Parameters:
+//   - name: Logger identifier for message display
+//   - enableTracking: Enable message update tracking (vs always new lines)
+//   - color: Hex color for logger messages (e.g., "#1e40af", empty string for default)
+//   - tabSection: The tab section returned by NewTabSection (as any for decoupling)
+//
+// Returns:
+//   - Variadic logging function: log("message", values...)
+//
+// Example:
+//   tab := tui.NewTabSection("BUILD", "Compiler")
+//   log := tui.AddLogger("BuildProcess", true, "#1e40af", tab)
+//   log("Starting build...")
+//   log("Compiling", 42, "files")
+func (t *DevTUI) AddLogger(name string, enableTracking bool, color string, tabSection any) func(message ...any) {
+	ts := t.validateTabSection(tabSection, "AddLogger")
+	return ts.addLogger(name, enableTracking, color)
+}
+
+// addLogger - internal method (lowercase, private)
+func (ts *tabSection) addLogger(name string, enableTracking bool, color string) func(message ...any) {
+	if enableTracking {
+		handler := &simpleWriterTrackerHandler{name: name}
+		return ts.registerLoggerFunc(handler, color)
+	} else {
+		handler := &simpleWriterHandler{name: name}
+		return ts.registerLoggerFunc(handler, color)
 	}
 }
 
@@ -136,26 +209,6 @@ func (ts *tabSection) registerLoggerHandler(handler HandlerLogger, color string,
 	ts.mu.Unlock()
 }
 
-
-// AddLogger creates a logger function with the given name and tracking capability
-// enableTracking: true = can update existing lines, false = always creates new lines
-//
-// Example:
-//
-//	log := tab.AddLogger("BuildProcess", true, "#1e40af")
-//	log("Starting build...")
-//	log("Compiling", 42, "files")
-//	log("Build completed successfully")
-func (ts *tabSection) AddLogger(name string, enableTracking bool, color string) func(message ...any) {
-	if enableTracking {
-		handler := &simpleWriterTrackerHandler{name: name}
-		return ts.registerLoggerFunc(handler, color)
-	} else {
-		handler := &simpleWriterHandler{name: name}
-		return ts.registerLoggerFunc(handler, color)
-	}
-}
-
 // Internal simple handler implementations
 type simpleWriterHandler struct {
 	name string
@@ -181,7 +234,6 @@ func (w *simpleWriterTrackerHandler) GetLastOperationID() string {
 func (w *simpleWriterTrackerHandler) SetLastOperationID(id string) {
 	w.lastOperationID = id
 }
-
 
 // registerShortcutsIfSupported checks if handler implements shortcut interface and registers shortcuts
 func (ts *tabSection) registerShortcutsIfSupported(handler HandlerEdit, fieldIndex int) {

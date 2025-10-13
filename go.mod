@@ -8,7 +8,6 @@ require (
 )
 
 require (
-	github.com/cdvelop/tinyreflect v0.2.0 // indirect
 	github.com/cdvelop/tinytime v0.1.4 // indirect
 	github.com/charmbracelet/colorprofile v0.3.2 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.13 // indirect
@@ -23,7 +22,7 @@ require (
 
 require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
-	github.com/cdvelop/unixid v0.0.120
+	github.com/cdvelop/unixid v0.2.0
 	github.com/charmbracelet/bubbles v0.21.0
 	github.com/charmbracelet/bubbletea v1.3.7
 	github.com/charmbracelet/x/ansi v0.10.1 // indirect

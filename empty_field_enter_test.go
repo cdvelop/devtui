@@ -15,7 +15,7 @@ func TestEmptyFieldEnterBehavior(t *testing.T) {
 
 		// Create test tab and register handler
 		tab := h.NewTabSection("Test Tab", "Test description")
-		tab.AddHandler(testHandler, 0, "")
+		h.AddHandler(testHandler, 0, "", tab)
 
 		// Initialize viewport
 		h.viewport.Width = 80
@@ -23,7 +23,8 @@ func TestEmptyFieldEnterBehavior(t *testing.T) {
 
 		// Use centralized function to get correct tab index
 		testTabIndex := GetFirstTestTabIndex()
-		field := h.tabSections[testTabIndex].fieldHandlers[0]
+		tabSection := h.TabSections[testTabIndex]
+		field := tabSection.fieldHandlers[0]
 
 		// The field already has "initial test value" from DefaultTUIForTest
 		// No need to set it again as SetValue is deprecated
@@ -76,14 +77,14 @@ func TestEmptyFieldEnterBehavior(t *testing.T) {
 
 		// Create test tab and register handler
 		tab := h.NewTabSection("Test Tab", "Test description")
-		tab.AddHandler(customHandler, 0, "")
+		h.AddHandler(customHandler, 0, "", tab)
 
 		h.viewport.Width = 80
 		h.viewport.Height = 24
 
 		// Get the field from the test tab
 		testTabIndex := GetFirstTestTabIndex()
-		tabSection := h.tabSections[testTabIndex]
+		tabSection := h.TabSections[testTabIndex]
 
 		field := tabSection.fieldHandlers[0]
 

@@ -13,12 +13,12 @@ func TestPaginationWritersOnlyTab(t *testing.T) {
 	h.paginationStyle = lipgloss.NewStyle().Background(lipgloss.Color(h.Secondary)).Foreground(lipgloss.Color(h.Foreground))
 
 	// Create a tab with only writers, no field handlers
-	h.tabSections = h.tabSections[:0]
+	h.TabSections = h.TabSections[:0]
 	logs := h.NewTabSection("Logs", "System Logs")
 	// Minimal SystemLogWriter for test
 
 	h.activeTab = 0
-	_ = logs.AddLogger("SystemLogWriter", false, "")
+	_ = h.AddLogger("SystemLogWriter", false, "", logs)
 
 	h.activeTab = 0
 	// Call the real footerView rendering logic

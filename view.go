@@ -15,15 +15,15 @@ func (h *DevTUI) View() string {
 
 // ContentView renderiza los mensajes para una sección de contenido
 func (h *DevTUI) ContentView() string {
-	if len(h.tabSections) == 0 {
+	if len(h.TabSections) == 0 {
 		return "No tabs created yet"
 	}
-	if h.activeTab >= len(h.tabSections) {
+	if h.activeTab >= len(h.TabSections) {
 		h.activeTab = 0
 	}
 
 	// Proteger el acceso a tabContents con mutex
-	section := h.tabSections[h.activeTab]
+	section := h.TabSections[h.activeTab]
 	section.mu.RLock()
 	tabContent := make([]tabContent, len(section.tabContents)) // Copia para evitar retener el lock
 	copy(tabContent, section.tabContents)
@@ -58,14 +58,14 @@ func (h *DevTUI) ContentView() string {
 }
 
 func (h *DevTUI) headerView() string {
-	if len(h.tabSections) == 0 {
+	if len(h.TabSections) == 0 {
 		return h.headerTitleStyle.Render(h.AppName + "/No tabs")
 	}
-	if h.activeTab >= len(h.tabSections) {
+	if h.activeTab >= len(h.TabSections) {
 		h.activeTab = 0
 	}
 
-	tab := h.tabSections[h.activeTab]
+	tab := h.TabSections[h.activeTab]
 
 	// Truncar el título si es necesario
 	headerText := h.AppName + "/" + tab.title
@@ -79,7 +79,7 @@ func (h *DevTUI) headerView() string {
 
 	// Pagination logic
 	currentTab := h.activeTab
-	totalTabs := len(h.tabSections)
+	totalTabs := len(h.TabSections)
 	if currentTab > 99 || totalTabs > 99 {
 		if h.Logger != nil {
 			h.Logger("Tab limit exceeded:", currentTab, "/", totalTabs)

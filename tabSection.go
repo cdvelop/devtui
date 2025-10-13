@@ -188,22 +188,22 @@ func (t *tabSection) updateOrAddContentWithHandler(msgType MessageType, content 
 	return false, newContent
 }
 
-// NewTabSection creates and initializes a new tabSection with the given title and footer
-// NewTabSection creates a new tab section and automatically adds it to the TUI
+// NewTabSection creates a new tab section and returns it as any for interface decoupling.
+// The returned value must be passed to AddHandler/AddLogger methods.
 //
 // Example:
-//
-//	tab := tui.NewTabSection("BUILD", "Compiler Section")
-func (t *DevTUI) NewTabSection(title, description string) *tabSection {
+//   tab := tui.NewTabSection("BUILD", "Compiler Section")
+//   tui.AddHandler(myHandler, 2*time.Second, "#3b82f6", tab)
+func (t *DevTUI) NewTabSection(title, description string) any {
 	tab := &tabSection{
 		title:              title,
 		sectionDescription: description,
 		tui:                t,
 	}
 
-	// Automatically add to tabSections and initialize
-	t.initTabSection(tab, len(t.tabSections))
-	t.tabSections = append(t.tabSections, tab)
+	// Automatically add to TabSections and initialize
+	t.initTabSection(tab, len(t.TabSections))
+	t.TabSections = append(t.TabSections, tab)
 
 	return tab
 }

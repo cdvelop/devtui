@@ -28,7 +28,7 @@ func TestUIDisplayBug(t *testing.T) {
 		// Create port handler with initial value "433" (like in the image)
 		portHandler := &PortTestHandler{currentPort: "433"}
 		tab := tui.NewTabSection("Server", "Server configuration")
-		tab.AddHandler(portHandler, 0, "")
+		tui.AddHandler(portHandler, 0, "", tab)
 
 		// Initialize viewport
 		tui.viewport.Width = 80
@@ -36,7 +36,8 @@ func TestUIDisplayBug(t *testing.T) {
 
 		// Navigate to Server tab
 		tui.activeTab = 1 // Skip SHORTCUTS tab
-		portField := tui.tabSections[1].fieldHandlers[0]
+		tabSection := tab.(*tabSection)
+		portField := tabSection.fieldHandlers[0]
 
 		t.Logf("=== REPRODUCING UI DISPLAY BUG ===")
 		t.Logf("Step 1: Initial value - field.Value(): '%s'", portField.Value())
@@ -110,13 +111,14 @@ func TestUIDisplayBug(t *testing.T) {
 		tui := NewTUI(config)
 		portHandler := &PortTestHandler{currentPort: "433"}
 		tab := tui.NewTabSection("Server", "Config")
-		tab.AddHandler(portHandler, 0, "")
+		tui.AddHandler(portHandler, 0, "", tab)
 
 		tui.viewport.Width = 80
 		tui.viewport.Height = 24
 		tui.activeTab = 1
 
-		portField := tui.tabSections[1].fieldHandlers[0]
+		tabSection := tab.(*tabSection)
+		portField := tabSection.fieldHandlers[0]
 
 		// Manually update the handler (simulating successful change)
 		t.Logf("Before manual update - field.Value(): '%s'", portField.Value())

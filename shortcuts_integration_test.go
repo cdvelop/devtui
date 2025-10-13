@@ -23,7 +23,7 @@ func TestShortcutIntegration_DatabaseHandler(t *testing.T) {
 
 	// Add database handler with shortcuts
 	handler := &example.DatabaseHandler{ConnectionString: "initial"}
-	tabSection.AddHandler(handler, 5*time.Second, "")
+	tui.AddHandler(handler, 5*time.Second, "", tabSection)
 
 	// Verify shortcuts were registered
 	expectedShortcuts := map[string]string{
@@ -72,15 +72,15 @@ func TestShortcutIntegration_NavigationBetweenTabs(t *testing.T) {
 	// Dashboard tab with StatusHandler (DisplayHandler - no shortcuts)
 	dashboard := tui.NewTabSection("Dashboard", "System Overview")
 	statusHandler := &example.StatusHandler{}
-	dashboard.AddHandler(statusHandler, 0, "")
+	tui.AddHandler(statusHandler, 0, "", dashboard)
 
 	// Config tab with DatabaseHandler (EditHandler with shortcuts) and BackupHandler (ExecutionHandler)
 	config := tui.NewTabSection("Config", "System Configuration")
 	databaseHandler := &example.DatabaseHandler{ConnectionString: "postgres://localhost:5432/mydb"}
-	config.AddHandler(databaseHandler, 2*time.Second, "")
+	tui.AddHandler(databaseHandler, 2*time.Second, "", config)
 
 	backupHandler := &example.BackupHandler{}
-	config.AddHandler(backupHandler, 5*time.Second, "")
+	tui.AddHandler(backupHandler, 5*time.Second, "", config)
 
 	// Initially on first tab (shortcuts tab is index 0, Dashboard is index 1)
 	tui.activeTab = 1
@@ -153,12 +153,12 @@ func TestShortcutIntegration_ConflictingShortcuts(t *testing.T) {
 	// Create first tab with DatabaseHandler that has shortcuts "t" and "b"
 	tab1 := tui.NewTabSection("Database1", "First database")
 	handler1 := &example.DatabaseHandler{ConnectionString: "db1"}
-	tab1.AddHandler(handler1, 5*time.Second, "")
+	tui.AddHandler(handler1, 5*time.Second, "", tab1)
 
 	// Create second tab with another DatabaseHandler that has same shortcuts
 	tab2 := tui.NewTabSection("Database2", "Second database")
 	handler2 := &example.DatabaseHandler{ConnectionString: "db2"}
-	tab2.AddHandler(handler2, 5*time.Second, "")
+	tui.AddHandler(handler2, 5*time.Second, "", tab2)
 
 	// The last registered handler should win (handler2)
 	entry, exists := tui.shortcutRegistry.Get("t")

@@ -18,7 +18,7 @@ func TestFieldEditingBugReplication(t *testing.T) {
 
 		// Create test tab and register handler
 		tab := h.NewTabSection("Test Tab", "Test description")
-		tab.AddHandler(testHandler, 0, "")
+		h.AddHandler(testHandler, 0, "", tab)
 
 		// Initialize viewport with a reasonable size for testing
 		h.viewport.Width = 80
@@ -26,13 +26,14 @@ func TestFieldEditingBugReplication(t *testing.T) {
 
 		// Use centralized function to get correct tab index
 		testTabIndex := GetFirstTestTabIndex()
-		field := h.tabSections[testTabIndex].fieldHandlers[0]
+		tabSection := h.TabSections[testTabIndex]
+		field := tabSection.fieldHandlers[0]
 		// The field already has "initial test value" from DefaultTUIForTest
 
 		// Switch to the test tab and enter editing mode
 		h.activeTab = testTabIndex
 		h.editModeActivated = true
-		h.tabSections[testTabIndex].indexActiveEditField = 0
+		h.TabSections[testTabIndex].indexActiveEditField = 0
 
 		// Initialize tempEditValue with the current value (this happens when entering edit mode)
 		field.tempEditValue = field.Value()
@@ -87,7 +88,7 @@ func TestFieldEditingCorrectBehavior(t *testing.T) {
 
 		// Create test tab and register handler
 		tab := h.NewTabSection("Test Tab", "Test description")
-		tab.AddHandler(testHandler, 0, "")
+		h.AddHandler(testHandler, 0, "", tab)
 
 		// Initialize viewport with a reasonable size for testing
 		h.viewport.Width = 80
@@ -95,7 +96,8 @@ func TestFieldEditingCorrectBehavior(t *testing.T) {
 
 		// Use centralized function to get correct tab index
 		testTabIndex := GetFirstTestTabIndex()
-		field := h.tabSections[testTabIndex].fieldHandlers[0]
+		tabSection := h.TabSections[testTabIndex]
+		field := tabSection.fieldHandlers[0]
 
 		// The field already has "initial test value" from DefaultTUIForTest
 		// No need to set it again as SetValue is deprecated
@@ -103,7 +105,7 @@ func TestFieldEditingCorrectBehavior(t *testing.T) {
 		// Switch to the test tab and enter editing mode
 		h.activeTab = testTabIndex
 		h.editModeActivated = true
-		h.tabSections[testTabIndex].indexActiveEditField = 0
+		h.TabSections[testTabIndex].indexActiveEditField = 0
 
 		// Simulate user clearing the field completely
 		field.tempEditValue = ""

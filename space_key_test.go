@@ -17,7 +17,7 @@ func setupTestWithEditableField(t *testing.T) (*DevTUI, *field) {
 	// Create test tab and register handler
 	tab := h.NewTabSection("Test Tab", "Test description")
 	// Provide the required HandlerEdit and time.Duration arguments
-	tab.AddHandler(testHandler, 0, "")
+	h.AddHandler(testHandler, 0, "", tab)
 
 	// Initialize viewport with a reasonable size for testing FIRST
 	h.viewport.Width = 80
@@ -25,16 +25,17 @@ func setupTestWithEditableField(t *testing.T) (*DevTUI, *field) {
 
 	// Use centralized function to get correct tab index
 	testTabIndex := GetFirstTestTabIndex()
-	if testTabIndex >= len(h.tabSections) {
-		t.Fatalf("Expected at least %d tab sections, got %d", testTabIndex+1, len(h.tabSections))
+	if testTabIndex >= len(h.TabSections) {
+		t.Fatalf("Expected at least %d tab sections, got %d", testTabIndex+1, len(h.TabSections))
 	}
 
-	field := h.tabSections[testTabIndex].fieldHandlers[0]
+	tabSection := h.TabSections[testTabIndex]
+	field := tabSection.fieldHandlers[0]
 
 	// Enter editing mode on the correct tab
 	h.activeTab = testTabIndex
 	h.editModeActivated = true
-	h.tabSections[testTabIndex].indexActiveEditField = 0
+	h.TabSections[testTabIndex].indexActiveEditField = 0
 
 	// Clear field and reset cursor
 	field.tempEditValue = ""

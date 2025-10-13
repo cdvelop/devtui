@@ -120,7 +120,7 @@ func (t *DevTUI) formatHandlerName(handlerName string, handlerColor string) stri
 // Helper to detect readonly handlers
 func (t *DevTUI) isReadOnlyHandler(handlerName string) bool {
 	// Check if handler has empty label (readonly convention)
-	for _, tab := range t.tabSections {
+	for _, tab := range t.TabSections {
 		if handler := tab.getWritingHandler(handlerName); handler != nil {
 			// Check if it's a display handler (readonly)
 			return handler.handlerType == handlerTypeDisplay
@@ -131,7 +131,7 @@ func (t *DevTUI) isReadOnlyHandler(handlerName string) bool {
 
 // NEW: Helper to detect interactive handlers
 func (t *DevTUI) isInteractiveHandler(handlerName string) bool {
-	for _, tab := range t.tabSections {
+	for _, tab := range t.TabSections {
 		for _, field := range tab.fieldHandlers {
 			if field.handler != nil && field.handler.Name() == handlerName {
 				return field.handler.handlerType == handlerTypeInteractive

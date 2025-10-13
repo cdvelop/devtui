@@ -27,7 +27,8 @@ func TestTabSectionWriter(t *testing.T) {
 	tab := tui.NewTabSection("TEST", "")
 
 	// Usar handlerWriter en vez de tabSection como Writer
-	handlerWriter := &handlerWriter{tabSection: tab, handlerName: ""}
+	tabSection := tab.(*tabSection)
+	handlerWriter := &handlerWriter{tabSection: tabSection, handlerName: ""}
 	testMsg := "Mensaje de prueba"
 	n, err := fmt.Fprintln(handlerWriter, testMsg)
 	if err != nil {
@@ -69,7 +70,8 @@ func TestTabContentsIncrementWhenSendingMessages(t *testing.T) {
 	tab := tui.NewTabSection("TEST", "")
 
 	// Usar handlerWriter en vez de tabSection como Writer
-	handlerWriter := &handlerWriter{tabSection: tab, handlerName: ""}
+	tabSection := tab.(*tabSection)
+	handlerWriter := &handlerWriter{tabSection: tabSection, handlerName: ""}
 
 	// Test messages with different types and prefixes for detection
 	messages := []struct {
@@ -109,14 +111,14 @@ func TestTabContentsIncrementWhenSendingMessages(t *testing.T) {
 			}
 
 			// Verify that tabContents has the correct amount (should be updated by sendMessage)
-			if len(tab.tabContents) != i+1 {
+			if len(tabSection.tabContents) != i+1 {
 				t.Errorf("Message %d: incorrect amount in tabContents. Expected %d, got %d",
-					i+1, i+1, len(tab.tabContents))
+					i+1, i+1, len(tabSection.tabContents))
 			}
 
 			// Verify that the last message added to the slice matches
-			if len(tab.tabContents) > 0 { // Check bounds
-				last := tab.tabContents[len(tab.tabContents)-1]
+			if len(tabSection.tabContents) > 0 { // Check bounds
+				last := tabSection.tabContents[len(tabSection.tabContents)-1]
 				if last.Content != message.expectedText || last.Type != message.expectedType {
 					t.Errorf("Message %d: last record in slice does not match. Expected ('%s', %v), got ('%s', %v)",
 						i+1, message.expectedText, message.expectedType, last.Content, last.Type)
@@ -131,16 +133,16 @@ func TestTabContentsIncrementWhenSendingMessages(t *testing.T) {
 	}
 
 	// Final verification of all messages
-	if len(tab.tabContents) != len(messages) {
+	if len(tabSection.tabContents) != len(messages) {
 		t.Fatalf("Incorrect final amount. Expected %d, got %d",
-			len(messages), len(tab.tabContents))
+			len(messages), len(tabSection.tabContents))
 	}
 
 	// Verify message order
 	for i, message := range messages {
-		if tab.tabContents[i].Content != message.expectedText {
+		if tabSection.tabContents[i].Content != message.expectedText {
 			t.Errorf("Incorrect order in message %d. Expected '%s', got '%s'",
-				i+1, message.expectedText, tab.tabContents[i].Content)
+				i+1, message.expectedText, tabSection.tabContents[i].Content)
 		}
 	}
 }

@@ -20,14 +20,15 @@ func TestUserScenarioExactReplication(t *testing.T) {
 
 		// Create test tab and register handler
 		tab := h.NewTabSection("Test Tab", "Test description")
-		tab.AddHandler(testHandler, 0, "")
+		h.AddHandler(testHandler, 0, "", tab)
 
 		// Initialize viewport with a reasonable size for testing
 		h.viewport.Width = 80
 		h.viewport.Height = 24
 
 		// Get the first field from the default configuration
-		field := h.tabSections[GetFirstTestTabIndex()].fieldHandlers[0]
+		tabSection := h.TabSections[GetFirstTestTabIndex()]
+		field := tabSection.fieldHandlers[0]
 
 		// Step 1: Field shows "initial test value" (this is the initial state)
 		expectedInitialValue := "initial test value"
@@ -38,7 +39,7 @@ func TestUserScenarioExactReplication(t *testing.T) {
 		// Enter editing mode (this happens when user presses Enter on the field)
 		h.editModeActivated = true
 		h.activeTab = GetFirstTestTabIndex() // Set the active tab to the test tab
-		h.tabSections[GetFirstTestTabIndex()].indexActiveEditField = 0
+		h.TabSections[GetFirstTestTabIndex()].indexActiveEditField = 0
 
 		// When entering edit mode, tempEditValue is initialized with the current value
 		field.tempEditValue = field.Value()
@@ -121,17 +122,18 @@ func TestBackspaceAfterClear(t *testing.T) {
 
 		// Create test tab and register handler
 		tab := h.NewTabSection("Test Tab", "Test description")
-		tab.AddHandler(testHandler, 0, "")
+		h.AddHandler(testHandler, 0, "", tab)
 
 		h.viewport.Width = 80
 		h.viewport.Height = 24
 
-		field := h.tabSections[GetFirstTestTabIndex()].fieldHandlers[0]
+		tabSection := h.TabSections[GetFirstTestTabIndex()]
+		field := tabSection.fieldHandlers[0]
 
 		// Enter editing mode
 		h.editModeActivated = true
 		h.activeTab = GetFirstTestTabIndex() // Set the active tab to the test tab
-		h.tabSections[GetFirstTestTabIndex()].indexActiveEditField = 0
+		h.TabSections[GetFirstTestTabIndex()].indexActiveEditField = 0
 
 		// Initialize editing
 		field.tempEditValue = field.Value()

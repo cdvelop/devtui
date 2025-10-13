@@ -18,7 +18,7 @@ func (h *DevTUI) handleKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 
 // handleEditingConfigKeyboard handles keyboard input while in config editing mode
 func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
-	currentTab := h.tabSections[h.activeTab]
+	currentTab := h.TabSections[h.activeTab]
 	fieldHandlers := currentTab.fieldHandlers
 	currentField := fieldHandlers[currentTab.indexActiveEditField]
 
@@ -151,7 +151,7 @@ func (h *DevTUI) handleEditingConfigKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 
 // handleNormalModeKeyboard handles keyboard input in normal mode (not editing config)
 func (h *DevTUI) handleNormalModeKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
-	currentTab := h.tabSections[h.activeTab]
+	currentTab := h.TabSections[h.activeTab]
 	fieldHandlers := currentTab.fieldHandlers
 	totalFields := len(fieldHandlers)
 
@@ -186,12 +186,12 @@ func (h *DevTUI) handleNormalModeKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 		}
 
 	case tea.KeyTab: // cambiar tabSection
-		h.activeTab = (h.activeTab + 1) % len(h.tabSections)
+		h.activeTab = (h.activeTab + 1) % len(h.TabSections)
 		h.updateViewport()
 		h.checkAndTriggerInteractiveContent() // NEW: Auto-trigger content for interactive handlers
 
 	case tea.KeyShiftTab: // cambiar tabSection
-		h.activeTab = (h.activeTab - 1 + len(h.tabSections)) % len(h.tabSections)
+		h.activeTab = (h.activeTab - 1 + len(h.TabSections)) % len(h.TabSections)
 		h.updateViewport()
 		h.checkAndTriggerInteractiveContent() // NEW: Auto-trigger content for interactive handlers
 
@@ -233,11 +233,11 @@ func (h *DevTUI) handleNormalModeKeyboard(msg tea.KeyMsg) (bool, tea.Cmd) {
 
 // checkAndTriggerInteractiveContent checks if the active field is interactive and triggers content display automatically
 func (h *DevTUI) checkAndTriggerInteractiveContent() {
-	if h.activeTab >= len(h.tabSections) {
+	if h.activeTab >= len(h.TabSections) {
 		return
 	}
 
-	activeTab := h.tabSections[h.activeTab]
+	activeTab := h.TabSections[h.activeTab]
 	fieldHandlers := activeTab.fieldHandlers
 
 	if len(fieldHandlers) == 0 || activeTab.indexActiveEditField >= len(fieldHandlers) {
@@ -254,14 +254,14 @@ func (h *DevTUI) checkAndTriggerInteractiveContent() {
 // executeShortcut executes a registered shortcut action
 func (h *DevTUI) executeShortcut(entry *ShortcutEntry) (bool, tea.Cmd) {
 	// Validate indexes are still valid
-	if entry.TabIndex >= len(h.tabSections) {
+	if entry.TabIndex >= len(h.TabSections) {
 		if h.Logger != nil {
 			h.Logger("Shortcut error: invalid tab index", entry.TabIndex)
 		}
 		return false, nil // Stop processing for invalid shortcuts
 	}
 
-	targetTab := h.tabSections[entry.TabIndex]
+	targetTab := h.TabSections[entry.TabIndex]
 	fieldHandlers := targetTab.fieldHandlers
 	if entry.FieldIndex >= len(fieldHandlers) {
 		if h.Logger != nil {

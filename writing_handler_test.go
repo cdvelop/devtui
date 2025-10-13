@@ -18,18 +18,19 @@ func TestWriterHandlerRegistration(t *testing.T) {
 	// Create a test writing handler using centralized handler
 
 	// Register the handler and get its writer
-	writer := tab.AddLogger("TestWriter", false, "")
+	writer := h.AddLogger("TestWriter", false, "", tab)
 
 	if writer == nil {
 		t.Fatal("RegisterHandlerLogger should return a non-nil writer")
 	}
 
 	// Verify the handler was registered
-	if tab.writingHandlers == nil {
+	tabSection := tab.(*tabSection)
+	if tabSection.writingHandlers == nil {
 		t.Fatal("writingHandlers slice should be initialized")
 	}
 
-	if registeredHandler := tab.getWritingHandler("TestWriter"); registeredHandler == nil {
+	if registeredHandler := tabSection.getWritingHandler("TestWriter"); registeredHandler == nil {
 		t.Fatal("Handler should be registered in writingHandlers slice")
 	}
 }
@@ -42,14 +43,15 @@ func TestHandlerLoggerFunctionality(t *testing.T) {
 	tab := h.NewTabSection("WritingTest", "Test HandlerLogger functionality")
 
 	// Register the handler and get its logger function (basic logger without tracking)
-	logger := tab.AddLogger("TestWriter", false, "")
+	logger := h.AddLogger("TestWriter", false, "", tab)
 
 	// Call the logger function with a test message
 	testMessage := "Test message from handler"
 	logger(testMessage)
 
 	// Verify handler was registered (basic writer doesn't have tracking)
-	if registeredHandler := tab.getWritingHandler("TestWriter"); registeredHandler == nil {
+	tabSection := tab.(*tabSection)
+	if registeredHandler := tabSection.getWritingHandler("TestWriter"); registeredHandler == nil {
 		t.Fatal("Handler should be registered in writingHandlers slice")
 	}
 }
@@ -62,14 +64,15 @@ func TestHandlerLoggerWithTracking(t *testing.T) {
 	tab := h.NewTabSection("WritingTest", "Test HandlerLogger with tracking")
 
 	// Register a writer with tracking enabled
-	writer := tab.AddLogger("TrackerWriter", true, "")
+	writer := h.AddLogger("TrackerWriter", true, "", tab)
 
 	// Call the logger function with a test message
 	testMessage := "Test tracking message"
 	writer(testMessage)
 
 	// Verify handler was registered with tracking capability
-	registeredHandler := tab.getWritingHandler("TrackerWriter")
+	tabSection := tab.(*tabSection)
+	registeredHandler := tabSection.getWritingHandler("TrackerWriter")
 	if registeredHandler == nil {
 		t.Fatal("Handler should be registered in writingHandlers slice")
 	}
@@ -99,7 +102,7 @@ func TestHandlerNameInMessages(t *testing.T) {
 	// Create a test writing handler
 
 	// Register the handler and get its writer
-	writer := tab.AddLogger("Writer", false, "")
+	writer := h.AddLogger("Writer", false, "", tab)
 
 	// Write a test message
 	testMessage := "Test message with handler name"
@@ -110,14 +113,15 @@ func TestHandlerNameInMessages(t *testing.T) {
 
 	// Check if the message contains the handler name
 	// Note: We need to check the formatted message in the tab contents
-	tab.mu.RLock()
-	defer tab.mu.RUnlock()
+	tabSection := tab.(*tabSection)
+	tabSection.mu.RLock()
+	defer tabSection.mu.RUnlock()
 
-	if len(tab.tabContents) == 0 {
+	if len(tabSection.tabContents) == 0 {
 		t.Fatal("No messages found in tab contents")
 	}
 
-	lastContent := tab.tabContents[len(tab.tabContents)-1]
+	lastContent := tabSection.tabContents[len(tabSection.tabContents)-1]
 	expectedName := padHandlerName("Writer", HandlerNameWidth)
 	if lastContent.handlerName != expectedName {
 		t.Errorf("Message should have handler name '%s', got '%s'", expectedName, lastContent.handlerName)
@@ -139,22 +143,23 @@ func TestExplicitWriterRegistration(t *testing.T) {
 	fieldHandler := NewTestEditableHandler("TestField", "test")
 
 	// Add field using new API (does NOT auto-register for writing anymore)
-	tab.AddHandler(fieldHandler, 0, "")
+	h.AddHandler(fieldHandler, 0, "", tab)
 
 	// Verify the field handler was NOT auto-registered for writing
+	tabSection := tab.(*tabSection)
 	handlerName := fieldHandler.Name()
-	if registeredHandler := tab.getWritingHandler(handlerName); registeredHandler != nil {
+	if registeredHandler := tabSection.getWritingHandler(handlerName); registeredHandler != nil {
 		t.Fatalf("Handler should NOT be auto-registered in writingHandlers slice with name '%s'", handlerName)
 	}
 
 	// Now explicitly register a writer with the same name
-	writer := tab.AddLogger(handlerName, false, "")
+	writer := h.AddLogger(handlerName, false, "", tab)
 	if writer == nil {
 		t.Fatal("NewLogger should return a non-nil writer")
 	}
 
 	// Verify the writer was explicitly registered
-	if registeredHandler := tab.getWritingHandler(handlerName); registeredHandler == nil {
+	if registeredHandler := tabSection.getWritingHandler(handlerName); registeredHandler == nil {
 		t.Fatalf("Writer should be explicitly registered in writingHandlers slice with name '%s'", handlerName)
 	}
 }
@@ -167,7 +172,7 @@ func TestOperationIDControl(t *testing.T) {
 	tab := h.NewTabSection("WritingTest", "Test operation ID control")
 
 	// Register a writer with tracking enabled for operation ID control
-	writer := tab.AddLogger("Writer", true, "")
+	writer := h.AddLogger("Writer", true, "", tab)
 
 	// First write - should create new message
 	writer("First message")
@@ -178,21 +183,22 @@ func TestOperationIDControl(t *testing.T) {
 	time.Sleep(10 * time.Millisecond)
 
 	// Verify the writer was registered with tracking capability
-	registeredHandler := tab.getWritingHandler("Writer")
+	tabSection := tab.(*tabSection)
+	registeredHandler := tabSection.getWritingHandler("Writer")
 	if registeredHandler == nil {
 		t.Fatal("Handler should be registered in writingHandlers slice")
 	}
 
 	// Verify messages were created
-	tab.mu.RLock()
-	defer tab.mu.RUnlock()
+	tabSection.mu.RLock()
+	defer tabSection.mu.RUnlock()
 
-	if len(tab.tabContents) < 1 {
-		t.Fatalf("Expected at least 1 message, got %d", len(tab.tabContents))
+	if len(tabSection.tabContents) < 1 {
+		t.Fatalf("Expected at least 1 message, got %d", len(tabSection.tabContents))
 	}
 
 	// Check that the handler name is preserved in messages
-	for _, content := range tab.tabContents {
+	for _, content := range tabSection.tabContents {
 		expectedName := padHandlerName("Writer", HandlerNameWidth)
 		if content.handlerName != expectedName {
 			t.Errorf("All messages should have handler name '%s', got '%s'", expectedName, content.handlerName)
@@ -210,8 +216,8 @@ func TestMultipleHandlersInSameTab(t *testing.T) {
 	// Create multiple test writing handlers
 
 	// Register both handlers
-	writer1 := tab.AddLogger("W1", false, "")
-	writer2 := tab.AddLogger("W2", false, "")
+	writer1 := h.AddLogger("W1", false, "", tab)
+	writer2 := h.AddLogger("W2", false, "", tab)
 
 	// Write messages from both handlers
 	writer1("Message from Writer1")
@@ -220,16 +226,17 @@ func TestMultipleHandlersInSameTab(t *testing.T) {
 	time.Sleep(10 * time.Millisecond)
 
 	// Verify both handlers are registered
-	if len(tab.writingHandlers) != 2 {
-		t.Errorf("Expected 2 registered handlers, got %d", len(tab.writingHandlers))
+	tabSection := tab.(*tabSection)
+	if len(tabSection.writingHandlers) != 2 {
+		t.Errorf("Expected 2 registered handlers, got %d", len(tabSection.writingHandlers))
 	}
 
 	// Verify messages from both handlers are present
-	tab.mu.RLock()
-	defer tab.mu.RUnlock()
+	tabSection.mu.RLock()
+	defer tabSection.mu.RUnlock()
 
 	var writer1Messages, writer2Messages int
-	for _, content := range tab.tabContents {
+	for _, content := range tabSection.tabContents {
 		switch content.handlerName {
 		case padHandlerName("W1", HandlerNameWidth):
 			writer1Messages++
@@ -254,7 +261,7 @@ func TestMessageTypeDetection(t *testing.T) {
 	tab := h.NewTabSection("WritingTest", "Test message type detection")
 
 	// Create a test writing handler
-	writer := tab.AddLogger("TestWriter", false, "")
+	writer := h.AddLogger("TestWriter", false, "", tab)
 
 	// Test different message types
 	testCases := []struct {
@@ -267,18 +274,19 @@ func TestMessageTypeDetection(t *testing.T) {
 		{"Info: This is information", Msg.Info},
 	}
 
+	tabSection := tab.(*tabSection)
 	for _, tc := range testCases {
 		writer(tc.message)
 		time.Sleep(5 * time.Millisecond)
 
 		// Check the last message
-		tab.mu.RLock()
-		if len(tab.tabContents) > 0 {
-			lastMessage := tab.tabContents[len(tab.tabContents)-1]
+		tabSection.mu.RLock()
+		if len(tabSection.tabContents) > 0 {
+			lastMessage := tabSection.tabContents[len(tabSection.tabContents)-1]
 			if lastMessage.Type != tc.expectedType {
 				t.Errorf("Message '%s' should have type %v, got %v", tc.message, tc.expectedType, lastMessage.Type)
 			}
 		}
-		tab.mu.RUnlock()
+		tabSection.mu.RUnlock()
 	}
 }

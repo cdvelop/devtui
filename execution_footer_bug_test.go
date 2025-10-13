@@ -37,10 +37,11 @@ func TestExecutionHandlerFooterBug(t *testing.T) {
 	})
 
 	tab := tui.NewTabSection("Tab", "TestTab")
-	tab.AddHandler(&ExecHandler{}, 50*time.Millisecond, "")
+	tui.AddHandler(&ExecHandler{}, 50*time.Millisecond, "", tab)
 
 	// Simulate Enter key (async)
-	fields := tab.fieldHandlers
+	tabSection := tab.(*tabSection)
+	fields := tabSection.fieldHandlers
 	if len(fields) == 0 {
 		t.Fatal("No field handlers registered")
 	}
@@ -51,10 +52,10 @@ func TestExecutionHandlerFooterBug(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	// Check tabContents for correct messages
-	tab.mu.RLock()
-	defer tab.mu.RUnlock()
+	tabSection.mu.RLock()
+	defer tabSection.mu.RUnlock()
 	var foundFinal bool
-	for _, c := range tab.tabContents {
+	for _, c := range tabSection.tabContents {
 		if c.Content == "Final step" {
 			foundFinal = true
 		}

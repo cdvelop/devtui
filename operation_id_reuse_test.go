@@ -21,9 +21,10 @@ func TestOperationIDReuse(t *testing.T) {
 
 		// Create a test tab since DefaultTUIForTest only creates SHORTCUTS tab
 		testTab := h.NewTabSection("Test Tab", "Test description")
-		testTab.AddHandler(handler, 0, "")
+		h.AddHandler(handler, 0, "", testTab)
 
-		field := testTab.fieldHandlers[0]
+		tabSection := testTab.(*tabSection)
+		field := tabSection.fieldHandlers[0]
 
 		// First execution - should create new message with the fixed operationID
 		field.executeChangeSyncWithTracking(field.Value())
@@ -34,13 +35,13 @@ func TestOperationIDReuse(t *testing.T) {
 		}
 
 		// Get initial message count
-		initialMessageCount := len(testTab.tabContents)
+		initialMessageCount := len(tabSection.tabContents)
 
 		// Second execution - should reuse the same operationID and update existing message
 		field.executeChangeSyncWithTracking(field.Value())
 
 		// Verify message count didn't increase (updated existing instead of creating new)
-		finalMessageCount := len(testTab.tabContents)
+		finalMessageCount := len(tabSection.tabContents)
 		if finalMessageCount != initialMessageCount {
 			t.Errorf("Expected message count to remain %d, got %d. Messages should be updated in place, not create new lines",
 				initialMessageCount, finalMessageCount)
@@ -74,18 +75,19 @@ func TestOperationIDReuse(t *testing.T) {
 
 		// Register handlers using the new API
 		testTab := h.NewTabSection("Test Tab 2", "Test description for multiple handlers")
-		testTab.AddHandler(handler1, 0, "")
-		testTab.AddHandler(handler2, 0, "")
+		h.AddHandler(handler1, 0, "", testTab)
+		h.AddHandler(handler2, 0, "", testTab)
 
-		field1 := testTab.fieldHandlers[0]
-		field2 := testTab.fieldHandlers[1]
+		tabSection := testTab.(*tabSection)
+		field1 := tabSection.fieldHandlers[0]
+		field2 := tabSection.fieldHandlers[1]
 
 		// Execute both handlers
 		field1.executeChangeSyncWithTracking(field1.Value())
 		field2.executeChangeSyncWithTracking(field2.Value())
 
 		// Should have 2 messages, one per handler
-		messageCount := len(testTab.tabContents)
+		messageCount := len(tabSection.tabContents)
 		if messageCount != 2 {
 			t.Errorf("Expected 2 messages (one per handler), got %d", messageCount)
 		}
@@ -93,7 +95,7 @@ func TestOperationIDReuse(t *testing.T) {
 		// Execute first handler again - should update its message, not create new
 		field1.executeChangeSyncWithTracking(field1.Value())
 
-		finalMessageCount := len(testTab.tabContents)
+		finalMessageCount := len(tabSection.tabContents)
 		if finalMessageCount != 2 {
 			t.Errorf("Expected message count to remain 2, got %d. Each handler should maintain its own message", finalMessageCount)
 		}
@@ -111,17 +113,18 @@ func TestOperationIDReuse(t *testing.T) {
 
 		// Register handler using the new API
 		testTab := h.NewTabSection("Test Tab 3", "Test description for new operation ID")
-		testTab.AddHandler(handler, 0, "")
+		h.AddHandler(handler, 0, "", testTab)
 
-		field := testTab.fieldHandlers[0]
+		tabSection := testTab.(*tabSection)
+		field := tabSection.fieldHandlers[0]
 
 		// First execution
 		field.executeChangeSyncWithTracking(field.Value())
-		initialMessageCount := len(testTab.tabContents)
+		initialMessageCount := len(tabSection.tabContents)
 
 		// Second execution - should create new message since no existing operationID
 		field.executeChangeSyncWithTracking(field.Value())
-		finalMessageCount := len(testTab.tabContents)
+		finalMessageCount := len(tabSection.tabContents)
 
 		// Verify new message was created
 		if finalMessageCount <= initialMessageCount {

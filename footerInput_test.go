@@ -17,7 +17,7 @@ func TestFooterView(t *testing.T) {
 	// Caso 1: Tab sin fields debe mostrar el scrollbar estándar
 	t.Run("Footer with no fields shows scrollbar", func(t *testing.T) {
 		// Guardar estado actual para restaurar después de la prueba
-		tab := h.tabSections[h.activeTab]
+		tab := h.TabSections[h.activeTab]
 		originalFields := tab.fieldHandlers
 
 		// Configurar pestaña sin fields
@@ -42,17 +42,17 @@ func TestFooterView(t *testing.T) {
 	t.Run("Footer with fields shows field as input even when not editing", func(t *testing.T) {
 
 		// Crear un nuevo field con handler para la prueba
-		tab := h.tabSections[h.activeTab]
+		tab := h.TabSections[h.activeTab]
 		tab.setFieldHandlers([]*field{})
 		testHandler := NewTestEditableHandler("TestLabel", "TestValue Rendered")
-		tab.AddHandler(testHandler, 0, "")
+		h.AddHandler(testHandler, 0, "", tab)
 
 		// Set viewport width for proper layout calculation
 		h.viewport.Width = 80
 
 		// Desactivar modo edición para verificar que aún así se muestra el campo
 		h.editModeActivated = false
-		tabSection := h.tabSections[h.activeTab]
+		tabSection := h.TabSections[h.activeTab]
 		tabSection.indexActiveEditField = 0
 
 		// Renderizar footer
@@ -74,12 +74,12 @@ func TestRenderFooterInput(t *testing.T) {
 			// Test logger - do nothing
 		})
 		h.editModeActivated = true
-		tab := h.tabSections[h.activeTab]
+		tab := h.TabSections[h.activeTab]
 
 		// Crear un nuevo field con handler para la prueba
 		tab.setFieldHandlers([]*field{})
 		testHandler := NewTestEditableHandler("Test", "test value")
-		tab.AddHandler(testHandler, 0, "")
+		h.AddHandler(testHandler, 0, "", tab)
 
 		// Set viewport width for proper layout calculation
 		h.viewport.Width = 80
@@ -105,15 +105,15 @@ func TestRenderFooterInput(t *testing.T) {
 		})
 
 		// Limpiar todos los handlers existentes y crear explícitamente un handler no editable
-		tab := h.tabSections[h.activeTab]
+		tab := h.TabSections[h.activeTab]
 		tab.setFieldHandlers([]*field{}) // Limpiar cualquier handler por defecto
 
 		// Crear explícitamente un handler no editable (ExecutionHandler)
 		testHandler := NewTestNonEditableHandler("Test", "Value")
-		tab.AddHandler(testHandler, 0, "")
+		h.AddHandler(testHandler, 0, "", tab)
 
 		h.editModeActivated = true
-		h.tabSections[h.activeTab].indexActiveEditField = 0
+		h.TabSections[h.activeTab].indexActiveEditField = 0
 
 		// Renderizar input
 		result := h.renderFooterInput()
@@ -132,15 +132,15 @@ func TestRenderFooterInput(t *testing.T) {
 
 		expectedLabel := "Test Handler"
 		// Configurar un índice activo fuera de rango
-		tab := h.tabSections[h.activeTab]
+		tab := h.TabSections[h.activeTab]
 		tab.setFieldHandlers([]*field{})
 		testHandler := NewTestNonEditableHandler(expectedLabel, "Some Value")
-		tab.AddHandler(testHandler, 0, "")
+		h.AddHandler(testHandler, 0, "", tab)
 
 		// Set viewport width for proper layout calculation
 		h.viewport.Width = 80
 
-		h.tabSections[h.activeTab].indexActiveEditField = 5 // Índice fuera de rango
+		h.TabSections[h.activeTab].indexActiveEditField = 5 // Índice fuera de rango
 
 		// Renderizar - no debería producir pánico
 		result := h.renderFooterInput()
@@ -158,11 +158,11 @@ func TestRenderFooterInput(t *testing.T) {
 			// Test logger - do nothing
 		})
 
-		tab := h.tabSections[h.activeTab]
+		tab := h.TabSections[h.activeTab]
 		tab.setFieldHandlers([]*field{})
 		testHandler := NewTestEditableHandler("Test", "Value")
-		tab.AddHandler(testHandler, 0, "")
-		h.tabSections[h.activeTab].indexActiveEditField = 0
+		h.AddHandler(testHandler, 0, "", tab)
+		h.TabSections[h.activeTab].indexActiveEditField = 0
 		h.editModeActivated = false // No en modo edición
 
 		// El estilo debe ser fieldSelectedStyle en vez de fieldEditingStyle
@@ -193,15 +193,15 @@ func TestInputNavigation(t *testing.T) {
 	})
 
 	// Configurar múltiples campos para prueba de navegación
-	tab := h.tabSections[h.activeTab]
+	tab := h.TabSections[h.activeTab]
 	tab.setFieldHandlers([]*field{})
 	testHandler1 := NewTestEditableHandler("Field1", "Value1")
 	testHandler2 := NewTestEditableHandler("Field2", "Value2")
 	testHandler3 := NewTestEditableHandler("Field3", "Value3")
-	tab.AddHandler(testHandler1, 0, "")
-	tab.AddHandler(testHandler2, 0, "")
-	tab.AddHandler(testHandler3, 0, "")
-	h.tabSections[h.activeTab].indexActiveEditField = 0
+	h.AddHandler(testHandler1, 0, "", tab)
+	h.AddHandler(testHandler2, 0, "", tab)
+	h.AddHandler(testHandler3, 0, "", tab)
+	h.TabSections[h.activeTab].indexActiveEditField = 0
 	h.editModeActivated = false
 
 	t.Run("Right key navigates to next field", func(t *testing.T) {
@@ -209,46 +209,46 @@ func TestInputNavigation(t *testing.T) {
 		_, _ = h.handleNormalModeKeyboard(tea.KeyMsg{Type: tea.KeyRight})
 
 		// Verificar que nos movimos al siguiente campo
-		if h.tabSections[h.activeTab].indexActiveEditField != 1 {
+		if h.TabSections[h.activeTab].indexActiveEditField != 1 {
 			t.Errorf("La tecla derecha debería navegar al siguiente campo, pero se quedó en: %d",
-				h.tabSections[h.activeTab].indexActiveEditField)
+				h.TabSections[h.activeTab].indexActiveEditField)
 		}
 	})
 
 	t.Run("Left key navigates to previous field", func(t *testing.T) {
 		// Nos aseguramos de estar en el campo del medio
-		h.tabSections[h.activeTab].indexActiveEditField = 1
+		h.TabSections[h.activeTab].indexActiveEditField = 1
 
 		// Simular pulsación de tecla izquierda
 		_, _ = h.handleNormalModeKeyboard(tea.KeyMsg{Type: tea.KeyLeft})
 
 		// Verificar que nos movimos al campo anterior
-		if h.tabSections[h.activeTab].indexActiveEditField != 0 {
+		if h.TabSections[h.activeTab].indexActiveEditField != 0 {
 			t.Errorf("La tecla izquierda debería navegar al campo anterior, pero se quedó en: %d",
-				h.tabSections[h.activeTab].indexActiveEditField)
+				h.TabSections[h.activeTab].indexActiveEditField)
 		}
 	})
 
 	t.Run("Cyclical navigation wraps around at boundaries", func(t *testing.T) {
 		// Ir al primer campo
-		h.tabSections[h.activeTab].indexActiveEditField = 0
+		h.TabSections[h.activeTab].indexActiveEditField = 0
 
 		// Simular pulsación de tecla izquierda (debe ir al último campo)
 		_, _ = h.handleNormalModeKeyboard(tea.KeyMsg{Type: tea.KeyLeft})
 
 		// Verificar que se movió al último campo
-		if h.tabSections[h.activeTab].indexActiveEditField != 2 {
+		if h.TabSections[h.activeTab].indexActiveEditField != 2 {
 			t.Errorf("La navegación cíclica debería ir al último campo, pero está en: %d",
-				h.tabSections[h.activeTab].indexActiveEditField)
+				h.TabSections[h.activeTab].indexActiveEditField)
 		}
 
 		// Simular pulsación de tecla derecha (debe volver al primer campo)
 		_, _ = h.handleNormalModeKeyboard(tea.KeyMsg{Type: tea.KeyRight})
 
 		// Verificar que volvió al primer campo
-		if h.tabSections[h.activeTab].indexActiveEditField != 0 {
+		if h.TabSections[h.activeTab].indexActiveEditField != 0 {
 			t.Errorf("La navegación cíclica debería volver al primer campo, pero está en: %d",
-				h.tabSections[h.activeTab].indexActiveEditField)
+				h.TabSections[h.activeTab].indexActiveEditField)
 		}
 	})
 
@@ -259,14 +259,14 @@ func TestInputNavigation(t *testing.T) {
 		})
 
 		// Configurar un campo editable
-		tab := h.tabSections[h.activeTab]
+		tab := h.TabSections[h.activeTab]
 		tab.setFieldHandlers([]*field{})
 		testHandler := NewTestEditableHandler("Test", "Value")
-		tab.AddHandler(testHandler, 0, "")
+		h.AddHandler(testHandler, 0, "", tab)
 
 		// Asegurar que no estamos en modo edición
 		h.editModeActivated = false
-		h.tabSections[h.activeTab].indexActiveEditField = 0
+		h.TabSections[h.activeTab].indexActiveEditField = 0
 
 		// Simular pulsación de Enter
 		_, _ = h.handleNormalModeKeyboard(tea.KeyMsg{Type: tea.KeyEnter})
@@ -284,14 +284,14 @@ func TestInputNavigation(t *testing.T) {
 		})
 
 		// Configurar un campo editable
-		tab := h.tabSections[h.activeTab]
+		tab := h.TabSections[h.activeTab]
 		tab.setFieldHandlers([]*field{})
 		testHandler := NewTestEditableHandler("Test", "Value")
-		tab.AddHandler(testHandler, 0, "")
+		h.AddHandler(testHandler, 0, "", tab)
 
 		// Asegurar que estamos en modo edición
 		h.editModeActivated = true
-		h.tabSections[h.activeTab].indexActiveEditField = 0
+		h.TabSections[h.activeTab].indexActiveEditField = 0
 
 		// Simular pulsación de Esc
 		_, _ = h.handleEditingConfigKeyboard(tea.KeyMsg{Type: tea.KeyEscape})
@@ -307,14 +307,14 @@ func TestInputNavigation(t *testing.T) {
 		h := DefaultTUIForTest(func(messages ...any) {
 			// Test logger - do nothing
 		})
-		tab := h.tabSections[h.activeTab]
+		tab := h.TabSections[h.activeTab]
 		tab.setFieldHandlers([]*field{})
 		testHandler := NewTestEditableHandler("Test", "Value1")
-		tab.AddHandler(testHandler, 0, "")
+		h.AddHandler(testHandler, 0, "", tab)
 
 		// Configurar para edición
 		h.editModeActivated = true
-		h.tabSections[h.activeTab].indexActiveEditField = 0
+		h.TabSections[h.activeTab].indexActiveEditField = 0
 		field := tab.fieldHandlers[0]
 		field.setCursorAtEnd()
 		// Move cursor to position 3 for test

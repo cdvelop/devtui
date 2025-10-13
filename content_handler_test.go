@@ -22,7 +22,7 @@ func TestHandlerInteractiveInterface(t *testing.T) {
 		h.viewport.Height = 24
 
 		// The shortcuts tab and its handler are created automatically by DefaultTUIForTest
-		shortcutsTab := h.tabSections[0]
+		shortcutsTab := h.TabSections[0]
 		if len(shortcutsTab.fieldHandlers) == 0 {
 			t.Fatal("Shortcuts handler not found")
 		}

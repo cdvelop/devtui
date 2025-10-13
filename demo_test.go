@@ -13,33 +13,33 @@ func TestDemoMessageDuplication(t *testing.T) {
 		h.viewport.Width = 80
 		h.viewport.Height = 24
 		h.activeTab = 0
-		h.tabSections[0].indexActiveEditField = 0
+		h.TabSections[0].indexActiveEditField = 0
 
-		field := h.tabSections[0].fieldHandlers[0]
+		field := h.TabSections[0].fieldHandlers[0]
 
 		// Clear messages like demo start
-		h.tabSections[0].tabContents = nil
+		h.TabSections[0].tabContents = nil
 
 		t.Logf("=== SIMULATING DEMO BEHAVIOR ===")
 
 		// 1. User navigates to shortcuts field (triggers auto-display)
 		h.checkAndTriggerInteractiveContent()
-		afterAutoDisplay := len(h.tabSections[0].tabContents)
+		afterAutoDisplay := len(h.TabSections[0].tabContents)
 		t.Logf("After auto-display: %d messages", afterAutoDisplay)
 
 		// 2. User presses Enter to edit (normal demo flow)
 		// This might trigger another content display
 		field.triggerContentDisplay()
-		afterManualTrigger := len(h.tabSections[0].tabContents)
+		afterManualTrigger := len(h.TabSections[0].tabContents)
 		t.Logf("After manual trigger: %d messages", afterManualTrigger)
 
 		// 3. User types "ES" and presses Enter (demo user input flow)
 		field.executeChangeSyncWithTracking("ES")
-		afterFirstChange := len(h.tabSections[0].tabContents)
+		afterFirstChange := len(h.TabSections[0].tabContents)
 		t.Logf("After first change (ES): %d messages", afterFirstChange)
 
 		// Print all messages to see what's happening
-		for i, msg := range h.tabSections[0].tabContents {
+		for i, msg := range h.TabSections[0].tabContents {
 			var opID string
 			if msg.operationID != nil {
 				opID = *msg.operationID
@@ -49,11 +49,11 @@ func TestDemoMessageDuplication(t *testing.T) {
 
 		// 4. User changes to "FR" - should UPDATE same message
 		field.executeChangeSyncWithTracking("FR")
-		afterSecondChange := len(h.tabSections[0].tabContents)
+		afterSecondChange := len(h.TabSections[0].tabContents)
 		t.Logf("After second change (FR): %d messages", afterSecondChange)
 
 		// Print all messages again
-		for i, msg := range h.tabSections[0].tabContents {
+		for i, msg := range h.TabSections[0].tabContents {
 			var opID string
 			if msg.operationID != nil {
 				opID = *msg.operationID
@@ -63,7 +63,7 @@ func TestDemoMessageDuplication(t *testing.T) {
 
 		// CRITICAL: If messages with same OpID exist, that's duplication!
 		opIDCounts := make(map[string]int)
-		for _, msg := range h.tabSections[0].tabContents {
+		for _, msg := range h.TabSections[0].tabContents {
 			if msg.operationID != nil {
 				opIDCounts[*msg.operationID]++
 			}

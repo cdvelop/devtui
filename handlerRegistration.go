@@ -57,9 +57,10 @@ func (t *DevTUI) validateTabSection(tab any, methodName string) *tabSection {
 //   - tabSection: The tab section returned by NewTabSection (as any for decoupling)
 //
 // Example:
-//   tab := tui.NewTabSection("BUILD", "Compiler")
-//   tui.AddHandler(myEditHandler, 2*time.Second, "#3b82f6", tab)
-//   tui.AddHandler(myDisplayHandler, 0, "", tab)
+//
+//	tab := tui.NewTabSection("BUILD", "Compiler")
+//	tui.AddHandler(myEditHandler, 2*time.Second, "#3b82f6", tab)
+//	tui.AddHandler(myDisplayHandler, 0, "", tab)
 func (t *DevTUI) AddHandler(handler any, timeout time.Duration, color string, tabSection any) {
 	ts := t.validateTabSection(tabSection, "AddHandler")
 	ts.addHandler(handler, timeout, color)
@@ -108,10 +109,11 @@ func (ts *tabSection) addHandler(handler any, timeout time.Duration, color strin
 //   - Variadic logging function: log("message", values...)
 //
 // Example:
-//   tab := tui.NewTabSection("BUILD", "Compiler")
-//   log := tui.AddLogger("BuildProcess", true, "#1e40af", tab)
-//   log("Starting build...")
-//   log("Compiling", 42, "files")
+//
+//	tab := tui.NewTabSection("BUILD", "Compiler")
+//	log := tui.AddLogger("BuildProcess", true, "#1e40af", tab)
+//	log("Starting build...")
+//	log("Compiling", 42, "files")
 func (t *DevTUI) AddLogger(name string, enableTracking bool, color string, tabSection any) func(message ...any) {
 	ts := t.validateTabSection(tabSection, "AddLogger")
 	return ts.addLogger(name, enableTracking, color)
@@ -240,16 +242,19 @@ func (ts *tabSection) registerShortcutsIfSupported(handler HandlerEdit, fieldInd
 	// Check if handler implements shortcut interface
 	if shortcutProvider, hasShortcuts := handler.(ShortcutProvider); hasShortcuts {
 		shortcuts := shortcutProvider.Shortcuts()
-		for key, description := range shortcuts {
-			entry := &ShortcutEntry{
-				Key:         key,
-				Description: description,
-				TabIndex:    ts.index,
-				FieldIndex:  fieldIndex,
-				HandlerName: handler.Name(),
-				Value:       key, // Use the key as the value by default
+		// shortcuts is an ordered slice of single-entry maps to preserve registration order
+		for _, m := range shortcuts {
+			for key, description := range m {
+				entry := &ShortcutEntry{
+					Key:         key,
+					Description: description,
+					TabIndex:    ts.index,
+					FieldIndex:  fieldIndex,
+					HandlerName: handler.Name(),
+					Value:       key, // Use the key as the value by default
+				}
+				ts.tui.shortcutRegistry.Register(key, entry)
 			}
-			ts.tui.shortcutRegistry.Register(key, entry)
 		}
 	}
 }

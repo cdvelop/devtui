@@ -117,14 +117,14 @@ type HandlerEdit interface {
 }
 ```
 
-**Optional Shortcut Support**: Add `Shortcuts() map[string]string` method to enable global keyboard shortcuts. The map key is the keyboard shortcut and the value passed to `Change()`. The map value is only for display/description:
+**Optional Shortcut Support**: Add `Shortcuts() []map[string]string` method to enable global keyboard shortcuts while preserving the registration order. Each element in the returned slice should be a single-entry map where the key is the shortcut and the value is a human-readable description. Example:
 
 ```go
 // Shortcuts work from any tab and automatically navigate to this field
-func (h *DatabaseHandler) Shortcuts() map[string]string {
-    return map[string]string{
-        "t": "test connection",  // Pressing 't' calls Change("t", progress)
-        "b": "backup database",  // Pressing 'b' calls Change("b", progress)
+func (h *DatabaseHandler) Shortcuts() []map[string]string {
+    return []map[string]string{
+        {"t": "test connection"}, // Pressing 't' calls Change("t", progress)
+        {"b": "backup database"}, // Pressing 'b' calls Change("b", progress)
     }
 }
 ```
@@ -264,9 +264,9 @@ consumer.Start(ui) // Pass UI as interface
 - **Ctrl+C**: Exit
 - **Global Shortcuts**: Single key shortcuts (e.g., "t", "b") work from any tab when defined in handlers
 
-**Shortcut System**: Handlers implementing `Shortcuts() map[string]string` automatically register global keyboard shortcuts. When pressed, shortcuts navigate to the handler's tab/field and execute the `Change()` method with the **map key** as the `newValue` parameter.
+**Shortcut System**: Handlers implementing `Shortcuts() []map[string]string` automatically register global keyboard shortcuts in the order returned by the slice. When pressed, shortcuts navigate to the handler's tab/field and execute the `Change()` method with the shortcut key as the `newValue` parameter.
 
-**Example**: If shortcuts return `{"t": "test connection"}`, pressing 't' calls `Change("t", progress)`.
+**Example**: If shortcuts return `[]map[string]string{{"t":"test connection"}}`, pressing 't' calls `Change("t", progress)`.
 
 
 **Note**: DevTUI automatically loads a built-in [ShortcutsHandler](shortcuts.go) at position 0 in the first tab, which displays detailed keyboard navigation commands. This handler demonstrates the `HandlerEdit` interface and provides interactive help within the application.

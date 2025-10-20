@@ -1,80 +1,102 @@
+type ShortcutProvider interface {
+type ShortcutEntry struct {
 # DevTUI Shortcut Keys Implementation Plan
 
-## Executive Summary
+## Executive summary
 
-This document outlines the comprehensive implementation plan for adding global shortcut key functionality to DevTUI. The feature will allow `HandlerEdit` implementations to optionally provide shortcuts that can be triggered from any tab, automatically navigating to the handler's tab and invoking its `Change()` method with the shortcut value.
+This document describes a concrete, ordered plan to implement global shortcut key support for DevTUI. The goal: allow `HandlerEdit` implementations to optionally provide ordered shortcuts that can be triggered from any tab. When a shortcut is pressed DevTUI should:
+- navigate to the handler's tab and field
+- invoke the handler's `Change()` with the shortcut value
+- display any progress messages using the existing `progress()` mechanism
 
-## Current Architecture Analysis
+This implementation preserves registration order by requiring handlers to return a slice of single-entry maps: `[]map[string]string` (each map has exactly one key → description pair).
 
-### Existing Keyboard Handling Flow
-1. **Entry Point**: `handleKeyboard()` in `userKeyboard.go` - main dispatcher
-2. **Mode Detection**: Splits into `handleEditingConfigKeyboard()` vs `handleNormalModeKeyboard()`
-3. **Normal Mode**: Handles navigation (Tab/Shift+Tab, Left/Right, Up/Down, PageUp/PageDown)
-4. **Edit Mode**: Handles text input, cursor movement, Enter/Esc
-5. **Global Keys**: Ctrl+C for exit
+## Design contract
 
-### Current Handler Registration Flow
-1. `AddEditHandler()` in `handlerRegistration.go` creates `anyHandler` wrapper
-2. Creates `field` struct with handler and adds to `tabSection.fieldHandlers`
-3. Handler interfaces are well-defined in `interfaces.go`
+- Input: handlers may optionally implement `ShortcutProvider` with `Shortcuts() []map[string]string`.
+- Output: a global, thread-safe registry mapping single-key shortcuts to a lightweight entry (tab index, field index, handler name, value) and providing O(1) lookup on keypress.
+- Error modes: invalid indexes (handler removed) should be logged and ignored; conflicts use first-registered-wins.
+- Success: shortcuts trigger the target handler's `Change()` and UI updates are visible to the user.
 
-### DevTUI Core Structure
+## Interface
+
+Add to `interfaces.go`:
 ```go
-type DevTUI struct {
-    tabSections       []*tabSection
-    activeTab         int
-    editModeActivated bool
-    // ... other fields
-}
-
-type tabSection struct {
-    fieldHandlers []*field
-    indexActiveEditField int
-    // ... other fields
-}
-```
-
-## Proposed Implementation
-
-### 1. New Interface Definition
-
-**File**: `interfaces.go`
-```go
-// HandlerEditWithShortcuts extends HandlerEdit with shortcut key support
-type HandlerEditWithShortcuts interface {
-    HandlerEdit
-    Shortcuts() []string // Returns shortcut keys (e.g., ["c", "d", "p"])
-}
-```
-
-**Alternative Approach**: Optional interface detection
-```go
-// Optional interface that HandlerEdit can implement
-type ShortcutProvider interface {
-    Shortcuts() map[string]string // Returns shortcut keys with descriptions (e.g., {"c": "coding mode", "d": "debug mode", "p": "production mode"})
-}
-```
-
-### 2. Shortcut Registry Structure
-
-**File**: `shortcuts_registry.go` (new file)
-```go
-package devtui
-
-import "sync"
-
-// ShortcutEntry represents a registered shortcut
-type ShortcutEntry struct {
-    Key         string        // The shortcut key (e.g., "c", "d", "p")
-    Description string        // Human-readable description (e.g., "coding mode", "debug mode")
-    TabIndex    int          // Index of the tab containing the handler
-    FieldIndex  int          // Index of the field within the tab
-    HandlerName string       // Handler name for identification
-    Value       string       // Value to pass to Change()
-}
-
-// ShortcutRegistry manages global shortcut keys
+// Optional interface that HandlerEdit can implement to provide ordered shortcuts
 type ShortcutRegistry struct {
+    // Returns an ordered slice of single-entry maps. Each element must contain
+    // exactly one entry: shortcut -> human-readable description.
+    Shortcuts() []map[string]string
+}
+```
+
+Rationale: a slice preserves registration order. A slice of single-entry maps keeps the API expressive (shortcut -> description) while making order explicit.
+
+## Core components to add / modify
+
+1. ShortcutRegistry (new file `shortcuts_registry.go`)
+   - Thread-safe registry with methods: Register(key string, *ShortcutEntry), Get(key string) (*ShortcutEntry, bool), Unregister(key string), List() []string.
+   - ShortcutEntry contains: Key, Description, TabIndex, FieldIndex, HandlerName, Value.
+
+2. DevTUI struct (`init.go`)
+   - Add field `shortcutRegistry *ShortcutRegistry` and initialize it in `NewTUI`.
+
+3. Handler registration (`handlerRegistration.go`)
+   - When registering `HandlerEdit` handlers, detect `ShortcutProvider` and call `registerShortcutsIfSupported(handler, fieldIndex)`.
+   - Implement `registerShortcutsIfSupported` to iterate the returned slice and register each single-entry map in order.
+
+4. Keyboard handling (`userKeyboard.go`)
+   - In normal mode only, detect single-character runes and consult the registry.
+   - On hit, call an `executeShortcut(entry *ShortcutEntry)` method that:
+     - validates indexes
+     - navigates to the target tab and field
+     - calls `Change(entry.Value, progress)` on the target handler
+     - updates the viewport
+
+5. Shortcuts help handler (`shortcuts.go`) — presentation only
+   - Keep a helper that enumerates registered shortcuts (for display). To preserve order in the help, read the registry's List() and map keys to entries in order.
+
+6. Examples and tests
+   - Update examples in `example/HandlerEdit.go`, `README.md` and docs to return `[]map[string]string` (already done).
+   - Add unit tests for the registry and integration tests that simulate pressing shortcuts.
+
+## Detailed behavior and edge cases
+
+- Order: the registry will register shortcuts in the order the slice is returned. If two handlers register the same key, the registry will keep the first registered entry by default and log a warning for subsequent conflicts.
+- Key normalization: registry stores keys exactly as provided; keyboard handler matches exactly (case-sensitive). We can later add normalization (e.g., uppercase) if desired.
+- Edit mode: shortcuts are active only in normal mode to avoid interfering with text input.
+- Handler removal: if/when handlers are removed, code should call Unregister for that handler's keys (future enhancement). On execution we validate indexes: if invalid, log and ignore.
+- Shortcut values: current design passes the shortcut key itself as the `newValue` to `Change()` (unless handlers choose to interpret differently). If a handler requires a different value per key, it can encode it in the Shortcuts mapping value (and the registration logic can be extended later to allow explicit value separate from key).
+
+## Tests to add
+
+- `shortcuts_registry_test.go` (unit): register/unregister, concurrency, conflict handling.
+- `shortcuts_integration_test.go` (integration): register handlers, simulate key press, assert navigation and Change() invoked.
+- `shortcuts_keyboard_test.go`: ensure shortcuts only work in normal mode and single character runes are handled.
+
+## Example usage (consumer)
+
+```go
+// Consumer handler example
+func (h *TinyWasmHandler) Shortcuts() []map[string]string {
+    return []map[string]string{
+        {"L": "Large build"},
+        {"M": "Medium build"},
+        {"S": "Small build"},
+    }
+}
+```
+
+When a user presses `L`, DevTUI will navigate to the handler and call `Change("L", progress)`.
+
+## Developer notes
+
+- I intentionally chose `[]map[string]string` to preserve order while keeping a simple mapping of key -> description.
+- If you prefer a typed struct slice for clarity, an alternative is `[]ShortcutSpec` with `type ShortcutSpec struct { Key, Description, Value string }` — this is more explicit but requires a new small type.
+
+---
+
+End of plan.
     mu        sync.RWMutex
     shortcuts map[string]*ShortcutEntry // key -> entry
 }
@@ -415,6 +437,14 @@ func (h *TestShortcutHandler) Shortcuts() map[string]string {
     }
 }
 
+func (h *TestShortcutHandler) Shortcuts() []map[string]string {
+    return []map[string]string{
+        {"c": "coding mode"},
+        {"d": "debug mode"},
+        {"p": "production mode"},
+    }
+}
+
 func (h *TestShortcutHandler) Change(newValue string, progress func(msgs ...any)) {
     h.lastValue = newValue
     if progress != nil {
@@ -422,6 +452,22 @@ func (h *TestShortcutHandler) Change(newValue string, progress func(msgs ...any)
     }
 }
 ```
+```go
+func (h *TinyWasmHandler) Shortcuts() []map[string]string {
+    return []map[string]string{
+        {"c": "coding mode"},
+        {"d": "debug mode"},
+        {"p": "production mode"},
+    }
+}
+```
+// NEW: Add shortcut support
+func (h *DatabaseHandler) Shortcuts() []map[string]string {
+    return []map[string]string{
+        {"t": "test connection"},
+        {"b": "backup database"},
+    }
+}
 
 ## Files to Create/Modify
 
@@ -526,11 +572,11 @@ func (h *TinyWasmHandler) Change(newValue string, progress func(msgs ...any)) {
 }
 
 // Enable shortcuts with descriptions
-func (h *TinyWasmHandler) Shortcuts() map[string]string {
-    return map[string]string{
-        "c": "coding mode",
-        "d": "debug mode",
-        "p": "production mode",
+func (h *TinyWasmHandler) Shortcuts() []map[string]string {
+    return []map[string]string{
+        {"c": "coding mode"},
+        {"d": "debug mode"},
+        {"p": "production mode"},
     }
 }
 
@@ -587,10 +633,10 @@ func (h *DatabaseHandler) Change(newValue string, progress func(msgs ...any)) {
 }
 
 // NEW: Add shortcut support
-func (h *DatabaseHandler) Shortcuts() map[string]string {
-    return map[string]string{
-        "t": "test connection",
-        "b": "backup database",
+func (h *DatabaseHandler) Shortcuts() []map[string]string {
+    return []map[string]string{
+        {"t": "test connection"},
+        {"b": "backup database"},
     }
 }
 ```

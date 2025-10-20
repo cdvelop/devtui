@@ -41,9 +41,9 @@ func (h *DatabaseHandler) Change(newValue string, progress func(msgs ...any)) {
 }
 
 // NEW: Add shortcut support
-func (h *DatabaseHandler) Shortcuts() map[string]string {
-	return map[string]string{
-		"t": "test connection",
-		"b": "backup database",
+func (h *DatabaseHandler) Shortcuts() []map[string]string {
+	return []map[string]string{
+		{"t": "test connection"},
+		{"b": "backup database"},
 	}
 }

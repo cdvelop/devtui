@@ -1,9 +1,9 @@
 module github.com/cdvelop/devtui
 
-go 1.24.4
+go 1.25.2
 
 require (
-	github.com/cdvelop/tinystring v0.8.1
+	github.com/cdvelop/tinystring v0.9.0
 	github.com/charmbracelet/lipgloss v1.1.0
 )
 

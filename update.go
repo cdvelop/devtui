@@ -57,6 +57,10 @@ func (h *DevTUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			h.updateViewport()
 		}
 
+	case refreshTabMsg: // Handle manual refresh requests from external tools
+		// Update viewport for the currently active tab
+		h.updateViewport()
+
 	case tea.WindowSizeMsg: // update the viewport size
 
 		headerHeight := lipgloss.Height(h.headerView())
@@ -104,6 +108,30 @@ func (h *DevTUI) updateViewport() {
 	h.viewport.SetContent(h.ContentView())
 	h.viewport.GotoBottom()
 }
+
+// RefreshUI updates the TUI display for the currently active tab.
+// This method is designed to be called from external tools/handlers to notify
+// devtui that the UI needs to be refreshed without creating coupling.
+//
+// Thread-safe and can be called from any goroutine.
+// Only updates the view if the TUI is actively running.
+//
+// Usage from external tools:
+//
+//	tui.RefreshUI() // Triggers a UI refresh for the active tab
+func (h *DevTUI) RefreshUI() {
+	// Only update if the TUI is actively running and ready
+	if h.tea == nil || !h.ready {
+		return
+	}
+
+	// Send a custom message to the tea.Program to trigger a view update
+	// This is thread-safe and non-blocking
+	h.tea.Send(refreshTabMsg{})
+}
+
+// refreshTabMsg is an internal message type for triggering tab refreshes
+type refreshTabMsg struct{}
 
 func (h *DevTUI) editingConfigOpen(open bool, currentField *field, msg string) {
 

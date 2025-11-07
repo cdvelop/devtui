@@ -182,7 +182,7 @@ func BenchmarkFieldHandler_SimpleOperation(b *testing.B) {
 
 func BenchmarkFieldHandler_MultipleFields(b *testing.B) {
 	// Create multiple handlers using centralized handler
-	var handlers []interface{}
+	var handlers []any
 	for i := 0; i < 10; i++ {
 		handler := NewTestEditableHandler(
 			fmt.Sprintf("Field-%d", i),

@@ -27,7 +27,7 @@ type anyHandler struct {
 	lastOpID    string        // Tracking interno
 	mu          sync.RWMutex  // Protección para lastOpID
 
-	origHandler interface{} // Store original handler for type assertions
+	origHandler any // Store original handler for type assertions
 
 	handlerColor string // NEW: Handler-specific color for message formatting
 

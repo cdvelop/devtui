@@ -96,7 +96,7 @@ type anyHandler struct {
     timeout     time.Duration
     lastOpID    string
     mu          sync.RWMutex
-    origHandler interface{}
+    origHandler any
     handlerColor string // NEW: Store handler-specific color - ADD THIS FIELD
     
     // ... rest of existing fields

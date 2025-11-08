@@ -1,60 +1,60 @@
-# DevTUI: Refactor Change Method to Use Channel-Based Progress
+# DevTUI: Refactor Progress Callbacks to Channels
 
 ## Objective
-Refactor the `Change` method signature across DevTUI library from callback-based `func(msgs ...any)` to channel-based `chan<- string` for consistency with external tools and better streaming support.
+Refactor `Change` and `Execute` methods from callback-based `func(msgs ...any)` to channel-based `chan<- string` for consistency with external tools and better streaming support.
 
-## Current Signature
+## Current vs Target Signatures
+
+**Current:**
 ```go
-// interfaces.go - HandlerEdit & HandlerInteractive
 Change(newValue string, progress func(msgs ...any))
-
-// anyHandler.go - Internal implementation
-changeFunc func(string, func(msgs ...any))
+Execute(progress func(msgs ...any))
 ```
 
-## Target Signature
+**Target:**
 ```go
-// interfaces.go - HandlerEdit & HandlerInteractive
 Change(newValue string, progress chan<- string)
-
-// anyHandler.go - Internal implementation
-changeFunc func(string, chan<- string)
+Execute(progress chan<- string)
 ```
 
 ## Rationale
-1. **Consistency**: External tools (TinyWasm, GoServer) will use channels for progress streaming
-2. **Streaming**: Channels enable true asynchronous progress updates
-3. **Simplicity**: Single message type (string) instead of variadic any
-4. **Idiomatic Go**: Channels are Go's standard for communication between goroutines
+1. **Consistency**: TinyWasm already uses `chan<- string` in `Change()` and MCP tools
+2. **Streaming**: True asynchronous progress updates for long operations
+3. **Simplicity**: Single string type instead of variadic any
+4. **Idiomatic Go**: Channels are standard for goroutine communication
 
-## Files to Modify
+## Core Files to Modify
 
-### 1. `/interfaces.go`
-Update interface definitions:
+### 1. `interfaces.go` (3 interfaces)
 ```go
 type HandlerEdit interface {
     Name() string
     Label() string
     Value() string
-    Change(newValue string, progress chan<- string) // Changed from func(msgs ...any)
+    Change(newValue string, progress chan<- string) // Updated
+}
+
+type HandlerExecution interface {
+    Name() string
+    Label() string
+    Execute(progress chan<- string) // Updated
 }
 
 type HandlerInteractive interface {
     Name() string
     Label() string
     Value() string
-    Change(newValue string, progress chan<- string) // Changed from func(msgs ...any)
+    Change(newValue string, progress chan<- string) // Updated
     WaitingForUser() bool
 }
 ```
 
-### 2. `/anyHandler.go`
-Update internal function pointer and method:
+### 2. `anyHandler.go` (struct + methods)
 ```go
 type anyHandler struct {
     // ... existing fields ...
-    changeFunc func(string, chan<- string) // Changed from func(string, func(msgs ...any))
-    // ... rest of fields ...
+    changeFunc  func(string, chan<- string) // Updated
+    executeFunc func(chan<- string)         // Updated
 }
 
 func (a *anyHandler) Change(newValue string, progress chan<- string) {
@@ -62,126 +62,155 @@ func (a *anyHandler) Change(newValue string, progress chan<- string) {
         a.changeFunc(newValue, progress)
     }
 }
-```
 
-### 3. `/handlerRegistration.go`
-Update handler creation for Edit handlers:
-```go
-func (ts *tabSection) registerEditHandler(h HandlerEdit, timeout time.Duration, color string) {
-    handler := &anyHandler{
-        // ... existing fields ...
-        changeFunc: func(newValue string, progress chan<- string) {
-            h.Change(newValue, progress)
-        },
-        // ... rest of fields ...
-    }
-    // ... registration logic ...
-}
-```
-
-Update for Interactive handlers similarly.
-
-### 4. `/field.go`
-Update `executeChangeSyncWithTracking` method to use channel instead of callback:
-```go
-func (f *field) executeChangeSyncWithTracking(newValue string) {
-    // Create buffered channel
-    progressChan := make(chan string, 10)
-    messages := []string{}
-    
-    // Collect messages in goroutine
-    done := make(chan bool)
-    go func() {
-        for msg := range progressChan {
-            messages = append(messages, msg)
-        }
-        done <- true
-    }()
-    
-    // Execute change (sends messages to channel)
-    f.handler.Change(newValue, progressChan)
-    close(progressChan)
-    
-    // Wait for collection
-    <-done
-    
-    // Process collected messages
-    for _, msg := range messages {
-        // ... existing message processing logic ...
+func (a *anyHandler) Execute(progress chan<- string) {
+    if a.executeFunc != nil {
+        a.executeFunc(progress)
     }
 }
 ```
 
-### 5. `/shortcuts.go`
-Update `shortcutsInteractiveHandler` implementation:
+### 3. `anyHandler.go` - Factory Methods
+Update `NewEditHandler`, `NewExecutionHandler`, `NewInteractiveHandler`:
+```go
+// In NewExecutionHandler
+changeFunc: func(_ string, progress chan<- string) {
+    h.Execute(progress)
+},
+```
+
+### 4. `field.go` - Progress Callbacks
+Update all `progressCallback` functions (4 locations):
+- `triggerContentDisplay()` - line ~145
+- `executeAsyncChange()` - line ~279  
+- `executeChangeSyncWithValue()` - line ~364
+- `executeChangeSyncWithTracking()` - line ~396
+
+**Pattern:**
+```go
+// Create channel
+progressChan := make(chan string, 10)
+messages := []string{}
+
+// Collect in goroutine
+done := make(chan struct{})
+go func() {
+    for msg := range progressChan {
+        messages = append(messages, msg)
+        // Process message immediately if needed
+        f.sendMessage(msg)
+    }
+    close(done)
+}()
+
+// Execute handler
+f.handler.Change(valueToSave.(string), progressChan)
+close(progressChan)
+<-done
+```
+
+### 5. `shortcuts.go`
 ```go
 func (h *shortcutsInteractiveHandler) Change(newValue string, progress chan<- string) {
+    defer close(progress) // Always close when done
+    
     if newValue == "" && !h.needsLanguageInput {
         progress <- h.generateHelpContent()
         return
     }
     
-    lang := OutLang(newValue)
-    h.lang = lang
+    h.lang = OutLang(newValue)
     h.needsLanguageInput = false
-    
     progress <- h.generateHelpContent()
 }
 ```
 
-### 6. Tests (All)
-Update all test handlers that implement HandlerEdit or HandlerInteractive:
+## Test Files to Update
 
-**Files to update:**
-- `/new_api_test.go` - `testEditHandler`
-- `/handler_value_update_test.go` - `ThreadSafePortTestHandler`
-- `/operation_id_reuse_test.go` - `TestOperationIDHandler`, `TestNewOperationHandler`
-- `/content_handler_test.go` - Any interactive handlers
-- `/chat_handler_test.go` - Chat handlers
-- `/cursor_behavior_test.go` - Test handlers
-- `/field_editing_bug_test.go` - Bug test handlers
-- `/empty_field_enter_test.go` - Test handlers
+**Edit Handlers:**
+- `new_api_test.go` - `testEditHandler`
+- `handler_test.go` - `TestEditableHandler`, `TestNonEditableHandler`, `PortTestHandler`, etc.
+- `operation_id_reuse_test.go` - `TestOperationIDHandler`, `TestNewOperationHandler`
+- `handler_value_update_test.go` - Any edit handlers
+- `tabSection_move_to_end_test.go` - `testTracker`
 
-Example test update:
+**Execution Handlers:**
+- `new_api_test.go` - `testRunHandler`
+- `handler_test.go` - Execution test handlers
+- `execution_footer_bug_test.go` - `ExecHandler`
+- `race_condition_test.go` - `RaceConditionHandler`
+
+**Interactive Handlers:**
+- `chat_handler_test.go` - Chat handlers
+- Any content display tests
+
+**Example conversion:**
 ```go
 // Before
-func (h *testEditHandler) Change(newValue string, progress func(msgs ...any)) {
-    h.value = newValue
-    progress("Value updated to:", newValue)
+func (h *TestHandler) Change(v string, progress func(msgs ...any)) {
+    progress("Starting", "update")
+    h.value = v
+    progress("Done:", v)
 }
 
-// After
-func (h *testEditHandler) Change(newValue string, progress chan<- string) {
-    h.value = newValue
-    progress <- fmt.Sprintf("Value updated to: %s", newValue)
+// After  
+func (h *TestHandler) Change(v string, progress chan<- string) {
+    progress <- "Starting update"
+    h.value = v
+    progress <- fmt.Sprintf("Done: %s", v)
 }
 ```
 
-## Implementation Steps
+## External Packages
 
-1. **Update interfaces.go** - Change method signatures
-2. **Update anyHandler.go** - Change function pointer type and method
-3. **Update handlerRegistration.go** - Update handler wrappers
-4. **Update field.go** - Refactor executeChangeSyncWithTracking to use channels
-5. **Update shortcuts.go** - Update shortcutsInteractiveHandler
-6. **Update all tests** - Change all test handler implementations
-7. **Run tests** - Verify all tests pass: `go test ./...`
+**devbrowser/tui.go:**
+```go
+func (h *DevBrowser) Execute(progress chan<- string) {
+    if h.isOpen {
+        progress <- "Closing..."
+        if err := h.CloseBrowser(); err != nil {
+            progress <- fmt.Sprintf("Close error: %v", err)
+        } else {
+            progress <- "Closed."
+        }
+    } else {
+        progress <- "Opening..."
+        h.OpenBrowser()
+    }
+}
+```
+
+**example/ directory:**
+- `HandlerEdit.go` - `DatabaseHandler`
+- `HandlerExecution.go` - `BackupHandler`
+- `HandlerInteractive.go` - `SimpleChatHandler`
+
+## Implementation Order
+
+1. Update `interfaces.go` (3 interfaces)
+2. Update `anyHandler.go` (struct, methods, factories)
+3. Update `field.go` (4 progressCallback patterns)
+4. Update `shortcuts.go` (1 handler)
+5. Update all test files (~15 files)
+6. Update example handlers (3 files)
+7. Update external package: `devbrowser/tui.go`
+8. Run: `go test ./...`
+
+## Critical Notes
+
+- **Always close channels**: Handler or caller must close after sending messages
+- **Buffered channels**: Use size 10 to prevent blocking
+- **Format first**: Use `fmt.Sprintf` to format before sending
+- **Collect async**: Use goroutine to collect messages without blocking
+- **No defer close in loops**: Close explicitly after all sends complete
 
 ## Breaking Changes
-⚠️ **This is a BREAKING CHANGE** - All implementations of HandlerEdit and HandlerInteractive must update their Change method signature.
+⚠️ **BREAKING CHANGE** - All handler implementations must update signatures.
 
 ## Success Criteria
-- [ ] All interfaces updated with new signature
-- [ ] All internal implementations updated
+- [ ] All interfaces updated
+- [ ] All internal implementations updated  
 - [ ] All test handlers updated
-- [ ] All tests pass: `go test ./...`
+- [ ] External packages updated
+- [ ] `go test ./...` passes
 - [ ] No compilation errors
-- [ ] Channel properly closed after use
-- [ ] Messages collected and processed correctly
-
-## Notes
-- Use buffered channels (size 10) to avoid blocking
-- Always close channel after sending messages
-- Collect messages in separate goroutine to avoid deadlock
-- Format messages before sending (use `fmt.Sprintf` if needed)
-- Preserve existing message tracking and timeout behavior

@@ -141,20 +141,11 @@ func (f *field) triggerContentDisplay() {
 
 		// Create progress callback that follows MessageTracker logic
 
-		// Create channel
-		progressChan := make(chan string, 10)
-		messages := []string{}
-
-		// Collect in goroutine
-		done := make(chan struct{})
-		go func() {
-			for msg := range progressChan {
-				messages = append(messages, msg)
-				// Process message immediately if needed
-				f.sendMessage(msg)
-			}
-			close(done)
-		}()
+		// Use helper to safely collect progress messages
+		progressChan, done := f.collectProgressMessages(func(msg string) {
+			// Process message immediately
+			f.sendMessage(msg)
+		})
 
 		// Execute handler
 		f.handler.Change("", progressChan)
@@ -206,6 +197,26 @@ func (f *field) getCurrentValue() any {
 		// For non-editable fields (action buttons), return the original value
 		return f.handler.Value()
 	}
+}
+
+// collectProgressMessages creates a goroutine that safely collects messages from a progress channel.
+// Returns the progress channel (for handler to send to) and done channel (to wait for completion).
+// The caller must close progressChan after handler completes, then wait on <-done.
+// This helper unifies the pattern and ensures 'done' is always closed via defer, preventing panics.
+func (f *field) collectProgressMessages(processMessage func(string)) (progressChan chan string, done chan struct{}) {
+	progressChan = make(chan string, 10)
+	done = make(chan struct{})
+
+	go func() {
+		defer close(done) // Always close done, even with early returns
+		for msg := range progressChan {
+			if processMessage != nil {
+				processMessage(msg)
+			}
+		}
+	}()
+
+	return progressChan, done
 }
 
 // sendMessage sends a message through parent tab with automatic type detection
@@ -293,21 +304,16 @@ func (f *field) executeAsyncChange(valueToSave any) {
 	}, 1)
 
 	go func() {
-		progressChan := make(chan string, 10)
-		done := make(chan struct{})
-
-		go func() {
-			for msg := range progressChan {
-				if f.parentTab != nil {
-					if f.hasContentMethod() {
-						f.parentTab.tui.updateViewport()
-						return
-					}
-					f.sendMessage(msg)
+		// Use helper to safely collect progress messages
+		progressChan, done := f.collectProgressMessages(func(msg string) {
+			if f.parentTab != nil {
+				if f.hasContentMethod() {
+					f.parentTab.tui.updateViewport()
+					return
 				}
+				f.sendMessage(msg)
 			}
-			close(done)
-		}()
+		})
 
 		f.handler.Change(currentValue.(string), progressChan)
 		close(progressChan)
@@ -370,15 +376,10 @@ func (f *field) executeChangeSyncWithValue(valueToSave any) {
 	// In sync test mode, we don't generate operation IDs or send messages to avoid race conditions
 	// Use the pre-captured value directly
 
-	// Create empty progress callback for sync test execution
-	progressChan := make(chan string, 10)
-	done := make(chan struct{})
-	go func() {
-		for range progressChan {
-			// In sync test mode, we don't send messages to avoid race conditions
-		}
-		close(done)
-	}()
+	// Use helper to safely collect progress messages (discarding them in test mode)
+	progressChan, done := f.collectProgressMessages(func(msg string) {
+		// In sync test mode, we don't send messages to avoid race conditions
+	})
 
 	f.handler.Change(valueToSave.(string), progressChan)
 	close(progressChan)
@@ -410,23 +411,19 @@ func (f *field) executeChangeSyncWithTracking(valueToSave any) {
 	handlerName := f.handler.Name()
 	handlerColor := f.handler.handlerColor // NEW: Get handler color
 
-	progressChan := make(chan string, 10)
-	done := make(chan struct{})
-	go func() {
-		for msg := range progressChan {
-			if f.parentTab != nil {
-				// NEW: If handler has Content() method, refresh display instead of creating messages
-				if f.hasContentMethod() {
-					f.parentTab.tui.updateViewport()
-					return
-				}
-				// For regular handlers, create timestamped messages with tracking
-				_, msgType := Translate(msg).StringType()
-				f.parentTab.tui.sendMessageWithHandler(msg, msgType, f.parentTab, handlerName, operationID, handlerColor)
+	// Use helper to safely collect progress messages
+	progressChan, done := f.collectProgressMessages(func(msg string) {
+		if f.parentTab != nil {
+			// NEW: If handler has Content() method, refresh display instead of creating messages
+			if f.hasContentMethod() {
+				f.parentTab.tui.updateViewport()
+				return
 			}
+			// For regular handlers, create timestamped messages with tracking
+			_, msgType := Translate(msg).StringType()
+			f.parentTab.tui.sendMessageWithHandler(msg, msgType, f.parentTab, handlerName, operationID, handlerColor)
 		}
-		close(done)
-	}()
+	})
 
 	// Execute handler
 	f.handler.Change(valueToSave.(string), progressChan)

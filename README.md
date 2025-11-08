@@ -7,7 +7,7 @@ Reusable **message presentation system** for Go development tools. DevTUI is a p
 
 **Decoupled Design**: DevTUI follows consumer-driven interface design - your application defines UI interfaces, DevTUI implements them. This enables zero coupling, easy testing, and pluggable UI implementations.
 
-**What DevTUI does**: Takes messages from your handlers via `progress()` callbacks and displays them in a clean, organized terminal interface with tabs, navigation, and automatic formatting.
+**What DevTUI does**: Takes messages from your handlers via a `progress` channel and displays them in a clean, organized terminal interface with tabs, navigation, and automatic formatting.
 
 **What DevTUI doesn't do**: Validate data, handle errors, or manage business logic. Your handlers are responsible for their own state and decisions - DevTUI just shows whatever they tell it to show.
 
@@ -31,9 +31,11 @@ type LanguageHandler struct {
 func (h *LanguageHandler) Name() string  { return "Language" }
 func (h *LanguageHandler) Label() string { return "Language" }
 func (h *LanguageHandler) Value() string { return h.lang }
-func (h *LanguageHandler) Change(newValue string, progress func(msgs ...any)) {
+func (h *LanguageHandler) Change(newValue string, progress chan<- string) {
     h.lang = newValue
-    progress("Language changed to", newValue) // Will only refresh, not create a message
+    // Send a single human-readable status message. The caller owns the
+    // channel lifecycle (do NOT close it from here).
+    progress <- "Language changed to " + newValue // Will only refresh, not create a message
 }
 func (h *LanguageHandler) Content() string {
     return "Current language: " + h.lang
@@ -54,12 +56,12 @@ type BackupHandler struct {
 
 func (h *BackupHandler) Name() string  { return "SystemBackup" }
 func (h *BackupHandler) Label() string { return "Create System Backup" }
-func (h *BackupHandler) Execute(progress func(msgs ...any)) {
-    progress("Preparing backup...")
+func (h *BackupHandler) Execute(progress chan<- string) {
+    progress <- "Preparing backup..."
     time.Sleep(200 * time.Millisecond)
-    progress("Backing up database...")
+    progress <- "Backing up database..."
     time.Sleep(500 * time.Millisecond)
-    progress("Backup completed successfully")
+    progress <- "Backup completed successfully"
 }
 
 // MessageTracker implementation for operation tracking
@@ -113,7 +115,12 @@ type HandlerEdit interface {
     Name() string    // Unique identifier for logging
     Label() string   // Field label
     Value() string   // Current/initial value
-    Change(newValue string, progress func(msgs ...any))
+    // Change receives a progress channel for status updates. Implementations
+    // should send human-readable messages to the channel (e.g. "validating...",
+    // "saving...", "done"). The caller manages the channel lifecycle and will
+    // close it; implementations MUST NOT close the channel. Avoid blocking
+    // indefinitely when sending (the channel may be unbuffered).
+    Change(newValue string, progress chan<- string)
 }
 ```
 
@@ -136,7 +143,11 @@ func (h *DatabaseHandler) Shortcuts() []map[string]string {
 type HandlerExecution interface {
     Name() string  // Unique identifier for logging
     Label() string // Button label
-    Execute(progress func(msgs ...any))
+    // Execute runs the action and can send progress updates via the provided
+    // channel. Do not close the channel from the implementation; the caller
+    // owns the lifecycle. Avoid blocking sends on the channel to prevent UI
+    // deadlocks.
+    Execute(progress chan<- string)
 }
 ```
 **[→ See complete implementation example](example/HandlerExecution.go)**
@@ -147,7 +158,10 @@ type HandlerInteractive interface {
     Name() string                                       // Identifier for logging
     Label() string                                      // Field label (updates dynamically)
     Value() string                                      // Current input value
-    Change(newValue string, progress func(msgs ...any)) // Handle user input + content display
+    // Change receives a progress channel for streaming content and status
+    // updates. Implementations should not close the channel and should avoid
+    // blocking sends.
+    Change(newValue string, progress chan<- string) // Handle user input + content display
     WaitingForUser() bool                               // Should edit mode be auto-activated?
 }
 ```
@@ -225,6 +239,23 @@ DevTUI automatically detects when a handler implements `MessageTracker` and enab
 - **Automatic MessageTracker Detection**: Optionally implement `MessageTracker` interface for operation tracking
 - **Decoupled Architecture**: Consumers define their own interfaces - DevTUI implements them
 - **Thread-Safe**: Concurrent handler registration and execution
+
+**Progress callbacks (channel contract)**
+
+DevTUI provides a `progress` channel to handlers for streaming human-readable
+status messages. A small contract to keep in mind:
+
+- The `progress` parameter has type `chan<- string` on handler methods.
+- The caller (DevTUI) owns the channel lifecycle and will close it when the
+    operation is finished. Handler implementations MUST NOT close the channel.
+- Handlers may send zero or more messages. Messages should be plain strings
+    intended for display to users (for example: "validating...", "step 2 done",
+    or "error: <message>").
+- To avoid deadlocks, avoid blocking sends on the channel. If a send may
+    block (for example when the channel is unbuffered and the UI may be busy),
+    send from a goroutine or use a non-blocking select with a default case.
+- MessageTracker implementations can be used alongside progress messages to
+    enable updating existing messages instead of appending new ones.
 
 ## Decoupled Architecture
 

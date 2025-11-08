@@ -13,15 +13,15 @@ type HandlerEdit interface {
 	Name() string                                       // Identifier for logging: "ServerPort", "DatabaseURL"
 	Label() string                                      // Field label (e.g., "Server Port", "Host Configuration")
 	Value() string                                      // Current/initial value (e.g., "8080", "localhost")
-	Change(newValue string, progress func(msgs ...any)) // New signature: no error, not variadic, string
+	Change(newValue string, progress chan<- string)
 }
 
 // HandlerExecution defines the interface for action buttons that execute operations.
 // These handlers trigger business logic when activated by the user.
 type HandlerExecution interface {
-	Name() string                       // Identifier for logging: "DeployProd", "BuildProject"
-	Label() string                      // Button label (e.g., "Deploy to Production", "Build Project")
-	Execute(progress func(msgs ...any)) // New signature: no error, not variadic
+	Name() string      // Identifier for logging: "DeployProd", "BuildProject"
+	Label() string     // Button label (e.g., "Deploy to Production", "Build Project")
+	Execute(progress chan<- string)
 }
 
 // HandlerLogger defines the interface for basic writers that create new lines for each write.
@@ -40,11 +40,11 @@ type HandlerLogger interface {
 // These handlers combine content display with user interaction capabilities.
 // All content display is handled through progress() for consistency.
 type HandlerInteractive interface {
-	Name() string                                       // Identifier for logging: "ChatBot", "ConfigWizard"
-	Label() string                                      // Field label (updates dynamically)
-	Value() string                                      // Current input value
-	Change(newValue string, progress func(msgs ...any)) // Handle user input + content display via progress
-	WaitingForUser() bool                               // Should edit mode be auto-activated?
+	Name() string                                // Identifier for logging: "ChatBot", "ConfigWizard"
+	Label() string                               // Field label (updates dynamically)
+	Value() string                               // Current input value
+	Change(newValue string, progress chan<- string)  // Handle user input + content display via progress
+	WaitingForUser() bool                        // Should edit mode be auto-activated?
 }
 
 // MessageTracker provides optional interface for message tracking control.

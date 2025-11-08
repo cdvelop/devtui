@@ -27,11 +27,11 @@ func (h *ThreadSafePortTestHandler) Value() string {
 	return h.currentPort
 }
 
-func (h *ThreadSafePortTestHandler) Change(newValue string, progress func(string)) {
+func (h *ThreadSafePortTestHandler) Change(newValue string, progress chan<- string) {
 	portStr := strings.TrimSpace(newValue)
 	if portStr == "" {
 		if progress != nil {
-			progress("port cannot be empty")
+			progress <- "port cannot be empty"
 		}
 		return
 	}
@@ -39,13 +39,13 @@ func (h *ThreadSafePortTestHandler) Change(newValue string, progress func(string
 	port, err := strconv.Atoi(portStr)
 	if err != nil {
 		if progress != nil {
-			progress("port must be a number")
+			progress <- "port must be a number"
 		}
 		return
 	}
 	if port < 1 || port > 65535 {
 		if progress != nil {
-			progress("port must be between 1 and 65535")
+			progress <- "port must be between 1 and 65535"
 		}
 		return
 	}
@@ -56,7 +56,7 @@ func (h *ThreadSafePortTestHandler) Change(newValue string, progress func(string
 	h.mu.Unlock()
 
 	if progress != nil {
-		progress(fmt.Sprintf("Port configured: %d", port))
+		progress <- fmt.Sprintf("Port configured: %d", port)
 	}
 }
 

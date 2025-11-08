@@ -14,7 +14,7 @@ type testTracker struct {
 func (t *testTracker) Name() string                                       { return "TestTracker" }
 func (t *testTracker) Label() string                                      { return "TrackerLabel" }
 func (t *testTracker) Value() string                                      { return "" }
-func (t *testTracker) Change(newValue string, progress func(msgs ...any)) {}
+func (t *testTracker) Change(newValue string, progress chan<- string) { close(progress) }
 func (t *testTracker) GetLastOperationID() string                         { return t.lastOpID }
 func (t *testTracker) SetLastOperationID(id string)                       { t.lastOpID = id }
 

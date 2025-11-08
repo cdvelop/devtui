@@ -42,10 +42,10 @@ func (h *shortcutsInteractiveHandler) SetLastOperationID(id string) { h.lastOpID
 func (h *shortcutsInteractiveHandler) Value() string { return Convert(h.lang).ToLower().String() }
 
 // Change handles both content display and user input via progress()
-func (h *shortcutsInteractiveHandler) Change(newValue string, progress func(msgs ...any)) {
+func (h *shortcutsInteractiveHandler) Change(newValue string, progress chan<- string) {
 	if newValue == "" && !h.needsLanguageInput {
 		// Display help content when field is selected (not in edit mode)
-		progress(h.generateHelpContent())
+		progress <- h.generateHelpContent()
 		return
 	}
 
@@ -55,7 +55,7 @@ func (h *shortcutsInteractiveHandler) Change(newValue string, progress func(msgs
 	h.needsLanguageInput = false
 
 	// Show updated help content
-	progress(h.generateHelpContent())
+	progress <- h.generateHelpContent()
 }
 
 func (h *shortcutsInteractiveHandler) WaitingForUser() bool {

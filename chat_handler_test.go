@@ -19,9 +19,9 @@ func TestChatHandlerRealScenario(t *testing.T) {
 		chatHandler := &example.SimpleChatHandler{}
 
 		var contentDisplayed []string
-		mockProgress := func(msgs ...any) {
-			for _, msg := range msgs {
-				contentDisplayed = append(contentDisplayed, msg.(string))
+		mockProgress := func(progress <-chan string) {
+			for msg := range progress {
+				contentDisplayed = append(contentDisplayed, msg)
 				t.Logf("Progress: %s", msg)
 			}
 		}
@@ -35,7 +35,12 @@ func TestChatHandlerRealScenario(t *testing.T) {
 		}
 
 		// DevTUI calls Change("", progress) when field is selected
-		chatHandler.Change("", mockProgress)
+		progressChan := make(chan string, 10)
+		go func() {
+			defer close(progressChan)
+			chatHandler.Change("", progressChan)
+		}()
+		mockProgress(progressChan)
 
 		// Verify welcome content was shown
 		if len(contentDisplayed) == 0 {
@@ -76,7 +81,12 @@ func TestChatHandlerRealScenario(t *testing.T) {
 		t.Logf("State 3: User sends message -> handler processes it")
 
 		userMessage := "Hello, how are you?"
-		chatHandler.Change(userMessage, mockProgress)
+		progressChan2 := make(chan string, 10)
+		go func() {
+			defer close(progressChan2)
+			chatHandler.Change(userMessage, progressChan2)
+		}()
+		mockProgress(progressChan2)
 
 		// Note: We cannot safely check handler state immediately after sending
 		// as the async operation may not have started yet. The handler's business logic
@@ -136,7 +146,12 @@ func TestChatHandlerRealScenario(t *testing.T) {
 		contentDisplayed = []string{}
 
 		// DevTUI calls Change("", progress) when field is re-selected
-		chatHandler.Change("", mockProgress)
+		progressChan3 := make(chan string, 10)
+		go func() {
+			defer close(progressChan3)
+			chatHandler.Change("", progressChan3)
+		}()
+		mockProgress(progressChan3)
 
 		// Verify conversation history is shown (handler's business logic)
 		historyFound := false
@@ -157,7 +172,12 @@ func TestChatHandlerRealScenario(t *testing.T) {
 		contentDisplayed = []string{}
 
 		// User presses Enter without typing anything
-		chatHandler.Change("", mockProgress)
+		progressChan4 := make(chan string, 10)
+		go func() {
+			defer close(progressChan4)
+			chatHandler.Change("", progressChan4)
+		}()
+		mockProgress(progressChan4)
 
 		// Handler should guide the user (handler's responsibility for UX)
 		guidanceFound := false

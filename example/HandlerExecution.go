@@ -8,15 +8,15 @@ type BackupHandler struct {
 
 func (h *BackupHandler) Name() string  { return "SystemBackup" }
 func (h *BackupHandler) Label() string { return "With Tracking" }
-func (h *BackupHandler) Execute(progress func(msgs ...any)) {
+func (h *BackupHandler) Execute(progress chan<- string) {
 	if progress != nil {
-		progress("Preparing", "backup...", h.lastOpID)
+		progress <- "Preparing backup... " + h.lastOpID
 		time.Sleep(500 * time.Millisecond)
-		progress("BackingUp", "database...", h.lastOpID)
+		progress <- "BackingUp database... " + h.lastOpID
 		time.Sleep(500 * time.Millisecond)
-		progress("BackingUp", "Files", h.lastOpID)
+		progress <- "BackingUp Files " + h.lastOpID
 		time.Sleep(500 * time.Millisecond)
-		progress("Backup", "End", "OK", h.lastOpID)
+		progress <- "Backup End OK " + h.lastOpID
 	}
 }
 

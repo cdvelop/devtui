@@ -282,11 +282,19 @@ func (h *DevTUI) executeShortcut(entry *ShortcutEntry) (bool, tea.Cmd) {
 
 	// Execute the Change method with shortcut value
 	if targetField.handler != nil {
-		progress := func(msgs ...any) {
-			// Use the new unified sendMessage method
-			targetField.sendMessage(msgs...)
-		}
-		targetField.handler.Change(entry.Value, progress)
+		progressChan := make(chan string, 10)
+		done := make(chan struct{})
+		go func() {
+			for msg := range progressChan {
+				targetField.sendMessage(msg)
+			}
+			close(done)
+		}()
+		go func() {
+			targetField.handler.Change(entry.Value, progressChan)
+			close(progressChan)
+		}()
+		<-done
 	}
 
 	// Update viewport to show changes

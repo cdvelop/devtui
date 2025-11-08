@@ -32,17 +32,17 @@ type anyHandler struct {
 	handlerColor string // NEW: Handler-specific color for message formatting
 
 	// Function pointers - solo los necesarios poblados
-	nameFunc     func() string                   // Todos
-	labelFunc    func() string                   // Display/Edit/Execution
-	valueFunc    func() string                   // Edit/Display
-	contentFunc  func() string                   // Display únicamente
-	editableFunc func() bool                     // Por tipo
-	editModeFunc func() bool                     // NEW: Auto edit mode activation
-	changeFunc   func(string, func(msgs ...any)) // Edit/Execution (nueva firma)
-	executeFunc  func(func(msgs ...any))         // Execution únicamente (nueva firma)
-	timeoutFunc  func() time.Duration            // Edit/Execution
-	getOpIDFunc  func() string                   // Tracking
-	setOpIDFunc  func(string)                    // Tracking
+	nameFunc     func() string                      // Todos
+	labelFunc    func() string                      // Display/Edit/Execution
+	valueFunc    func() string                      // Edit/Display
+	contentFunc  func() string                      // Display únicamente
+	editableFunc func() bool                        // Por tipo
+	editModeFunc func() bool                        // NEW: Auto edit mode activation
+	changeFunc   func(string, chan<- string) // Edit/Execution (nueva firma)
+	executeFunc  func(chan<- string)            // Execution únicamente (nueva firma)
+	timeoutFunc  func() time.Duration               // Edit/Execution
+	getOpIDFunc  func() string                      // Tracking
+	setOpIDFunc  func(string)                       // Tracking
 }
 
 // ============================================================================
@@ -77,9 +77,15 @@ func (a *anyHandler) editable() bool {
 	return false
 }
 
-func (a *anyHandler) Change(newValue string, progress func(msgs ...any)) {
+func (a *anyHandler) Change(newValue string, progress chan<- string) {
 	if a.changeFunc != nil {
 		a.changeFunc(newValue, progress)
+	}
+}
+
+func (a *anyHandler) Execute(progress chan<- string) {
+	if a.executeFunc != nil {
+		a.executeFunc(progress)
 	}
 }
 
@@ -178,7 +184,7 @@ func NewExecutionHandler(h HandlerExecution, timeout time.Duration, color string
 		labelFunc:    h.Label,
 		editableFunc: func() bool { return false },
 		executeFunc:  h.Execute,
-		changeFunc: func(_ string, progress func(msgs ...any)) {
+		changeFunc: func(_ string, progress chan<- string) {
 			h.Execute(progress)
 		},
 		timeoutFunc:  func() time.Duration { return timeout },

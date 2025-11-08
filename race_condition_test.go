@@ -14,11 +14,11 @@ type RaceConditionHandler struct {
 
 func (h *RaceConditionHandler) Name() string  { return "RaceTest" }
 func (h *RaceConditionHandler) Label() string { return "Race Condition Test" }
-func (h *RaceConditionHandler) Execute(progress func(msgs ...any)) {
+func (h *RaceConditionHandler) Execute(progress chan<- string) {
 	// Simulate work that triggers progress updates
 	if progress != nil {
 		for i := 0; i < 10; i++ {
-			progress("Step ", string(rune('0'+i)))
+			progress <- "Step " + string(rune('0'+i))
 			time.Sleep(1 * time.Millisecond) // Small delay to increase race probability
 		}
 	}
@@ -76,9 +76,12 @@ func TestRaceConditionReproduction(t *testing.T) {
 
 				// Also execute the handler to trigger the race condition path
 				go func() {
-					handler.Execute(func(msgs ...any) {
-						// This progress callback will trigger SetLastOperationID internally
-					})
+					progressChan := make(chan string)
+					go func() {
+						for range progressChan {
+						}
+					}()
+					handler.Execute(progressChan)
 				}()
 
 				time.Sleep(1 * time.Millisecond)

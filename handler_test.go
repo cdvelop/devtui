@@ -46,12 +46,12 @@ func (h *TestEditableHandler) Value() string {
 func (h *TestEditableHandler) editable() bool         { return true }
 func (h *TestEditableHandler) Timeout() time.Duration { return 0 }
 
-func (h *TestEditableHandler) Change(newValue string, progress func(msgs ...any)) {
+func (h *TestEditableHandler) Change(newValue string, progress chan<- string) {
 	h.mu.Lock()
 	h.currentValue = newValue
 	h.mu.Unlock()
 	if progress != nil {
-		progress("Saved: ", newValue)
+		progress <- "Saved: " + newValue
 	}
 }
 
@@ -106,16 +106,16 @@ func (h *TestNonEditableHandler) Value() string {
 
 func (h *TestNonEditableHandler) Timeout() time.Duration { return 0 }
 
-func (h *TestNonEditableHandler) Change(newValue string, progress func(msgs ...any)) {
+func (h *TestNonEditableHandler) Change(newValue string, progress chan<- string) {
 	if progress != nil {
-		progress("Action executed: ", h.actionText)
+		progress <- "Action executed: " + h.actionText
 	}
 }
 
 // HandlerExecution interface
-func (h *TestNonEditableHandler) Execute(progress func(msgs ...any)) {
+func (h *TestNonEditableHandler) Execute(progress chan<- string) {
 	if progress != nil {
-		progress("Action executed: ", h.actionText)
+		progress <- "Action executed: " + h.actionText
 	}
 }
 
@@ -206,24 +206,24 @@ func (h *PortTestHandler) Value() string {
 func (h *PortTestHandler) Editable() bool         { return true }
 func (h *PortTestHandler) Timeout() time.Duration { return 3 * time.Second }
 
-func (h *PortTestHandler) Change(newValue string, progress func(msgs ...any)) {
+func (h *PortTestHandler) Change(newValue string, progress chan<- string) {
 	portStr := strings.TrimSpace(newValue)
 	if portStr == "" {
 		if progress != nil {
-			progress("port cannot be empty")
+			progress <- "port cannot be empty"
 		}
 		return
 	}
 	port, err := strconv.Atoi(portStr)
 	if err != nil {
 		if progress != nil {
-			progress("port must be a number")
+			progress <- "port must be a number"
 		}
 		return
 	}
 	if port < 1 || port > 65535 {
 		if progress != nil {
-			progress("port must be between 1 and 65535")
+			progress <- "port must be between 1 and 65535"
 		}
 		return
 	}
@@ -231,7 +231,7 @@ func (h *PortTestHandler) Change(newValue string, progress func(msgs ...any)) {
 	h.currentPort = portStr
 	h.mu.Unlock()
 	if progress != nil {
-		progress("Port configured: ", port)
+		progress <- "Port configured: " + strconv.Itoa(port)
 	}
 }
 
@@ -280,9 +280,9 @@ func (h *TestErrorHandler) Value() string          { return h.value }
 func (h *TestErrorHandler) Editable() bool         { return true }
 func (h *TestErrorHandler) Timeout() time.Duration { return 0 }
 
-func (h *TestErrorHandler) Change(newValue string, progress func(msgs ...any)) {
+func (h *TestErrorHandler) Change(newValue string, progress chan<- string) {
 	if progress != nil {
-		progress("simulated error occurred")
+		progress <- "simulated error occurred"
 	}
 }
 
@@ -321,16 +321,16 @@ func (h *TestRequiredFieldHandler) Value() string          { return h.currentVal
 func (h *TestRequiredFieldHandler) Editable() bool         { return true }
 func (h *TestRequiredFieldHandler) Timeout() time.Duration { return 0 }
 
-func (h *TestRequiredFieldHandler) Change(newValue string, progress func(msgs ...any)) {
+func (h *TestRequiredFieldHandler) Change(newValue string, progress chan<- string) {
 	if newValue == "" {
 		if progress != nil {
-			progress("Field cannot be empty")
+			progress <- "Field cannot be empty"
 		}
 		return
 	}
 	h.currentValue = newValue
 	if progress != nil {
-		progress("Accepted: ", newValue)
+		progress <- "Accepted: " + newValue
 	}
 }
 
@@ -369,16 +369,16 @@ func (h *TestOptionalFieldHandler) Value() string          { return h.currentVal
 func (h *TestOptionalFieldHandler) Editable() bool         { return true }
 func (h *TestOptionalFieldHandler) Timeout() time.Duration { return 0 }
 
-func (h *TestOptionalFieldHandler) Change(newValue string, progress func(msgs ...any)) {
+func (h *TestOptionalFieldHandler) Change(newValue string, progress chan<- string) {
 	h.currentValue = newValue
 	if newValue == "" {
 		h.currentValue = "Default Value" // Para el test que espera esta transformación
 		if progress != nil {
-			progress("Default Value")
+			progress <- "Default Value"
 		}
 	} else {
 		if progress != nil {
-			progress("Updated: ", newValue)
+			progress <- "Updated: " + newValue
 		}
 	}
 }
@@ -418,10 +418,10 @@ func (h *TestClearableFieldHandler) Value() string          { return h.currentVa
 func (h *TestClearableFieldHandler) Editable() bool         { return true }
 func (h *TestClearableFieldHandler) Timeout() time.Duration { return 0 }
 
-func (h *TestClearableFieldHandler) Change(newValue string, progress func(msgs ...any)) {
+func (h *TestClearableFieldHandler) Change(newValue string, progress chan<- string) {
 	h.currentValue = newValue
 	if progress != nil {
-		progress(newValue)
+		progress <- newValue
 	}
 }
 
@@ -462,7 +462,7 @@ func (h *TestCapturingHandler) Value() string          { return h.currentValue }
 func (h *TestCapturingHandler) Editable() bool         { return true }
 func (h *TestCapturingHandler) Timeout() time.Duration { return 0 }
 
-func (h *TestCapturingHandler) Change(newValue string, progress func(msgs ...any)) {
+func (h *TestCapturingHandler) Change(newValue string, progress chan<- string) {
 	if h.capturedValue != nil {
 		*h.capturedValue = newValue // Captura el valor para el test
 	}

@@ -11,12 +11,12 @@ type ExecHandler struct{}
 
 func (h *ExecHandler) Name() string  { return "TestExec" }
 func (h *ExecHandler) Label() string { return "Action" }
-func (h *ExecHandler) Execute(progress func(msgs ...any)) {
-	progress("Step 1")
+func (h *ExecHandler) Execute(progress chan<- string) {
+	progress <- "Step 1"
 	time.Sleep(10 * time.Millisecond)
-	progress("Step 2")
+	progress <- "Step 2"
 	time.Sleep(10 * time.Millisecond)
-	progress("Final step")
+	progress <- "Final step"
 }
 
 // TestExecutionHandlerFooterBug verifies that only progress messages are shown for execution handlers without Value()

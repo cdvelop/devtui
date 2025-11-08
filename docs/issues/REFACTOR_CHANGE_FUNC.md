@@ -198,11 +198,11 @@ func (h *DevBrowser) Execute(progress chan<- string) {
 
 ## Critical Notes
 
-- **Always close channels**: Handler or caller must close after sending messages
-- **Buffered channels**: Use size 10 to prevent blocking
+- **⚠️ HANDLERS MUST NOT CLOSE THE CHANNEL**: DevTUI owns the progress channel and is responsible for closing it. Handlers should ONLY send messages, never close the channel.
+- **Buffered channels**: DevTUI uses size 10 to prevent blocking
 - **Format first**: Use `fmt.Sprintf` to format before sending
-- **Collect async**: Use goroutine to collect messages without blocking
-- **No defer close in loops**: Close explicitly after all sends complete
+- **Collect async**: DevTUI uses goroutine to collect messages without blocking
+- **No defer close in handlers**: Handlers must never use `defer close(progress)` - this causes "close of closed channel" panics
 
 ## Breaking Changes
 ⚠️ **BREAKING CHANGE** - All handler implementations must update signatures.

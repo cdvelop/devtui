@@ -315,15 +315,44 @@ func (f *field) executeAsyncChange(valueToSave any) {
 			}
 		})
 
-		f.handler.Change(currentValue.(string), progressChan)
-		close(progressChan)
-		<-done
+		// Ensure channel is closed when goroutine exits, even if context is cancelled
+		// Use defer with panic recovery to prevent crashes
+		defer func() {
+			if r := recover(); r != nil {
+				// Log the panic instead of crashing
+				if f.parentTab != nil && f.parentTab.tui != nil && f.parentTab.tui.Logger != nil {
+					f.parentTab.tui.Logger("Internal error in handler goroutine:", r)
+				}
+			}
+			// Safely close the channel
+			func() {
+				defer func() {
+					if r := recover(); r != nil {
+						// Channel might already be closed, log but don't crash
+						if f.parentTab != nil && f.parentTab.tui != nil && f.parentTab.tui.Logger != nil {
+							f.parentTab.tui.Logger("Channel close error (expected if timeout occurred):", r)
+						}
+					}
+				}()
+				close(progressChan)
+			}()
+			<-done
+		}()
 
-		result := f.handler.Value() // Obtener valor actualizado
-		resultChan <- struct {
-			result string
-			err    error
-		}{result, nil}
+		f.handler.Change(currentValue.(string), progressChan)
+
+		// Only send result if context wasn't cancelled
+		select {
+		case <-ctx.Done():
+			// Context was cancelled, don't send result
+			return
+		default:
+			result := f.handler.Value() // Obtener valor actualizado
+			resultChan <- struct {
+				result string
+				err    error
+			}{result, nil}
+		}
 	}()
 
 	// Wait for completion or timeout

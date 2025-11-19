@@ -22,7 +22,7 @@ require (
 
 require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
-	github.com/cdvelop/unixid v0.2.0
+	github.com/cdvelop/unixid v0.2.9
 	github.com/charmbracelet/bubbles v0.21.0
 	github.com/charmbracelet/bubbletea v1.3.7
 	github.com/charmbracelet/x/ansi v0.10.1 // indirect

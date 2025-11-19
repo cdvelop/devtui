@@ -4,8 +4,8 @@ github.com/cdvelop/tinystring v0.10.2 h1:1451YriIyN1sODCOLOAt8RJqHuqbPzCD4dYPoqv
 github.com/cdvelop/tinystring v0.10.2/go.mod h1:v6+hdP7eaOZn9qoaPm4GQnX8cRzUzD2mEjILAkPLkyo=
 github.com/cdvelop/tinytime v0.2.3 h1:mUn4tsYT9ogXGRtPe5GLu5BB9MEBKszUR1RtP/hPj3M=
 github.com/cdvelop/tinytime v0.2.3/go.mod h1:r4Z6Y622BnLLCtnSiv7QJKhzpyxGiJjXtqCGgjCUCNQ=
-github.com/cdvelop/unixid v0.2.0 h1:e8XD+O1BtqSc7IuSGPfb3eZLCLSnHQ1VcD6zEwhyFMc=
-github.com/cdvelop/unixid v0.2.0/go.mod h1:Vs4xkcXfby7rQ51WthOg/IkedolUKL6EZuN1w6rm2v8=
+github.com/cdvelop/unixid v0.2.9 h1:ahV/zXv6wOthklfDE+6Jnfw2kJW/cvQiNyFqyVgtY74=
+github.com/cdvelop/unixid v0.2.9/go.mod h1:5lGAFjuQqCE42RzhFQ/2/OuK8t76YxGMGAzev3650xo=
 github.com/charmbracelet/bubbles v0.21.0 h1:9TdC97SdRVg/1aaXNVWfFH3nnLAwOXr8Fn6u6mfQdFs=
 github.com/charmbracelet/bubbles v0.21.0/go.mod h1:HF+v6QUR4HkEpz62dx7ym2xc71/KBHg+zKwJtMw+qtg=
 github.com/charmbracelet/bubbletea v1.3.7 h1:FNaEEFEenOEPnZsY9MI64thl2c84MI66+1QaQbxGOl4=

@@ -87,8 +87,9 @@ func (t *DevTUI) applyMessageTypeStyle(content string, msgType MessageType) stri
 }
 
 func (t *DevTUI) generateTimestamp(timestamp string) string {
-	if t.id != nil {
-		return t.timeStyle.Render(t.id.UnixNanoToTime(timestamp))
+	if t.timeProvider != nil && timestamp != "" {
+		// FormatTime accepts any (string, int64, etc.) and returns "HH:MM:SS"
+		return t.timeStyle.Render(t.timeProvider.FormatTime(timestamp))
 	}
 	return t.timeStyle.Render("--:--:--")
 }

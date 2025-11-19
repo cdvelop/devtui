@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/cdvelop/tinytime"
 	"github.com/cdvelop/unixid"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
@@ -21,7 +22,8 @@ type DevTUI struct {
 	*TuiConfig
 	*tuiStyle
 
-	id *unixid.UnixID
+	id           *unixid.UnixID
+	timeProvider tinytime.TimeProvider
 
 	ready    bool
 	viewport viewport.Model
@@ -81,10 +83,14 @@ func NewTUI(c *TuiConfig) *DevTUI {
 		// id will remain nil, but createTabContent method will handle this gracefully now
 	}
 
+	// Initialize time provider for timestamp formatting
+	timeProvider := tinytime.NewTimeProvider()
+
 	tui := &DevTUI{
 		TuiConfig:        c,
 		focused:          true, // assume the app is focused
 		TabSections:      []*tabSection{},
+		timeProvider:     timeProvider,
 		activeTab:        0, // Will be adjusted in Start() method
 		tabContentsChan:  make(chan tabContent, 100),
 		currentTime:      time.Now().Format("15:04:05"),

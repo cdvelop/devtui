@@ -4,11 +4,11 @@ go 1.25.2
 
 require (
 	github.com/cdvelop/tinystring v0.10.2
+	github.com/cdvelop/tinytime v0.2.3
 	github.com/charmbracelet/lipgloss v1.1.0
 )
 
 require (
-	github.com/cdvelop/tinytime v0.2.3 // indirect
 	github.com/charmbracelet/colorprofile v0.3.2 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.13 // indirect
 	github.com/charmbracelet/x/term v0.2.1 // indirect

@@ -2,12 +2,10 @@ github.com/aymanbagabas/go-osc52/v2 v2.0.1 h1:HwpRHbFMcZLEVr42D4p7XBqjyuxQH5SMiE
 github.com/aymanbagabas/go-osc52/v2 v2.0.1/go.mod h1:uYgXzlJ7ZpABp8OJ+exZzJJhRNQ2ASbcXHWsFqH8hp8=
 github.com/cdvelop/tinystring v0.10.2 h1:1451YriIyN1sODCOLOAt8RJqHuqbPzCD4dYPoqvwAQM=
 github.com/cdvelop/tinystring v0.10.2/go.mod h1:v6+hdP7eaOZn9qoaPm4GQnX8cRzUzD2mEjILAkPLkyo=
-github.com/cdvelop/tinytime v0.1.4 h1:BIh28l/slraT2kkIYjtoLxFFs+9FmP2frTNTEq4JqaA=
-github.com/cdvelop/tinytime v0.1.4/go.mod h1:N1JvbWasiGgipDVPwA0ysFldxwYehWliMkr+YZZaf2M=
+github.com/cdvelop/tinytime v0.2.0 h1:P7SgKBQIOZ9Oeo6I6zoFYcP47EHdVb7n+mtr9kxp040=
+github.com/cdvelop/tinytime v0.2.0/go.mod h1:r4Z6Y622BnLLCtnSiv7QJKhzpyxGiJjXtqCGgjCUCNQ=
 github.com/cdvelop/unixid v0.2.0 h1:e8XD+O1BtqSc7IuSGPfb3eZLCLSnHQ1VcD6zEwhyFMc=
 github.com/cdvelop/unixid v0.2.0/go.mod h1:Vs4xkcXfby7rQ51WthOg/IkedolUKL6EZuN1w6rm2v8=
-github.com/cdvelop/wasmtest v0.0.9 h1:R17RYOaGEF+ji4x602C+BLL4Ha33PszV6Tz6D3odXTA=
-github.com/cdvelop/wasmtest v0.0.9/go.mod h1:JLf/e8lVq5lO96GgJH6rencPvETusRYx5PBUNV8PmsY=
 github.com/charmbracelet/bubbles v0.21.0 h1:9TdC97SdRVg/1aaXNVWfFH3nnLAwOXr8Fn6u6mfQdFs=
 github.com/charmbracelet/bubbles v0.21.0/go.mod h1:HF+v6QUR4HkEpz62dx7ym2xc71/KBHg+zKwJtMw+qtg=
 github.com/charmbracelet/bubbletea v1.3.7 h1:FNaEEFEenOEPnZsY9MI64thl2c84MI66+1QaQbxGOl4=
